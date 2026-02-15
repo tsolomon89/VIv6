@@ -1,0 +1,31 @@
+<section style="padding: 6rem 0; text-align: center;">
+  <div class="container">
+    {{#if data.Headline}}
+      <h1 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.1;">
+        {{data.Headline}}
+      </h1>
+    {{else}}
+      <h1 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.1;">
+        {{entity.name}}
+      </h1>
+    {{/if}}
+
+    {{#if data.Subheadline}}
+      <p style="font-size: 1.25rem; color: #a1a1aa; max-width: 600px; margin: 0 auto 2.5rem;">
+        {{data.Subheadline}}
+      </p>
+    {{else}}
+      {{#if entity.description}}
+        <p style="font-size: 1.25rem; color: #a1a1aa; max-width: 600px; margin: 0 auto 2.5rem;">
+          {{entity.description}}
+        </p>
+      {{/if}}
+    {{/if}}
+
+    {{#if data.CTA_Link}}
+      <a href="{{data.CTA_Link}}" class="btn">
+        {{data.CTA_Text}}
+      </a>
+    {{/if}}
+  </div>
+</section>

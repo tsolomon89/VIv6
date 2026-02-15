@@ -1,0 +1,130 @@
+[
+  {
+    "id": "policy-00000000-0000-0000-0000-000000000001",
+    "type": "rule",
+    "slug": "policy-allow-read-with-capability",
+    "name": "Allow Read with Capability",
+    "summary": "Allows read operations if user has read:* or read:{type} capability",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_read",
+      "Trigger Entity Type": "*",
+      "Conditions": "[{\"field\": \"$context.capabilities\", \"op\": \"has\", \"value\": \"read:*\"}]",
+      "Actions": "[{\"type\": \"allow\"}]",
+      "Priority": 100,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "policy-00000000-0000-0000-0000-000000000002",
+    "type": "rule",
+    "slug": "policy-allow-create-with-capability",
+    "name": "Allow Create with Capability",
+    "summary": "Allows create operations if user has write:* capability",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_create",
+      "Trigger Entity Type": "*",
+      "Conditions": "[{\"field\": \"$context.capabilities\", \"op\": \"has\", \"value\": \"write:*\"}]",
+      "Actions": "[{\"type\": \"allow\"}]",
+      "Priority": 100,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "policy-00000000-0000-0000-0000-000000000003",
+    "type": "rule",
+    "slug": "policy-allow-update-with-capability",
+    "name": "Allow Update with Capability",
+    "summary": "Allows update operations if user has write:* capability",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_update",
+      "Trigger Entity Type": "*",
+      "Conditions": "[{\"field\": \"$context.capabilities\", \"op\": \"has\", \"value\": \"write:*\"}]",
+      "Actions": "[{\"type\": \"allow\"}]",
+      "Priority": 100,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "policy-00000000-0000-0000-0000-000000000004",
+    "type": "rule",
+    "slug": "policy-allow-delete-admin-only",
+    "name": "Allow Delete Admin Only",
+    "summary": "Allows delete operations only for admin:* capability",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_delete",
+      "Trigger Entity Type": "*",
+      "Conditions": "[{\"field\": \"$context.capabilities\", \"op\": \"has\", \"value\": \"admin:*\"}]",
+      "Actions": "[{\"type\": \"allow\"}]",
+      "Priority": 100,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "policy-00000000-0000-0000-0000-000000000005",
+    "type": "rule",
+    "slug": "policy-allow-contact-write-for-sales",
+    "name": "Allow Contact Write for Sales",
+    "summary": "Allows sales role to write contacts",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_create",
+      "Trigger Entity Type": "contact",
+      "Conditions": "[{\"field\": \"$context.capabilities\", \"op\": \"has\", \"value\": \"write:contacts\"}]",
+      "Actions": "[{\"type\": \"allow\"}]",
+      "Priority": 90,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "policy-00000000-0000-0000-0000-000000000006",
+    "type": "rule",
+    "slug": "policy-allow-contact-update-for-sales",
+    "name": "Allow Contact Update for Sales",
+    "summary": "Allows sales role to update contacts",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_update",
+      "Trigger Entity Type": "contact",
+      "Conditions": "[{\"field\": \"$context.capabilities\", \"op\": \"has\", \"value\": \"write:contacts\"}]",
+      "Actions": "[{\"type\": \"allow\"}]",
+      "Priority": 90,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "policy-00000000-0000-0000-0000-000000000007",
+    "type": "rule",
+    "slug": "policy-allow-opportunity-write-for-sales",
+    "name": "Allow Opportunity Write for Sales",
+    "summary": "Allows sales role to create opportunities",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_create",
+      "Trigger Entity Type": "opportunity",
+      "Conditions": "[{\"field\": \"$context.capabilities\", \"op\": \"has\", \"value\": \"write:opportunities\"}]",
+      "Actions": "[{\"type\": \"allow\"}]",
+      "Priority": 90,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "policy-00000000-0000-0000-0000-000000000008",
+    "type": "rule",
+    "slug": "policy-allow-asset-write-for-editor",
+    "name": "Allow Asset Write for Editor",
+    "summary": "Allows editor role to create/update assets",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_create",
+      "Trigger Entity Type": "asset",
+      "Conditions": "[{\"field\": \"$context.capabilities\", \"op\": \"has\", \"value\": \"write:assets\"}]",
+      "Actions": "[{\"type\": \"allow\"}]",
+      "Priority": 90,
+      "Is Active": true
+    }
+  }
+]

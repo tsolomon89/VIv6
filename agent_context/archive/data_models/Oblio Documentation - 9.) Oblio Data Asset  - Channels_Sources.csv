@@ -1,0 +1,97 @@
+Source / Referrer,Network,Referral,Channel,Medium,Content Type
+<companyName>,,Organic,Admin,Demonstration,Admin Demonstration
+<companyName>,,Organic,Admin,Message,Admin Message
+<companyName>,,Organic,Admin,Presentation,Admin Presentation
+<companyName>,,Organic,Admin,Presentation,Admin Presentation
+GoogleMeet,,Organic,Call,Demonstration,Call Demonstration
+Zoom,,Organic,Call,Demonstration,Call Demonstration
+Phone?Mobile?,,Organic,Call,Message,Call Message
+SalesGenie,,Organic,Call,Message,Call Message
+GoogleMeet,,Organic,Call,Presentation,Call Presentation
+Zoom,,Organic,Call,Presentation,Call Presentation
+<companyName>,,Organic,Direct,Article,Direct Article
+<companyName>,,Organic,Direct,Collection,Direct Collection
+<companyName>,,Organic,Direct,Demonstration,Direct Demonstration
+<companyName>,,Organic,Direct,Document,Direct Document
+<companyName>,,Organic,Direct,Page,Direct Page
+<companyName>,,Organic,Direct,Presentation,Direct Presentation
+<companyName>,,Organic,Direct,Video,Direct Video
+Facebook,Facebook Network,Paid,Display,Dynamic,Display Dynamic
+Google,Google Network,Paid,Display,Dynamic,Display Dynamic
+Youtube,Google Network,Paid,Display,Video,Display Video
+Gmail or <CompanyURL?>,,Organic,Email,Collection,Email Collection
+MailChimp,,Organic,Email,Collection,Email Collection
+Oblio,,Organic,Email,Collection,Email Collection
+Gmail or <CompanyURL?>,,Organic,Email,Message,Email Message
+MailChimp,,Organic,Email,Message,Email Message
+Oblio,,Organic,Email,Message,Email Message
+<referrerURL>,<parntershipAccount>,Paid,Email,Sponsorship,Email Sponsorship
+Gmail or <CompanyURL?>,,Organic,Email,Video,Email Video
+MailChimp,,Organic,Email,Video,Email Video
+Oblio,,Organic,Email,Video,Email Video
+<eventName> + <eventLocation>,<eventHost> or <eventSupplier>,Paid,Event,Demonstration,Event Demonstration
+<eventName> + <eventLocation>,,Organic,Event,Demonstration,Event Demonstration
+<eventName> + <eventLocation>,<eventHost> or <eventSupplier>,Paid,Event,Document,Event Document
+<eventName> + <eventLocation>,,Organic,Event,Document,Event Document
+<eventName> + <eventLocation>,<eventHost> or <eventSupplier>,Paid,Event,Exhibit,Event Exhibit
+<eventName> + <eventLocation>,,Organic,Event,Exhibit,Event Exhibit
+<eventName> + <eventLocation>,<eventHost> or <eventSupplier>,Paid,Event,Message,Event Message
+<eventName> + <eventLocation>,,Organic,Event,Message,Event Message
+<eventName> + <eventLocation>,<eventHost> or <eventSupplier>,Paid,Event,Networking,Event Networking
+<eventName> + <eventLocation>,,Organic,Event,Networking,Event Networking
+<eventName> + <eventLocation>,<eventHost> or <eventSupplier>,Paid,Event,Page,Event Page
+<eventName> + <eventLocation>,,Organic,Event,Page,Event Page
+<eventName> + <eventLocation>,<eventHost> or <eventSupplier>,Paid,Event,Presentation,Event Presentation
+<eventName> + <eventLocation>,,Organic,Event,Presentation,Event Presentation
+<eventName> + <eventLocation>,<eventHost> or <eventSupplier>,Paid,Event,Sponsorship,Event Sponsorship
+<eventName> + <eventLocation>,,Organic,Event,Sponsorship,Event Sponsorship
+<referrerURL>,<parntershipAccount>,Paid,Referral,Article,Referral Article
+<referrerURL>,,Organic,Referral,Article,Referral Article
+<referrerURL>,,Organic,Referral,Article,Referral Article
+<referrerURL>,<parntershipAccount>,Paid,Referral,Collection,Referral Collection
+<referrerURL>,,Organic,Referral,Collection,Referral Collection
+<referrerURL>,<parntershipAccount>,Paid,Referral,Document,Referral Document
+<referrerURL>,,Organic,Referral,Document,Referral Document
+<referrerURL>,<parntershipAccount>,Paid,Referral,Page,Referral Page
+<referrerURL>,,Organic,Referral,Page,Referral Page
+<referrerURL>,<parntershipAccount>,Paid,Referral,Presentation,Referral Presentation
+<referrerURL>,,Organic,Referral,Presentation,Referral Presentation
+<referrerURL>,<parntershipAccount>,Paid,Referral,Video,Referral Video
+<referrerURL>,,Organic,Referral,Video,Referral Video
+Bing,,Organic,Search,Dynamic,Search Dynamic
+Bing,Bing Network,Paid,Search,Dynamic,Search Dynamic
+Google,,Organic,Search,Dynamic,Search Dynamic
+Google,Google Network,Paid,Search,Dynamic,Search Dynamic
+Linkedin,,Organic,Social,Article,Social Article
+Linkedin,Linkedin Network,Paid,Social,Article,Social Article
+Facebook,,Organic,Social,Collection,Social Collection
+Facebook,Facebook Network,Paid,Social,Collection,Social Collection
+Linkedin,,Organic,Social,Collection,Social Collection
+Linkedin,Linkedin Network,Paid,Social,Collection,Social Collection
+Facebook,,Organic,Social,Dynamic,Social Dynamic
+Facebook,Facebook Network,Paid,Social,Dynamic,Social Dynamic
+Linkedin,,Organic,Social,Dynamic,Social Dynamic
+Linkedin,Linkedin Network,Paid,Social,Dynamic,Social Dynamic
+Twitter,,Organic,Social,Dynamic,Social Dynamic
+Twitter,Twitter Network,Paid,Social,Dynamic,Social Dynamic
+Youtube,,Organic,Social,Dynamic,Social Dynamic
+Youtube,Google Network,Paid,Social,Dynamic,Social Dynamic
+Facebook,,Organic,Social,Message,Social Message
+Linkedin,,Organic,Social,Message,Social Message
+Linkedin,Linkedin Network,Paid,Social,Message,Social Message
+Twitter,,Organic,Social,Message,Social Message
+Facebook,,,Social,Page,Social Page
+Linkedin,,Organic,Social,Page,Social Page
+Twitter,,Organic,Social,Page,Social Page
+Facebook,,Organic,Social,Post,Social Post
+Facebook,Facebook Network,Paid,Social,Post,Social Post
+Linkedin,,Organic,Social,Post,Social Post
+Linkedin,Linkedin Network,Paid,Social,Post,Social Post
+Twitter,,Organic,Social,Post,Social Post
+Twitter,Twitter Network,Paid,Social,Post,Social Post
+Facebook,,Organic,Social,Video,Social Video
+Facebook,Facebook Network,Paid,Social,Video,Social Video
+Linkedin,,Organic,Social,Video,Social Video
+Linkedin,Linkedin Network,Paid,Social,Video,Social Video
+Youtube,,Organic,Social,Video,Social Video
+Youtube,Google Network,Paid,Social,Video,Social Video

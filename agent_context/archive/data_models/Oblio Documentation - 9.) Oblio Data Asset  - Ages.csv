@@ -1,0 +1,8 @@
+Age Start,Age End,Age Range,Google,Linkedin,Facebook* x <= 65+
+18,24,18 - 24,18 - 24,18 to 24,
+35,34,25 - 34,25 - 34,25 to 34,
+35,44,35 - 44,35 - 44,35 to 54,
+45,54,45 - 54,45 - 54,35 to 54,
+55,64,55 - 64,55 - 64,55+,
+65,,65+,65+,55+,
+Unknown,,Unknown,Unknown,Unknown,

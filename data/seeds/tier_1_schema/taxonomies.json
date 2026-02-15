@@ -1,0 +1,79 @@
+[
+  {
+    "id": "e0000000-0000-0000-0000-000000000001",
+    "type": "taxonomy_term",
+    "slug": "sector_tech",
+    "name": "Technology",
+    "data": { "dimension": "sector" }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000002",
+    "type": "taxonomy_term",
+    "slug": "sector_finance",
+    "name": "Finance",
+    "data": { "dimension": "sector" }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000003",
+    "type": "taxonomy_term",
+    "slug": "sector_healthcare",
+    "name": "Healthcare",
+    "data": { "dimension": "sector" }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000004",
+    "type": "taxonomy_term",
+    "slug": "sector_retail",
+    "name": "Retail",
+    "data": { "dimension": "sector" }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000010",
+    "type": "taxonomy_term",
+    "slug": "ind_software",
+    "name": "Software",
+    "data": { "dimension": "industry", "parent_ref": "e0000000-0000-0000-0000-000000000001" }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000011",
+    "type": "taxonomy_term",
+    "slug": "ind_fintech",
+    "name": "Fintech",
+    "data": { "dimension": "industry", "parent_ref": "e0000000-0000-0000-0000-000000000002" }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000020",
+    "type": "taxonomy_term",
+    "slug": "role_admin",
+    "name": "Admin",
+    "data": { "dimension": "role" }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000021",
+    "type": "taxonomy_term",
+    "slug": "role_member",
+    "name": "Member",
+    "data": { "dimension": "role" }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000030",
+    "type": "taxonomy_term",
+    "slug": "persona_decision_maker",
+    "name": "Decision Maker",
+    "data": { "dimension": "persona", "power_level": 3 }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000031",
+    "type": "taxonomy_term",
+    "slug": "persona_influencer",
+    "name": "Influencer",
+    "data": { "dimension": "persona", "power_level": 2 }
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000032",
+    "type": "taxonomy_term",
+    "slug": "persona_end_user",
+    "name": "End User",
+    "data": { "dimension": "persona", "power_level": 1 }
+  }
+]

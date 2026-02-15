@@ -1,0 +1,120 @@
+[
+  {
+    "id": "hr-prod-00000000-0000-0000-0000-000000000001",
+    "type": "product",
+    "slug": "role-admin",
+    "name": "Administrator",
+    "summary": "Full administrative access to all system features",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "product_type": "HUM",
+      "category": "role",
+      "capabilities": [
+        "admin:*",
+        "read:*",
+        "write:*",
+        "delete:*"
+      ],
+      "description": "System administrator role with unrestricted access"
+    }
+  },
+  {
+    "id": "hr-prod-00000000-0000-0000-0000-000000000002",
+    "type": "product",
+    "slug": "role-editor",
+    "name": "Content Editor",
+    "summary": "Create and edit content, manage assets",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "product_type": "HUM",
+      "category": "role",
+      "capabilities": [
+        "read:*",
+        "write:content",
+        "write:assets",
+        "write:pages",
+        "write:features",
+        "write:products"
+      ],
+      "description": "Content editor role for managing catalog and assets"
+    }
+  },
+  {
+    "id": "hr-prod-00000000-0000-0000-0000-000000000003",
+    "type": "product",
+    "slug": "role-sales",
+    "name": "Sales Representative",
+    "summary": "Manage contacts, opportunities, and sales pipeline",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "product_type": "HUM",
+      "category": "role",
+      "capabilities": [
+        "read:*",
+        "write:contacts",
+        "write:opportunities",
+        "write:activities",
+        "write:campaigns"
+      ],
+      "description": "Sales role for CRM and pipeline management"
+    }
+  },
+  {
+    "id": "hr-prod-00000000-0000-0000-0000-000000000004",
+    "type": "product",
+    "slug": "role-viewer",
+    "name": "Viewer",
+    "summary": "Read-only access to view records",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "product_type": "HUM",
+      "category": "role",
+      "capabilities": [
+        "read:*"
+      ],
+      "description": "Read-only viewer role"
+    }
+  },
+  {
+    "id": "hr-prod-00000000-0000-0000-0000-000000000005",
+    "type": "product",
+    "slug": "role-marketing",
+    "name": "Marketing Manager",
+    "summary": "Manage campaigns, assets, and marketing content",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "product_type": "HUM",
+      "category": "role",
+      "capabilities": [
+        "read:*",
+        "write:campaigns",
+        "write:assets",
+        "write:content",
+        "write:personas"
+      ],
+      "description": "Marketing role for campaign and content management"
+    }
+  },
+  {
+    "id": "hr-prod-00000000-0000-0000-0000-000000000006",
+    "type": "product",
+    "slug": "role-developer",
+    "name": "Developer",
+    "summary": "Technical access for integrations and configurations",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "product_type": "HUM",
+      "category": "role",
+      "capabilities": [
+        "read:*",
+        "write:*",
+        "admin:views",
+        "admin:derivations",
+        "admin:metrics",
+        "admin:rules",
+        "admin:templates"
+      ],
+      "description": "Developer role for Ops layer and technical configuration"
+    }
+  }
+]

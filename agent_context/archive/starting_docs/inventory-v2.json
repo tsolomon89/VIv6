@@ -1,0 +1,469 @@
+{
+  "version": "2.0.0",
+  "generatedAt": "2026-01-31",
+  "notes": [
+    "REVISION: UseCases moved from Products to Solutions (derived relationship)",
+    "REVISION: Added productSolutionEdges to capture emphasized solutions per product",
+    "REVISION: Added solutionUseCaseEdges to capture applicability by company size",
+    "REVISION: Completed all 16 products from the master table",
+    "Features/Solutions/UseCases remain shared and non-unique to brands"
+  ],
+
+  "enums": {
+    "productType": ["B2B", "B2C", "Partnership", "Reseller", "Investment"],
+    "personaType": ["DM", "EU", "IN"],
+    "useCaseField": ["accountSize"],
+    "contractDurationType": ["None", "Annually", "Monthly", "Weekly", "Daily", "PerUnit"],
+    "billingFrequency": ["None", "Annually", "Monthly", "Weekly", "Daily", "PerUnit"],
+    "transactionGoalType": ["FormSubmit", "EmailSignup", "Purchase", "RequestAccess", "ViewDocs", "ContactRequest"]
+  },
+
+  "brands": [
+    {
+      "id": "brand_timothysolomon",
+      "domain": "timothysolomon.com",
+      "labels": {
+        "products": "Publications / Talks / Workshops",
+        "features": "Topics",
+        "solutions": "Principles",
+        "useCases": "—"
+      },
+      "primaryCTA": { "type": "EmailSignup", "label": "Subscribe" }
+    },
+    {
+      "id": "brand_hiretimothy",
+      "domain": "hiretimothysolomon.com",
+      "labels": {
+        "products": "Services",
+        "features": "Capabilities",
+        "solutions": "Outcomes",
+        "useCases": "Company sizes"
+      },
+      "primaryCTA": { "type": "FormSubmit", "label": "Book a call" }
+    },
+    {
+      "id": "brand_ftl",
+      "domain": "ftlmarketing.com",
+      "labels": {
+        "products": "Services",
+        "features": "Capabilities",
+        "solutions": "Solutions",
+        "useCases": "Company sizes"
+      },
+      "primaryCTA": { "type": "FormSubmit", "label": "Request a proposal" }
+    },
+    {
+      "id": "brand_victory",
+      "domain": "victoryinitiative.com",
+      "labels": {
+        "products": "Properties / Tools / Games",
+        "features": "Stack",
+        "solutions": "—",
+        "useCases": "—"
+      },
+      "primaryCTA": { "type": "ContactRequest", "label": "Collaborate" }
+    },
+    {
+      "id": "brand_oblio",
+      "domain": "oblio.app",
+      "labels": {
+        "products": "Platform / Modules",
+        "features": "Features",
+        "solutions": "Workflows",
+        "useCases": "Company sizes"
+      },
+      "primaryCTA": { "type": "RequestAccess", "label": "Request access" }
+    },
+    {
+      "id": "brand_keimenon",
+      "domain": "keimenon.com",
+      "labels": {
+        "products": "Tools",
+        "features": "Capabilities",
+        "solutions": "Discoveries",
+        "useCases": "—"
+      },
+      "primaryCTA": { "type": "RequestAccess", "label": "Try it" },
+      "notes": "AI chat conversation parser — excavating meaning from accumulated AI conversations"
+    },
+    {
+      "id": "brand_keimai",
+      "domain": "keimai.app",
+      "labels": {
+        "products": "Tools",
+        "features": "Modules",
+        "solutions": "Patterns",
+        "useCases": "—"
+      },
+      "primaryCTA": { "type": "RequestAccess", "label": "Get started" },
+      "notes": "Lightweight schema planning tool — can share nodes with Oblio under different roles"
+    }
+  ],
+
+  "features": [
+    { "id": "feat_positioning", "name": "Positioning", "summary": "Narrative clarity and category framing." },
+    { "id": "feat_offerDesign", "name": "Offer Design", "summary": "Packaging, pricing logic, tiers, guarantees." },
+    { "id": "feat_paidMedia", "name": "Paid Media", "summary": "Cross-channel acquisition and spend control." },
+    { "id": "feat_accountStructure", "name": "Account Structure", "summary": "Campaign/ad-group taxonomy and segmentation." },
+    { "id": "feat_instrumentation", "name": "Instrumentation", "summary": "Tracking plan, events, pixels, measurement plumbing." },
+    { "id": "feat_attribution", "name": "Attribution", "summary": "Channel credit rules and ROI interpretation." },
+    { "id": "feat_reporting", "name": "Reporting", "summary": "Dashboards, readouts, anomaly narratives." },
+    { "id": "feat_crmSchema", "name": "CRM Schema", "summary": "Objects/fields definitions; naming before counting." },
+    { "id": "feat_lifecycleOps", "name": "Lifecycle Ops", "summary": "Routing, scoring, stages, SLAs." },
+    { "id": "feat_seoStructure", "name": "SEO Structure", "summary": "Information architecture, internal linking, clusters." },
+    { "id": "feat_systemsBuild", "name": "Systems Build", "summary": "Web/data engineering; shared schemas; integration surfaces." },
+    { "id": "feat_automation", "name": "Automation", "summary": "Workflows, webhooks, orchestration, ops hygiene." },
+    { "id": "feat_contentEngine", "name": "Content Engine", "summary": "Writing → distribution → compounding." },
+    { "id": "feat_dataHygiene", "name": "Data Hygiene", "summary": "Dedupe, normalization, backfills, QA." },
+    { "id": "feat_integrations", "name": "Integrations", "summary": "CRM↔ads↔analytics connections, ETL-lite." },
+    { "id": "feat_landingPages", "name": "Landing Pages", "summary": "Conversion pages and iteration loop." },
+    { "id": "feat_creativeOps", "name": "Creative Ops", "summary": "Testing cadence, creative iteration, learnings." },
+    { "id": "feat_visualization", "name": "Visualization", "summary": "Interactive sims/tools for systems dynamics." },
+    { "id": "feat_activationDesign", "name": "Activation Design", "summary": "Event-to-pipeline conversion design." },
+    { "id": "feat_privacyCompliance", "name": "Privacy Compliance", "summary": "GDPR-aware tracking, consent flows." }
+  ],
+
+  "solutions": [
+    { "id": "sol_clarifyPosition", "name": "Clarify Position", "summary": "Make the offer legible and distinct." },
+    { "id": "sol_priceOffers", "name": "Price Offers", "summary": "Turn intent into a buyable package." },
+    { "id": "sol_proveROI", "name": "Prove ROI", "summary": "Make value measurable enough to steer." },
+    { "id": "sol_trackJourney", "name": "Track Journey", "summary": "Know what happens between touch and transaction." },
+    { "id": "sol_addStructure", "name": "Add Structure", "summary": "Make the system navigable: naming, taxonomy, rules." },
+    { "id": "sol_fixPipeline", "name": "Fix Pipeline", "summary": "Make stages, routing, handoffs behave." },
+    { "id": "sol_reduceEntropy", "name": "Reduce Entropy", "summary": "Remove chaos: dedupe, governance, constraints." },
+    { "id": "sol_runExperiments", "name": "Run Experiments", "summary": "Controlled learning loops for growth." },
+    { "id": "sol_compoundContent", "name": "Compound Content", "summary": "Durable distribution + accumulation." },
+    { "id": "sol_shipSystems", "name": "Ship Systems", "summary": "Build the thing so it keeps working." },
+    { "id": "sol_launchCampaigns", "name": "Launch Campaigns", "summary": "Get offers into market with feedback loops." },
+    { "id": "sol_visualizeDynamics", "name": "Visualize Dynamics", "summary": "Make systems understandable via simulation." }
+  ],
+
+  "useCases": [
+    { "id": "uc_proprietor", "field": "accountSize", "value": "Proprietor", "label": "Proprietor (1)", "headcountRange": [1, 1] },
+    { "id": "uc_micro", "field": "accountSize", "value": "Micro", "label": "Micro (2–10)", "headcountRange": [2, 10] },
+    { "id": "uc_smb", "field": "accountSize", "value": "SMB", "label": "SMB (11–50)", "headcountRange": [11, 50] },
+    { "id": "uc_mid", "field": "accountSize", "value": "Mid", "label": "Mid (51–200)", "headcountRange": [51, 200] },
+    { "id": "uc_large", "field": "accountSize", "value": "Large", "label": "Large (201–1000)", "headcountRange": [201, 1000] },
+    { "id": "uc_enterprise", "field": "accountSize", "value": "Enterprise", "label": "Enterprise (1000+)", "headcountRange": [1001, null] }
+  ],
+
+  "featureSolutionEdges": [
+    { "featureId": "feat_positioning", "solutionId": "sol_clarifyPosition" },
+    { "featureId": "feat_offerDesign", "solutionId": "sol_priceOffers" },
+    { "featureId": "feat_paidMedia", "solutionId": "sol_launchCampaigns" },
+    { "featureId": "feat_paidMedia", "solutionId": "sol_runExperiments" },
+    { "featureId": "feat_paidMedia", "solutionId": "sol_proveROI" },
+    { "featureId": "feat_accountStructure", "solutionId": "sol_addStructure" },
+    { "featureId": "feat_accountStructure", "solutionId": "sol_runExperiments" },
+    { "featureId": "feat_instrumentation", "solutionId": "sol_trackJourney" },
+    { "featureId": "feat_instrumentation", "solutionId": "sol_proveROI" },
+    { "featureId": "feat_attribution", "solutionId": "sol_proveROI" },
+    { "featureId": "feat_reporting", "solutionId": "sol_proveROI" },
+    { "featureId": "feat_reporting", "solutionId": "sol_trackJourney" },
+    { "featureId": "feat_reporting", "solutionId": "sol_runExperiments" },
+    { "featureId": "feat_crmSchema", "solutionId": "sol_addStructure" },
+    { "featureId": "feat_crmSchema", "solutionId": "sol_reduceEntropy" },
+    { "featureId": "feat_crmSchema", "solutionId": "sol_fixPipeline" },
+    { "featureId": "feat_lifecycleOps", "solutionId": "sol_fixPipeline" },
+    { "featureId": "feat_lifecycleOps", "solutionId": "sol_trackJourney" },
+    { "featureId": "feat_seoStructure", "solutionId": "sol_compoundContent" },
+    { "featureId": "feat_seoStructure", "solutionId": "sol_addStructure" },
+    { "featureId": "feat_systemsBuild", "solutionId": "sol_shipSystems" },
+    { "featureId": "feat_automation", "solutionId": "sol_fixPipeline" },
+    { "featureId": "feat_automation", "solutionId": "sol_reduceEntropy" },
+    { "featureId": "feat_automation", "solutionId": "sol_trackJourney" },
+    { "featureId": "feat_contentEngine", "solutionId": "sol_compoundContent" },
+    { "featureId": "feat_contentEngine", "solutionId": "sol_launchCampaigns" },
+    { "featureId": "feat_dataHygiene", "solutionId": "sol_reduceEntropy" },
+    { "featureId": "feat_integrations", "solutionId": "sol_shipSystems" },
+    { "featureId": "feat_integrations", "solutionId": "sol_reduceEntropy" },
+    { "featureId": "feat_landingPages", "solutionId": "sol_trackJourney" },
+    { "featureId": "feat_landingPages", "solutionId": "sol_proveROI" },
+    { "featureId": "feat_landingPages", "solutionId": "sol_launchCampaigns" },
+    { "featureId": "feat_creativeOps", "solutionId": "sol_runExperiments" },
+    { "featureId": "feat_visualization", "solutionId": "sol_visualizeDynamics" },
+    { "featureId": "feat_activationDesign", "solutionId": "sol_launchCampaigns" },
+    { "featureId": "feat_privacyCompliance", "solutionId": "sol_proveROI" },
+    { "featureId": "feat_privacyCompliance", "solutionId": "sol_trackJourney" }
+  ],
+
+  "solutionUseCaseEdges": [
+    { "solutionId": "sol_clarifyPosition", "useCaseIds": ["uc_proprietor", "uc_micro", "uc_smb", "uc_mid"] },
+    { "solutionId": "sol_priceOffers", "useCaseIds": ["uc_proprietor", "uc_micro", "uc_smb"] },
+    { "solutionId": "sol_proveROI", "useCaseIds": ["uc_smb", "uc_mid", "uc_large", "uc_enterprise"] },
+    { "solutionId": "sol_trackJourney", "useCaseIds": ["uc_smb", "uc_mid", "uc_large", "uc_enterprise"] },
+    { "solutionId": "sol_addStructure", "useCaseIds": ["uc_proprietor", "uc_micro", "uc_smb", "uc_mid", "uc_large"] },
+    { "solutionId": "sol_fixPipeline", "useCaseIds": ["uc_mid", "uc_large", "uc_enterprise"] },
+    { "solutionId": "sol_reduceEntropy", "useCaseIds": ["uc_mid", "uc_large", "uc_enterprise"] },
+    { "solutionId": "sol_runExperiments", "useCaseIds": ["uc_smb", "uc_mid", "uc_large"] },
+    { "solutionId": "sol_compoundContent", "useCaseIds": ["uc_proprietor", "uc_micro", "uc_smb", "uc_mid", "uc_large", "uc_enterprise"] },
+    { "solutionId": "sol_shipSystems", "useCaseIds": ["uc_mid", "uc_large", "uc_enterprise"] },
+    { "solutionId": "sol_launchCampaigns", "useCaseIds": ["uc_proprietor", "uc_micro", "uc_smb", "uc_mid"] },
+    { "solutionId": "sol_visualizeDynamics", "useCaseIds": ["uc_proprietor", "uc_micro", "uc_smb", "uc_mid", "uc_large", "uc_enterprise"] }
+  ],
+
+  "qualificationGoals": [
+    {
+      "id": "qg_default_form",
+      "name": "Complete Qualification Form",
+      "goalType": "FormSubmit",
+      "requiredFields": ["accountName", "contactName", "email", "phone", "industry", "sector", "companySize"],
+      "optionalFields": ["arrBracket"]
+    },
+    {
+      "id": "qg_newsletter",
+      "name": "Newsletter Signup",
+      "goalType": "EmailSignup",
+      "requiredFields": ["email"]
+    },
+    {
+      "id": "qg_request_access",
+      "name": "Request Access",
+      "goalType": "RequestAccess",
+      "requiredFields": ["accountName", "contactName", "email", "companySize"]
+    },
+    {
+      "id": "qg_contact",
+      "name": "Contact Request",
+      "goalType": "ContactRequest",
+      "requiredFields": ["contactName", "email"]
+    }
+  ],
+
+  "products": [
+    {
+      "id": "prod_ts_newsletter",
+      "brandId": "brand_timothysolomon",
+      "name": "Newsletter / Subscribe",
+      "slug": "/newsletter",
+      "productType": "B2C",
+      "summary": "Writing delivered regularly. Transaction goal is subscription.",
+      "transactionGoalId": "qg_newsletter",
+      "pricing": { "value": 0, "currency": "GBP", "billingFrequency": "None" },
+      "featureIds": ["feat_contentEngine", "feat_instrumentation", "feat_automation"],
+      "solutionIds": ["sol_compoundContent", "sol_trackJourney"]
+    },
+    {
+      "id": "prod_ts_speaking",
+      "brandId": "brand_timothysolomon",
+      "name": "Speaking",
+      "slug": "/speaking",
+      "productType": "B2B",
+      "summary": "Keynotes on growth systems, measurement, and strategy.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 7500, "currency": "GBP", "billingFrequency": "PerUnit" },
+      "featureIds": ["feat_positioning", "feat_attribution", "feat_reporting"],
+      "solutionIds": ["sol_clarifyPosition", "sol_proveROI"]
+    },
+    {
+      "id": "prod_ts_workshops",
+      "brandId": "brand_timothysolomon",
+      "name": "Workshops",
+      "slug": "/workshops",
+      "productType": "B2B",
+      "summary": "Small-group deep dives on positioning, pricing, and measurement.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 2500, "currency": "GBP", "billingFrequency": "PerUnit" },
+      "featureIds": ["feat_positioning", "feat_offerDesign", "feat_reporting"],
+      "solutionIds": ["sol_clarifyPosition", "sol_priceOffers", "sol_proveROI"]
+    },
+    {
+      "id": "prod_ts_publications",
+      "brandId": "brand_timothysolomon",
+      "name": "Publications",
+      "slug": "/publications",
+      "productType": "B2C",
+      "summary": "Ebooks, math papers, and framework documentation.",
+      "transactionGoalId": "qg_newsletter",
+      "pricing": { "value": 0, "currency": "GBP", "billingFrequency": "None" },
+      "featureIds": ["feat_contentEngine", "feat_visualization"],
+      "solutionIds": ["sol_compoundContent", "sol_visualizeDynamics"]
+    },
+
+    {
+      "id": "prod_hire_fractional",
+      "brandId": "brand_hiretimothy",
+      "name": "Fractional Growth Lead",
+      "slug": "/services/fractional-growth-lead",
+      "productType": "B2B",
+      "summary": "Strategy + architecture + execution steering across PPC, measurement, and pipeline.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 8000, "currency": "GBP", "billingFrequency": "Monthly" },
+      "featureIds": ["feat_positioning", "feat_offerDesign", "feat_paidMedia", "feat_accountStructure", "feat_instrumentation", "feat_attribution", "feat_reporting", "feat_crmSchema", "feat_lifecycleOps", "feat_automation"],
+      "solutionIds": ["sol_clarifyPosition", "sol_priceOffers", "sol_launchCampaigns", "sol_runExperiments", "sol_proveROI", "sol_trackJourney", "sol_addStructure", "sol_reduceEntropy", "sol_fixPipeline"]
+    },
+    {
+      "id": "prod_hire_measurement_audit",
+      "brandId": "brand_hiretimothy",
+      "name": "Measurement Audit Sprint",
+      "slug": "/services/measurement-audit",
+      "productType": "B2B",
+      "summary": "Tracking, attribution, reporting fixes. Output is a measurement layer you can steer with.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 4500, "currency": "GBP", "billingFrequency": "PerUnit" },
+      "featureIds": ["feat_instrumentation", "feat_attribution", "feat_reporting", "feat_privacyCompliance"],
+      "solutionIds": ["sol_trackJourney", "sol_proveROI"]
+    },
+    {
+      "id": "prod_hire_crm_rebuild",
+      "brandId": "brand_hiretimothy",
+      "name": "CRM Rebuild Sprint",
+      "slug": "/services/crm-rebuild",
+      "productType": "B2B",
+      "summary": "Schema + lifecycle + automation. Output is a clean, governable CRM model.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 7500, "currency": "GBP", "billingFrequency": "PerUnit" },
+      "featureIds": ["feat_crmSchema", "feat_lifecycleOps", "feat_automation", "feat_integrations", "feat_dataHygiene"],
+      "solutionIds": ["sol_addStructure", "sol_reduceEntropy", "sol_fixPipeline", "sol_shipSystems"]
+    },
+    {
+      "id": "prod_hire_offer_funnel",
+      "brandId": "brand_hiretimothy",
+      "name": "Offer & Funnel Refactor",
+      "slug": "/services/offer-funnel-refactor",
+      "productType": "B2B",
+      "summary": "Positioning, pricing, landing pages, and conversion path optimization.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 6000, "currency": "GBP", "billingFrequency": "PerUnit" },
+      "featureIds": ["feat_positioning", "feat_offerDesign", "feat_seoStructure", "feat_landingPages", "feat_reporting"],
+      "solutionIds": ["sol_clarifyPosition", "sol_priceOffers", "sol_compoundContent", "sol_addStructure", "sol_launchCampaigns", "sol_trackJourney", "sol_proveROI"]
+    },
+
+    {
+      "id": "prod_ftl_managed_paid",
+      "brandId": "brand_ftl",
+      "name": "Managed Paid Media",
+      "slug": "/services/managed-paid-media",
+      "productType": "B2B",
+      "summary": "Execution service for paid acquisition with reporting and testing cadence.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 2500, "currency": "GBP", "billingFrequency": "Monthly" },
+      "featureIds": ["feat_paidMedia", "feat_accountStructure", "feat_instrumentation", "feat_reporting", "feat_creativeOps"],
+      "solutionIds": ["sol_launchCampaigns", "sol_runExperiments", "sol_proveROI", "sol_trackJourney", "sol_addStructure"]
+    },
+    {
+      "id": "prod_ftl_growth_ops",
+      "brandId": "brand_ftl",
+      "name": "Growth Ops Retainer",
+      "slug": "/services/growth-ops-retainer",
+      "productType": "B2B",
+      "summary": "Content, SEO, lifecycle ops, and reporting as ongoing service.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 3500, "currency": "GBP", "billingFrequency": "Monthly" },
+      "featureIds": ["feat_contentEngine", "feat_seoStructure", "feat_lifecycleOps", "feat_reporting"],
+      "solutionIds": ["sol_compoundContent", "sol_launchCampaigns", "sol_trackJourney", "sol_fixPipeline", "sol_addStructure", "sol_proveROI"]
+    },
+    {
+      "id": "prod_ftl_mops_crm",
+      "brandId": "brand_ftl",
+      "name": "Marketing Ops & CRM",
+      "slug": "/services/marketing-ops-crm",
+      "productType": "B2B",
+      "summary": "CRM schema, automation, integrations, and reporting layer.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 4000, "currency": "GBP", "billingFrequency": "Monthly" },
+      "featureIds": ["feat_crmSchema", "feat_automation", "feat_integrations", "feat_reporting"],
+      "solutionIds": ["sol_addStructure", "sol_reduceEntropy", "sol_fixPipeline", "sol_shipSystems", "sol_trackJourney"]
+    },
+    {
+      "id": "prod_ftl_event_activation",
+      "brandId": "brand_ftl",
+      "name": "Event Activation",
+      "slug": "/services/event-activation",
+      "productType": "B2B",
+      "summary": "Event-to-pipeline conversion: booth design, capture, follow-up, attribution.",
+      "transactionGoalId": "qg_default_form",
+      "pricing": { "value": 5000, "currency": "GBP", "billingFrequency": "PerUnit" },
+      "featureIds": ["feat_instrumentation", "feat_lifecycleOps", "feat_activationDesign", "feat_reporting"],
+      "solutionIds": ["sol_launchCampaigns", "sol_trackJourney", "sol_fixPipeline", "sol_proveROI"]
+    },
+
+    {
+      "id": "prod_victory_catalog",
+      "brandId": "brand_victory",
+      "name": "Properties / Tools / Games",
+      "slug": "/projects",
+      "productType": "B2C",
+      "summary": "Publisher catalog of shipped projects, tools, and experiments.",
+      "transactionGoalId": "qg_contact",
+      "pricing": { "value": 0, "currency": "GBP", "billingFrequency": "None" },
+      "featureIds": ["feat_systemsBuild", "feat_visualization", "feat_contentEngine"],
+      "solutionIds": ["sol_shipSystems", "sol_visualizeDynamics", "sol_compoundContent"]
+    },
+
+    {
+      "id": "prod_oblio_platform",
+      "brandId": "brand_oblio",
+      "name": "Oblio Platform (Core)",
+      "slug": "/product",
+      "productType": "B2B",
+      "summary": "Schema-first CRM: products, features, solutions, pipeline as one model.",
+      "transactionGoalId": "qg_request_access",
+      "pricing": { "value": 299, "currency": "GBP", "billingFrequency": "Monthly" },
+      "featureIds": ["feat_crmSchema", "feat_automation", "feat_reporting", "feat_instrumentation", "feat_attribution"],
+      "solutionIds": ["sol_addStructure", "sol_reduceEntropy", "sol_fixPipeline", "sol_trackJourney", "sol_proveROI"]
+    },
+    {
+      "id": "prod_oblio_campaigns",
+      "brandId": "brand_oblio",
+      "name": "Campaigns Module",
+      "slug": "/product/campaigns",
+      "productType": "B2B",
+      "summary": "Campaign attribution, asset tracking, and launch automation.",
+      "transactionGoalId": "qg_request_access",
+      "pricing": { "value": 99, "currency": "GBP", "billingFrequency": "Monthly" },
+      "featureIds": ["feat_instrumentation", "feat_attribution", "feat_automation"],
+      "solutionIds": ["sol_launchCampaigns", "sol_trackJourney", "sol_proveROI"]
+    },
+    {
+      "id": "prod_oblio_pipeline",
+      "brandId": "brand_oblio",
+      "name": "Pipeline Module",
+      "slug": "/product/pipeline",
+      "productType": "B2B",
+      "summary": "Lifecycle ops, qualification goals, and pipeline mechanics.",
+      "transactionGoalId": "qg_request_access",
+      "pricing": { "value": 99, "currency": "GBP", "billingFrequency": "Monthly" },
+      "featureIds": ["feat_lifecycleOps", "feat_crmSchema", "feat_reporting"],
+      "solutionIds": ["sol_fixPipeline", "sol_reduceEntropy", "sol_addStructure", "sol_trackJourney", "sol_proveROI"]
+    },
+    {
+      "id": "prod_oblio_catalog",
+      "brandId": "brand_oblio",
+      "name": "Product Catalog Module",
+      "slug": "/product/catalog",
+      "productType": "B2B",
+      "summary": "Product, feature, solution, and offer management.",
+      "transactionGoalId": "qg_request_access",
+      "pricing": { "value": 49, "currency": "GBP", "billingFrequency": "Monthly" },
+      "featureIds": ["feat_offerDesign", "feat_crmSchema"],
+      "solutionIds": ["sol_priceOffers", "sol_addStructure"]
+    },
+
+    {
+      "id": "prod_keimenon_parser",
+      "brandId": "brand_keimenon",
+      "name": "Keimenon Parser",
+      "slug": "/",
+      "productType": "B2C",
+      "summary": "AI conversation archaeology — parse, search, and excavate meaning from Claude/ChatGPT exports.",
+      "transactionGoalId": "qg_request_access",
+      "pricing": { "value": 0, "currency": "GBP", "billingFrequency": "None" },
+      "featureIds": ["feat_visualization", "feat_contentEngine", "feat_dataHygiene", "feat_systemsBuild"],
+      "solutionIds": ["sol_visualizeDynamics", "sol_compoundContent", "sol_reduceEntropy"]
+    },
+
+    {
+      "id": "prod_keimai_planner",
+      "brandId": "brand_keimai",
+      "name": "Keimai Schema Planner",
+      "slug": "/",
+      "productType": "B2C",
+      "summary": "Lightweight schema planning tool — design entity graphs, relationships, and derive page structures.",
+      "transactionGoalId": "qg_request_access",
+      "pricing": { "value": 0, "currency": "GBP", "billingFrequency": "None" },
+      "featureIds": ["feat_crmSchema", "feat_visualization", "feat_systemsBuild"],
+      "solutionIds": ["sol_addStructure", "sol_visualizeDynamics", "sol_shipSystems"]
+    }
+  ]
+}

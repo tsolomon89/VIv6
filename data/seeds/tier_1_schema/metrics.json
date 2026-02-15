@@ -1,0 +1,135 @@
+[
+  {
+    "id": "metric-00000000-0000-0000-0000-000000000001",
+    "type": "metric",
+    "slug": "account-pipeline-value",
+    "name": "Account Pipeline Value",
+    "summary": "Total opportunity amount for an account",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Entity Type": "opportunity",
+      "Target Entity Type": "account",
+      "Source Field": "amount",
+      "Target Field": "pipeline_value",
+      "Aggregation": "sum",
+      "Relationship Path": "belongs_to",
+      "Filters": "[{\"field\": \"stage\", \"op\": \"not_in\", \"value\": [\"won\", \"lost\"]}]",
+      "Track Lineage": true
+    }
+  },
+  {
+    "id": "metric-00000000-0000-0000-0000-000000000002",
+    "type": "metric",
+    "slug": "account-opportunity-count",
+    "name": "Account Opportunity Count",
+    "summary": "Number of open opportunities for an account",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Entity Type": "opportunity",
+      "Target Entity Type": "account",
+      "Source Field": "id",
+      "Target Field": "open_opportunities",
+      "Aggregation": "count",
+      "Relationship Path": "belongs_to",
+      "Filters": "[{\"field\": \"stage\", \"op\": \"not_in\", \"value\": [\"won\", \"lost\"]}]"
+    }
+  },
+  {
+    "id": "metric-00000000-0000-0000-0000-000000000003",
+    "type": "metric",
+    "slug": "account-contact-count",
+    "name": "Account Contact Count",
+    "summary": "Number of contacts associated with an account",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Entity Type": "contact",
+      "Target Entity Type": "account",
+      "Source Field": "id",
+      "Target Field": "contact_count",
+      "Aggregation": "count",
+      "Relationship Path": "belongs_to"
+    }
+  },
+  {
+    "id": "metric-00000000-0000-0000-0000-000000000004",
+    "type": "metric",
+    "slug": "campaign-total-cost",
+    "name": "Campaign Total Cost",
+    "summary": "Sum of activity costs for a campaign",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Entity Type": "activity",
+      "Target Entity Type": "campaign",
+      "Source Field": "cost",
+      "Target Field": "total_cost",
+      "Aggregation": "sum",
+      "Relationship Path": "part_of",
+      "Track Lineage": true
+    }
+  },
+  {
+    "id": "metric-00000000-0000-0000-0000-000000000005",
+    "type": "metric",
+    "slug": "campaign-activity-count",
+    "name": "Campaign Activity Count",
+    "summary": "Number of activities in a campaign",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Entity Type": "activity",
+      "Target Entity Type": "campaign",
+      "Source Field": "id",
+      "Target Field": "activity_count",
+      "Aggregation": "count",
+      "Relationship Path": "part_of"
+    }
+  },
+  {
+    "id": "metric-00000000-0000-0000-0000-000000000006",
+    "type": "metric",
+    "slug": "product-feature-count",
+    "name": "Product Feature Count",
+    "summary": "Number of features a product has",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Entity Type": "feature",
+      "Target Entity Type": "product",
+      "Source Field": "id",
+      "Target Field": "feature_count",
+      "Aggregation": "count",
+      "Relationship Path": "has_feature"
+    }
+  },
+  {
+    "id": "metric-00000000-0000-0000-0000-000000000007",
+    "type": "metric",
+    "slug": "contact-activity-count",
+    "name": "Contact Activity Count",
+    "summary": "Number of activities involving a contact",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Entity Type": "activity",
+      "Target Entity Type": "contact",
+      "Source Field": "id",
+      "Target Field": "activity_count",
+      "Aggregation": "count",
+      "Relationship Path": "involves"
+    }
+  },
+  {
+    "id": "metric-00000000-0000-0000-0000-000000000008",
+    "type": "metric",
+    "slug": "opportunity-avg-probability",
+    "name": "Account Average Win Probability",
+    "summary": "Average probability across account opportunities",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Entity Type": "opportunity",
+      "Target Entity Type": "account",
+      "Source Field": "probability",
+      "Target Field": "avg_win_probability",
+      "Aggregation": "avg",
+      "Relationship Path": "belongs_to",
+      "Filters": "[{\"field\": \"stage\", \"op\": \"not_in\", \"value\": [\"won\", \"lost\"]}]"
+    }
+  }
+]

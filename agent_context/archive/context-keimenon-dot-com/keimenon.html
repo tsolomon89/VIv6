@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEIMENON | The Living Graph</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
+    <script src="https://unpkg.com/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
+    <!-- Updated Lenis CDN to newer package -->
+    <script src="https://unpkg.com/lenis@1.0.45/dist/lenis.min.js"></script>
+
+    <style>
+        :root {
+            --color-void: #020202;
+            --color-signal: #00ffcc;
+            --color-secondary: #7000ff;
+            --color-text: #e0e0e0;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            /* REMOVED fixed height to allow scrolling */
+            min-height: 100%; 
+            background-color: var(--color-void);
+            color: var(--color-text);
+            overflow-x: hidden;
+            font-family: 'Space Mono', monospace;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #content {
+            position: relative;
+            z-index: 10;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Cinzel', serif;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+        }
+
+        .mono { font-family: 'Space Mono', monospace; }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Custom Cursor */
+        .cursor-dot, .cursor-outline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        
+        .cursor-dot { width: 8px; height: 8px; background-color: var(--color-signal); }
+        .cursor-outline { width: 40px; height: 40px; border: 1px solid rgba(255, 255, 255, 0.3); transition: width 0.2s, height 0.2s; }
+
+        .mix-diff { mix-blend-mode: difference; }
+        .outline-text { color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
+
+        /* Loader */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .loading-bar {
+            width: 200px;
+            height: 2px;
+            background: #222;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .loading-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--color-signal);
+            box-shadow: 0 0 10px var(--color-signal);
+        }
+
+        /* --- UPDATED CREATOR MODE UI --- */
+        #creator-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 340px;
+            background: rgba(5, 5, 5, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #eee;
+            z-index: 11000;
+            font-family: 'Space Mono', monospace;
+            padding: 0;
+            display: none;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(0, 255, 204, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain; /* Prevents scroll chaining to body */
+            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        #creator-panel.visible {
+            display: block;
+            animation: slideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(40px) scale(0.95); opacity: 0; }
+            to { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        /* Scrollbar Styling */
+        #creator-panel::-webkit-scrollbar { width: 4px; }
+        #creator-panel::-webkit-scrollbar-track { background: transparent; }
+        #creator-panel::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+        #creator-panel::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .creator-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .creator-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--color-signal);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .creator-title::before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 6px;
+            background: var(--color-signal);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--color-signal);
+        }
+
+        .header-tools {
+            display: flex;
+            gap: 12px;
+            font-size: 14px;
+            color: #888;
+        }
+        .header-tools span:hover { color: #fff; cursor: pointer; }
+
+        #creator-controls {
+            padding: 16px;
+        }
+
+        /* Group Styling */
+        .creator-group {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .creator-group:hover {
+            border-color: rgba(255,255,255,0.08);
+        }
+
+        .creator-group-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #888;
+            padding: 10px 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            user-select: none;
+        }
+        .creator-group-title:hover { color: #fff; background: rgba(255,255,255,0.02); }
+        .creator-group-title::after {
+            content: '▼';
+            font-size: 8px;
+            transition: transform 0.3s;
+            opacity: 0.5;
+        }
+        
+        .creator-group.collapsed .creator-group-title::after { transform: rotate(-90deg); }
+        
+        .creator-group-content {
+            padding: 12px;
+            transition: max-height 0.4s ease, opacity 0.3s ease;
+            max-height: 800px; /* Arbitrary large height */
+            opacity: 1;
+        }
+        .creator-group.collapsed .creator-group-content {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        /* Parameter Row */
+        .param-row {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .param-row:last-child { margin-bottom: 0; padding-bottom: 0; border: none; }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+
+        .link-toggle {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0.5;
+        }
+        .link-toggle:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+        .link-toggle.active {
+            opacity: 1;
+            background: rgba(0, 255, 204, 0.1);
+            border-color: rgba(0, 255, 204, 0.3);
+            color: var(--color-signal);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);
+        }
+
+        /* Grid Layout for Slider Rows */
+        .slider-row {
+            display: grid;
+            grid-template-columns: 12px 1fr 45px;
+            align-items: center;
+            gap: 12px;
+            height: 28px;
+        }
+        
+        .slider-label {
+            font-size: 9px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        /* Custom Range Slider */
+        .range-input {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            height: 20px;
+            cursor: pointer;
+            margin: 0;
+        }
+        .range-input:focus { outline: none; }
+
+        /* Track */
+        .range-input::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.15);
+            border-radius: 1px;
+            transition: background 0.2s;
+        }
+        .range-input:hover::-webkit-slider-runnable-track { background: rgba(255,255,255,0.3); }
+
+        /* Thumb */
+        .range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            margin-top: -4px;
+            box-shadow: 0 0 0 0 rgba(255,255,255,0);
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .range-input:hover::-webkit-slider-thumb {
+            transform: scale(1.3);
+            background: var(--color-signal);
+            box-shadow: 0 0 10px var(--color-signal);
+        }
+
+        /* Value Display */
+        .value-display {
+            font-size: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 3px;
+            padding: 3px 0;
+            text-align: center;
+            color: var(--color-signal);
+            cursor: text;
+            transition: all 0.2s;
+            font-family: 'Fira Code', monospace;
+        }
+        .value-display:hover {
+            border-color: var(--color-signal);
+            background: rgba(0, 255, 204, 0.05);
+        }
+
+        /* Disabled State */
+        .slider-row.disabled { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+
+        /* Action Button */
+        .action-btn {
+            display: block;
+            width: calc(100% - 32px);
+            margin: 0 16px 16px 16px;
+            padding: 10px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            color: var(--color-signal);
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .action-btn:hover {
+            background: var(--color-signal);
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+        }
+
+        #flash-overlay {
+            position: fixed;
+            inset: 0;
+            background: yellow;
+            z-index: 20000;
+            pointer-events: none;
+            opacity: 0;
+            mix-blend-mode: difference;
+        }
+
+        /* Glitch Effect */
+        .glitch-text { position: relative; }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8;
+        }
+        .glitch-text::before {
+            color: var(--color-signal); z-index: -1; clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+            transform: translate(-2px, -2px); animation: glitch-anim-1 2s infinite linear alternate-reverse;
+        }
+        .glitch-text::after {
+            color: var(--color-secondary); z-index: -2; clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+            transform: translate(2px, 2px); animation: glitch-anim-2 2s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim-1 {
+            0% { clip-path: inset(20% 0 80% 0); } 100% { clip-path: inset(30% 0 20% 0); }
+        }
+        @keyframes glitch-anim-2 {
+            0% { clip-path: inset(10% 0 60% 0); } 100% { clip-path: inset(0% 0 10% 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Flash Overlay for Konami Code -->
+    <div id="flash-overlay"></div>
+
+    <!-- Creator Panel (Hidden by default) -->
+    <div id="creator-panel" data-lenis-prevent>
+        <div class="creator-header">
+            <div class="creator-title">VI Studio | Creator Mode</div>
+            <div class="header-tools">
+                <span title="Export JSON" onclick="CreatorMode.exportConfig()">📋</span>
+                <span title="Toggle View" onclick="CreatorMode.toggleUI()">⏻</span>
+            </div>
+        </div>
+        <div id="creator-controls">
+            <!-- Controls injected via JS -->
+        </div>
+        <button class="action-btn" onclick="CreatorMode.exportConfig()">EXPORT CONFIG JSON</button>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loader">
+        <h1 class="text-2xl tracking-[0.5em] text-white font-light">SYSTEM BOOT</h1>
+        <div class="loading-bar">
+            <div class="loading-progress" id="progress-bar"></div>
+        </div>
+        <div class="mt-4 font-mono text-xs text-gray-500">ESTABLISHING NEURAL LINK...</div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <!-- WebGL Background -->
+    <div id="canvas-container"></div>
+
+    <!-- Scrollable Content -->
+    <main id="content">
+
+        <!-- 1. HERO -->
+        <section id="hero" class="items-center text-center">
+            <div class="relative z-10 mix-diff pointer-events-none">
+                <p class="mono text-xs md:text-sm tracking-[0.5em] mb-6 text-gray-400 uppercase">Memory Architecture v3.9</p>
+                <h1 class="text-6xl md:text-9xl text-white mb-4 leading-none glitch-text" data-text="KEIMENON">KEIMENON</h1>
+                <p class="mono text-sm md:text-base max-w-xl mx-auto text-gray-300 leading-relaxed mt-8 border-l-2 border-[#00ffcc] pl-4 text-left">
+                    > SYSTEM STATE: <span class="text-[#00ffcc] animate-pulse">ACTIVE</span><br>
+                    > CREATOR MODE: READY (WAITING FOR INPUT)<br>
+                    > FULL PARAMETER CONTROL: ENABLED
+                </p>
+            </div>
+            <div class="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 mix-diff opacity-50">
+                <span class="mono text-[10px]">INITIALIZE SCROLL</span>
+                <div class="w-[1px] h-12 bg-white"></div>
+            </div>
+        </section>
+
+        <!-- 2. PRODUCT -->
+        <section id="product" class="items-start justify-center">
+            <div class="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="space-y-8 pointer-events-none"></div>
+                <div class="space-y-8 text-right md:text-left mix-diff">
+                    <h2 class="text-4xl md:text-6xl text-white">THE CLUSTER</h2>
+                    <div class="w-24 h-[1px] bg-[#00ffcc] md:ml-0 ml-auto shadow-[0_0_10px_#00ffcc]"></div>
+                    <p class="mono text-sm md:text-lg text-gray-300">
+                        Keimenon uses force-directed graph physics to reveal the hidden density of your conversations.
+                        <br><br>
+                        Long-range connections snap together into extremely tight neural knots, visualizing the gravity of your ideas.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. FEATURES -->
+        <section id="features" class="items-center">
+            <div class="max-w-6xl mx-auto w-full relative">
+                <div class="absolute -top-20 -left-20 text-[10rem] md:text-[20rem] font-bold outline-text opacity-10 pointer-events-none select-none z-0">
+                    GRAPH
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left relative z-10">
+                    <div class="p-8 border-l border-white/10 hover:border-[#00ffcc] bg-black/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 feature-card">
+                        <h3 class="text-2xl text-white mb-4">Elastic Search</h3>
+                        <p class="mono text-xs text-gray-400 leading-relaxed">
+                            Pull on one thread, and the entire related context springs into view.
+                        </p>
+                    </div>
+                    <div class="p-8 border-l border-white/10 hover:border-[#7000ff] bg-black/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 feature-card">
+                        <h3 class="text-2xl text-white mb-4">Semantic Gravity</h3>
+                        <p class="mono text-xs text-gray-400 leading-relaxed">
+                            Heavier, more complex conversations naturally sink to the center.
+                        </p>
+                    </div>
+                    <div class="p-8 border-l border-white/10 hover:border-[#00ffcc] bg-black/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 feature-card">
+                        <h3 class="text-2xl text-white mb-4">Living Archives</h3>
+                        <p class="mono text-xs text-gray-400 leading-relaxed">
+                            Your export isn't a dead file. It's a living ecosystem of thought.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. SOLUTIONS -->
+        <section id="solutions" class="items-center justify-center">
+             <div class="absolute right-0 top-1/2 -translate-y-1/2 w-1/2 h-full bg-gradient-to-l from-[#050505] via-transparent to-transparent z-0"></div>
+             
+             <div class="relative z-10 text-center max-w-4xl mx-auto">
+                <h2 class="text-5xl md:text-8xl text-white mb-8 mix-diff tracking-tighter">CLARITY</h2>
+                <div class="flex justify-center mb-12">
+                    <div class="px-4 py-1 border border-[#00ffcc] text-[#00ffcc] mono text-xs rounded-full shadow-[0_0_15px_rgba(0,255,204,0.3)]">
+                        PHYSICS ACTIVE
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
+                     <div class="border-t border-white/20 pt-4 hover:border-[#00ffcc] transition-colors">
+                        <span class="block text-2xl font-bold text-white mb-1">FORCE</span>
+                        <span class="mono text-xs text-gray-500">DIRECTED</span>
+                     </div>
+                     <div class="border-t border-white/20 pt-4 hover:border-[#00ffcc] transition-colors">
+                        <span class="block text-2xl font-bold text-white mb-1">0ms</span>
+                        <span class="mono text-xs text-gray-500">LATENCY</span>
+                     </div>
+                     <div class="border-t border-white/20 pt-4 hover:border-[#00ffcc] transition-colors">
+                        <span class="block text-2xl font-bold text-white mb-1">∞</span>
+                        <span class="mono text-xs text-gray-500">RETENTION</span>
+                     </div>
+                     <div class="border-t border-white/20 pt-4 hover:border-[#00ffcc] transition-colors">
+                        <span class="block text-2xl font-bold text-white mb-1">JSON</span>
+                        <span class="mono text-xs text-gray-500">NATIVE</span>
+                     </div>
+                </div>
+             </div>
+        </section>
+
+        <!-- 6. CTA -->
+        <section id="cta" class="items-center justify-center text-center">
+            <div class="relative z-10">
+                <h2 class="text-4xl md:text-7xl mb-12 tracking-tight">BEGIN EXCAVATION</h2>
+                <div class="flex flex-col md:flex-row gap-6 justify-center items-center">
+                    <a href="#" class="group relative px-10 py-5 bg-white text-black overflow-hidden transition-all hover:bg-[#00ffcc]">
+                        <span class="relative mono text-sm font-bold tracking-widest z-10">LAUNCH APP</span>
+                    </a>
+                </div>
+                
+                <footer class="absolute bottom-8 left-0 w-full text-center">
+                    <p class="mono text-[10px] text-gray-600">KEIMENON // SYSTEM ID: K-992 // <span class="text-[#00ffcc] animate-pulse">● CONNECTED</span></p>
+                </footer>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Logic -->
+    <script>
+        // --- CREATOR MODE NAMESPACE ---
+        const CreatorMode = {
+            unlocked: false,
+            uiVisible: true,
+            konamiSequence: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'],
+            inputBuffer: [],
+            
+            config: {
+                // Physics
+                shapeStrength: { start: 0.002, end: 0.0001, linked: true, min: 0, max: 0.05, step: 0.0001, name: 'Shape Strength', group: 'Physics' },
+                clusterStrength: { start: 0.08, end: 0.15, linked: true, min: 0, max: 0.5, step: 0.01, name: 'Cluster Strength', group: 'Physics' },
+                restLength: { start: 0.1, end: 0.05, linked: true, min: 0.01, max: 2.0, step: 0.01, name: 'Rest Length', group: 'Physics' },
+                damping: { start: 0.90, end: 0.95, linked: false, min: 0.8, max: 0.99, step: 0.01, name: 'Damping', group: 'Physics' },
+                rayIntervalMin: { start: 2.0, end: 0.5, linked: true, min: 0.1, max: 5.0, step: 0.1, name: 'Ray Intvl Min', group: 'Physics' },
+                rayIntervalMax: { start: 5.0, end: 1.5, linked: true, min: 0.1, max: 8.0, step: 0.1, name: 'Ray Intvl Max', group: 'Physics' },
+                
+                // Visuals
+                particleSize: { start: 0.5, end: 0.8, linked: true, min: 0.1, max: 2.0, step: 0.1, name: 'Part. Size', group: 'Visuals' },
+                particleOpacity: { start: 0.9, end: 0.5, linked: true, min: 0.1, max: 1.0, step: 0.1, name: 'Part. Opacity', group: 'Visuals' },
+                lineOpacity: { start: 0.6, end: 0.8, linked: true, min: 0.1, max: 1.0, step: 0.1, name: 'Line Opacity', group: 'Visuals' },
+                fogDensity: { start: 0.002, end: 0.01, linked: true, min: 0, max: 0.05, step: 0.001, name: 'Fog Density', group: 'Visuals' },
+                rotationSpeed: { start: 0.05, end: 0.2, linked: true, min: 0, max: 0.5, step: 0.01, name: 'Rot. Speed', group: 'Visuals' }
+            },
+
+            runtime: {},
+
+            init() {
+                if (localStorage.getItem('vi_debug_unlocked') === 'true') {
+                    this.unlock();
+                }
+
+                document.addEventListener('keydown', (e) => {
+                    this.inputBuffer.push(e.key);
+                    if (this.inputBuffer.length > this.konamiSequence.length) {
+                        this.inputBuffer.shift();
+                    }
+                    if (JSON.stringify(this.inputBuffer) === JSON.stringify(this.konamiSequence)) {
+                        this.unlock();
+                        this.flashScreen();
+                    }
+                });
+
+                this.buildUI();
+                this.updateRuntime(0);
+            },
+
+            unlock() {
+                this.unlocked = true;
+                localStorage.setItem('vi_debug_unlocked', 'true');
+                document.getElementById('creator-panel').classList.add('visible');
+                console.log('%c VI STUDIO CREATOR MODE UNLOCKED ', 'background: #00ffcc; color: #000; font-size: 14px; padding: 4px;');
+            },
+
+            flashScreen() {
+                const overlay = document.getElementById('flash-overlay');
+                gsap.fromTo(overlay, { opacity: 0.8 }, { opacity: 0, duration: 0.5, ease: 'power2.out' });
+            },
+
+            toggleUI() {
+                const panel = document.getElementById('creator-panel');
+                if (panel.style.display === 'none') {
+                    panel.style.display = 'block';
+                } else {
+                    panel.style.display = 'none';
+                }
+            },
+
+            buildUI() {
+                const container = document.getElementById('creator-controls');
+                container.innerHTML = '';
+
+                const groups = {};
+                Object.keys(this.config).forEach(key => {
+                    const groupName = this.config[key].group || 'Other';
+                    if (!groups[groupName]) groups[groupName] = [];
+                    groups[groupName].push(key);
+                });
+
+                Object.keys(groups).forEach(groupName => {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'creator-group';
+                    
+                    // Header
+                    const header = document.createElement('div');
+                    header.className = 'creator-group-title';
+                    header.innerText = groupName;
+                    header.onclick = () => groupDiv.classList.toggle('collapsed');
+                    groupDiv.appendChild(header);
+
+                    // Content Container
+                    const content = document.createElement('div');
+                    content.className = 'creator-group-content';
+
+                    groups[groupName].forEach(key => {
+                        const param = this.config[key];
+                        const row = document.createElement('div');
+                        row.className = 'param-row';
+                        row.innerHTML = `
+                            <div class="param-label">
+                                <span>${param.name}</span>
+                                <span class="link-toggle ${param.linked ? 'active' : ''}" onclick="CreatorMode.toggleLink('${key}', this)">LINK</span>
+                            </div>
+                            <!-- Start Slider -->
+                            <div class="slider-row">
+                                <span class="slider-label">S</span>
+                                <input type="range" class="range-input" id="slider-${key}-start"
+                                    min="${param.min}" max="${param.max}" step="${param.step}" value="${param.start}"
+                                    oninput="CreatorMode.updateParam('${key}', 'start', this.value)">
+                                <div class="value-display" id="val-${key}-start" onclick="CreatorMode.manualInput('${key}', 'start')">${param.start}</div>
+                            </div>
+                            <!-- End Slider -->
+                             <div class="slider-row ${param.linked ? '' : 'disabled'}" id="row-${key}-end">
+                                <span class="slider-label">E</span>
+                                <input type="range" class="range-input" id="slider-${key}-end"
+                                    min="${param.min}" max="${param.max}" step="${param.step}" value="${param.end}"
+                                    oninput="CreatorMode.updateParam('${key}', 'end', this.value)" ${param.linked ? '' : 'disabled'}>
+                                <div class="value-display" id="val-${key}-end" onclick="CreatorMode.manualInput('${key}', 'end')">${param.end}</div>
+                            </div>
+                        `;
+                        content.appendChild(row);
+                    });
+                    groupDiv.appendChild(content);
+                    container.appendChild(groupDiv);
+                });
+            },
+
+            updateParam(key, type, value) { 
+                this.config[key][type] = parseFloat(value);
+                document.getElementById(`val-${key}-${type}`).innerText = value;
+            },
+
+            manualInput(key, type) {
+                const spanId = `val-${key}-${type}`;
+                const spanEl = document.getElementById(spanId);
+                if (!spanEl || spanEl.tagName === 'INPUT') return;
+
+                const currentVal = this.config[key][type];
+                
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.value = currentVal;
+                input.step = this.config[key].step;
+                
+                // Styling input to match display
+                input.style.width = '100%';
+                input.style.fontSize = '10px';
+                input.style.fontFamily = 'inherit';
+                input.style.textAlign = 'center';
+                input.style.background = '#000';
+                input.style.color = '#00ffcc';
+                input.style.border = '1px solid #00ffcc';
+                input.style.borderRadius = '3px';
+                input.style.outline = 'none';
+                input.style.padding = '2px 0';
+
+                spanEl.parentNode.replaceChild(input, spanEl);
+                input.focus();
+                input.select();
+
+                const commit = () => {
+                    let val = parseFloat(input.value);
+                    if (isNaN(val)) val = currentVal;
+
+                    const param = this.config[key];
+                    if (val < param.min) val = param.min;
+                    if (val > param.max) val = param.max;
+
+                    this.config[key][type] = val;
+
+                    const newSpan = document.createElement('div');
+                    newSpan.id = spanId;
+                    newSpan.className = 'value-display';
+                    newSpan.innerText = val;
+                    newSpan.onclick = () => this.manualInput(key, type);
+
+                    if (input.parentNode) {
+                        input.parentNode.replaceChild(newSpan, input);
+                    }
+
+                    const slider = document.getElementById(`slider-${key}-${type}`);
+                    if (slider) slider.value = val;
+                };
+
+                input.addEventListener('blur', commit);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') input.blur();
+                });
+            },
+
+            toggleLink(key, el) {
+                this.config[key].linked = !this.config[key].linked;
+                el.classList.toggle('active');
+                
+                // Toggle disabled state of End Row
+                const endRow = document.getElementById(`row-${key}-end`);
+                const endInput = document.getElementById(`slider-${key}-end`);
+                
+                if (this.config[key].linked) {
+                    endRow.classList.remove('disabled');
+                    endInput.removeAttribute('disabled');
+                } else {
+                    endRow.classList.add('disabled');
+                    endInput.setAttribute('disabled', 'true');
+                }
+            },
+
+            exportConfig() {
+                const exportData = JSON.stringify(this.config, null, 2);
+                console.log(exportData);
+                navigator.clipboard.writeText(exportData).then(() => {
+                    alert('Config copied to clipboard!');
+                });
+            },
+
+            updateRuntime(progress) {
+                Object.keys(this.config).forEach(key => {
+                    const p = this.config[key];
+                    if (p.linked) {
+                        this.runtime[key] = p.start + (p.end - p.start) * progress;
+                    } else {
+                        this.runtime[key] = p.start;
+                    }
+                });
+            }
+        };
+
+
+        // --- 1. SETUP & INIT ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        const canvasContainer = document.getElementById('canvas-container');
+        const loadingScreen = document.getElementById('loader');
+        const progressBar = document.getElementById('progress-bar');
+        
+        CreatorMode.init();
+
+        let loadProgress = 0;
+        const loadInterval = setInterval(() => {
+            loadProgress += Math.random() * 8;
+            if(loadProgress > 100) loadProgress = 100;
+            progressBar.style.width = `${loadProgress}%`;
+            
+            if(loadProgress === 100) {
+                clearInterval(loadInterval);
+                gsap.to(loadingScreen, {
+                    yPercent: -100,
+                    duration: 1.2,
+                    ease: "expo.inOut",
+                    delay: 0.2,
+                    onComplete: initExperience
+                });
+            }
+        }, 30);
+
+        // --- 2. THREE.JS SCENE ---
+        
+        function initExperience() {
+            gsap.to("section", { autoAlpha: 1, duration: 1, stagger: 0.1 });
+
+            let scene, camera, renderer, particles, geometry, material;
+            let persistentLines; 
+            let activeEdges = []; 
+            const maxEdges = 1000; 
+            
+            const particleCount = 2000;
+            const positions = new Float32Array(particleCount * 3);
+            const targetPositions = new Float32Array(particleCount * 3);
+            const velocities = new Float32Array(particleCount * 3);
+            
+            let uniqueShots = 0;
+            let burstQueue = 0;
+            let burstNode = -1;
+            let nextSpawnTime = 0;
+
+            const shapes = {
+                chaos: new Float32Array(particleCount * 3),
+                sphere: new Float32Array(particleCount * 3),
+                helix: new Float32Array(particleCount * 3),
+                grid: new Float32Array(particleCount * 3)
+            };
+
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020202, 0.002);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 60;
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            canvasContainer.appendChild(renderer.domElement);
+
+            for(let i = 0; i < particleCount * 3; i+=3) {
+                shapes.chaos[i] = (Math.random() - 0.5) * 120;
+                shapes.chaos[i+1] = (Math.random() - 0.5) * 120;
+                shapes.chaos[i+2] = (Math.random() - 0.5) * 120;
+
+                const phi = Math.acos(-1 + (2 * (i/3)) / particleCount);
+                const theta = Math.sqrt(particleCount * Math.PI) * phi;
+                const r = 35;
+                shapes.sphere[i] = r * Math.cos(theta) * Math.sin(phi);
+                shapes.sphere[i+1] = r * Math.sin(theta) * Math.sin(phi);
+                shapes.sphere[i+2] = r * Math.cos(phi);
+
+                const t = i * 0.15;
+                shapes.helix[i] = Math.cos(t) * 20;
+                shapes.helix[i+1] = (i/3) * 0.08 - 40;
+                shapes.helix[i+2] = Math.sin(t) * 20;
+
+                const spacing = 8;
+                const gridSize = Math.ceil(Math.cbrt(particleCount));
+                const gx = (i/3) % gridSize;
+                const gy = Math.floor((i/3) / gridSize) % gridSize;
+                const gz = Math.floor((i/3) / (gridSize * gridSize));
+                const offset = (gridSize * spacing) / 2;
+                shapes.grid[i] = (gx * spacing) - offset;
+                shapes.grid[i+1] = (gy * spacing) - offset;
+                shapes.grid[i+2] = (gz * spacing) - offset;
+
+                positions[i] = shapes.chaos[i];
+                positions[i+1] = shapes.chaos[i+1];
+                positions[i+2] = shapes.chaos[i+2];
+                
+                targetPositions[i] = shapes.chaos[i];
+                targetPositions[i+1] = shapes.chaos[i+1];
+                targetPositions[i+2] = shapes.chaos[i+2];
+            }
+
+            geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const sprite = new THREE.TextureLoader().load('https://assets.codepen.io/16327/dot.png'); 
+            material = new THREE.PointsMaterial({
+                size: 0.5,
+                map: sprite,
+                transparent: true,
+                alphaTest: 0.1,
+                color: 0xffffff,
+                opacity: 0.9,
+                blending: THREE.AdditiveBlending
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            const edgeGeometry = new THREE.BufferGeometry();
+            const edgePositions = new Float32Array(maxEdges * 2 * 3);
+            edgeGeometry.setAttribute('position', new THREE.BufferAttribute(edgePositions, 3));
+            
+            const edgeMaterial = new THREE.LineBasicMaterial({
+                color: 0x00ffcc,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            
+            persistentLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+            persistentLines.frustumCulled = false; 
+            scene.add(persistentLines);
+
+            for(let i=0; i<maxEdges * 2 * 3; i++) edgePositions[i] = 99999;
+
+            const clock = new THREE.Clock();
+            
+            function animate() {
+                const now = clock.getElapsedTime();
+
+                const scrollY = window.scrollY;
+                const maxScroll = document.body.scrollHeight - window.innerHeight;
+                let scrollProgress = 0;
+                if (maxScroll > 0) scrollProgress = Math.min(1, Math.max(0, scrollY / maxScroll));
+                
+                CreatorMode.updateRuntime(scrollProgress);
+
+                const shapeStrength = CreatorMode.runtime.shapeStrength;
+                const damping = CreatorMode.runtime.damping;
+                const clusterStrength = CreatorMode.runtime.clusterStrength;
+                const restLength = CreatorMode.runtime.restLength;
+                const rayIntervalMin = CreatorMode.runtime.rayIntervalMin;
+                const rayIntervalMax = CreatorMode.runtime.rayIntervalMax;
+                
+                material.size = CreatorMode.runtime.particleSize;
+                material.opacity = CreatorMode.runtime.particleOpacity;
+                edgeMaterial.opacity = CreatorMode.runtime.lineOpacity;
+                scene.fog.density = CreatorMode.runtime.fogDensity;
+                
+                particles.rotation.y = now * CreatorMode.runtime.rotationSpeed;
+                persistentLines.rotation.y = particles.rotation.y;
+                
+                if (now > nextSpawnTime && activeEdges.length < maxEdges) {
+                    attemptSpawnSystem();
+                    
+                    if (burstQueue > 0) {
+                        nextSpawnTime = now + 0.05 + Math.random() * 0.1;
+                    } else {
+                        nextSpawnTime = now + rayIntervalMin + Math.random() * (rayIntervalMax - rayIntervalMin);
+                    }
+                }
+
+                const forces = new Float32Array(particleCount * 3);
+
+                for(let i = 0; i < particleCount * 3; i++) {
+                    forces[i] += (targetPositions[i] - positions[i]) * shapeStrength;
+                }
+
+                const lineAttr = persistentLines.geometry.attributes.position.array;
+                
+                for (let i = activeEdges.length - 1; i >= 0; i--) {
+                    const edge = activeEdges[i];
+                    edge.life -= 0.005; 
+
+                    if (edge.life <= 0) {
+                        const v = edge.vertexIndex;
+                        lineAttr[v] = 99999; lineAttr[v+1] = 99999; lineAttr[v+2] = 99999;
+                        lineAttr[v+3] = 99999; lineAttr[v+4] = 99999; lineAttr[v+5] = 99999;
+                        
+                        activeEdges.splice(i, 1);
+                        continue;
+                    }
+
+                    const idxA = edge.idxA;
+                    const idxB = edge.idxB;
+
+                    const ax = positions[idxA], ay = positions[idxA+1], az = positions[idxA+2];
+                    const bx = positions[idxB], by = positions[idxB+1], bz = positions[idxB+2];
+
+                    const dx = bx - ax;
+                    const dy = by - ay;
+                    const dz = bz - az;
+                    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    
+                    if (dist > restLength) { 
+                        const forceMagnitude = (dist - restLength) * clusterStrength;
+                        const fx = (dx / dist) * forceMagnitude;
+                        const fy = (dy / dist) * forceMagnitude;
+                        const fz = (dz / dist) * forceMagnitude;
+
+                        forces[idxA] += fx; forces[idxA+1] += fy; forces[idxA+2] += fz;
+                        forces[idxB] -= fx; forces[idxB+1] -= fy; forces[idxB+2] -= fz;
+                    }
+
+                    const v = edge.vertexIndex;
+                    lineAttr[v] = ax; lineAttr[v+1] = ay; lineAttr[v+2] = az;
+                    lineAttr[v+3] = bx; lineAttr[v+4] = by; lineAttr[v+5] = bz;
+                }
+                
+                persistentLines.geometry.attributes.position.needsUpdate = true;
+
+                for(let i = 0; i < particleCount * 3; i++) {
+                    velocities[i] += forces[i];
+                    velocities[i] *= damping;
+                    positions[i] += velocities[i];
+                }
+
+                geometry.attributes.position.needsUpdate = true;
+                
+                renderer.render(scene, camera);
+                requestAnimationFrame(animate);
+            }
+
+            function attemptSpawnSystem() {
+                if (burstQueue > 0) {
+                    spawnEdge(burstNode); 
+                    burstQueue--;
+                    return;
+                }
+
+                if (Math.random() > 0.4) return; 
+
+                const nodeA = Math.floor(Math.random() * particleCount);
+                uniqueShots++;
+
+                let triggerBurst = false;
+                let minBurst = 0, maxBurst = 0;
+
+                if (uniqueShots >= 10) {
+                    triggerBurst = true;
+                    minBurst = 4; maxBurst = 8;
+                    uniqueShots = 0; 
+                } 
+                else if (uniqueShots >= 3) {
+                    if (Math.random() < 0.5) {
+                        triggerBurst = true;
+                        minBurst = 2; maxBurst = 5;
+                        uniqueShots = 0; 
+                    }
+                }
+
+                if (triggerBurst) {
+                    burstQueue = Math.floor(Math.random() * (maxBurst - minBurst + 1)) + minBurst;
+                    burstNode = nodeA;
+                    spawnEdge(nodeA);
+                    burstQueue--;
+                } else {
+                    spawnEdge(nodeA);
+                }
+            }
+
+            function spawnEdge(specificStartNode) {
+                if (activeEdges.length >= maxEdges) return;
+
+                const nodeA = (specificStartNode !== undefined) ? specificStartNode : Math.floor(Math.random() * particleCount);
+                const idxA = nodeA * 3;
+
+                const minShotDist = 20.0;
+                let nodeB = -1;
+                let attempts = 0;
+
+                while (attempts < 10) {
+                    const candidate = Math.floor(Math.random() * particleCount);
+                    if (candidate === nodeA) { attempts++; continue; }
+                    
+                    const idxC = candidate * 3;
+                    const dx = positions[idxA] - positions[idxC];
+                    const dy = positions[idxA+1] - positions[idxC+1];
+                    const dz = positions[idxA+2] - positions[idxC+2];
+                    const distSq = dx*dx + dy*dy + dz*dz;
+
+                    if (distSq > (minShotDist * minShotDist)) {
+                        nodeB = candidate;
+                        break;
+                    }
+                    attempts++;
+                }
+
+                if (nodeB === -1) {
+                    nodeB = Math.floor(Math.random() * particleCount);
+                    while(nodeB === nodeA) nodeB = Math.floor(Math.random() * particleCount);
+                }
+
+                const idxB = nodeB * 3;
+
+                let slot = -1;
+                const posAttr = persistentLines.geometry.attributes.position.array;
+                for(let i=0; i<maxEdges; i++) {
+                    if (posAttr[i*6] > 90000) {
+                        slot = i;
+                        break;
+                    }
+                }
+                
+                if (slot === -1) return; 
+
+                activeEdges.push({
+                    idxA: idxA,
+                    idxB: idxB,
+                    life: 1.0 + Math.random() * 2.0,
+                    vertexIndex: slot * 6
+                });
+            }
+
+            function setupScrollTriggers() {
+                function updateTargets(targetShapeName) {
+                    const targetArray = shapes[targetShapeName];
+                    const transition = { val: 0 };
+                    const startValues = Float32Array.from(targetPositions);
+
+                    gsap.to(transition, {
+                        val: 1,
+                        duration: 3, 
+                        ease: "power2.inOut",
+                        onUpdate: () => {
+                            for(let i=0; i < particleCount * 3; i++) {
+                                targetPositions[i] = startValues[i] + (targetArray[i] - startValues[i]) * transition.val;
+                            }
+                        }
+                    });
+                }
+
+                ScrollTrigger.create({ trigger: "#product", start: "top center", onEnter: () => updateTargets('sphere'), onLeaveBack: () => updateTargets('chaos') });
+                ScrollTrigger.create({ trigger: "#features", start: "top center", onEnter: () => updateTargets('helix'), onLeaveBack: () => updateTargets('sphere') });
+                ScrollTrigger.create({ trigger: "#solutions", start: "top center", onEnter: () => updateTargets('grid'), onLeaveBack: () => updateTargets('helix') });
+                ScrollTrigger.create({ trigger: "#cta", start: "top bottom", onEnter: () => updateTargets('chaos') });
+
+                const sections = document.querySelectorAll('section');
+                sections.forEach((section, index) => {
+                    gsap.to(camera.position, {
+                        z: 60 - (index * 12),
+                        scrollTrigger: {
+                            trigger: section,
+                            start: "top bottom",
+                            end: "bottom top",
+                            scrub: 1
+                        }
+                    });
+                });
+            }
+
+            animate();
+            setupScrollTriggers();
+        }
+
+        if (typeof Lenis !== 'undefined') {
+            const lenis = new Lenis({ duration: 1.2, smooth: true });
+            function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+            requestAnimationFrame(raf);
+        } else {
+            console.warn("Lenis library failed to load or is not defined.");
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            const cursorDot = document.querySelector('.cursor-dot');
+            const cursorOutline = document.querySelector('.cursor-outline');
+            if (cursorDot && cursorOutline) {
+                cursorDot.style.left = `${e.clientX}px`;
+                cursorDot.style.top = `${e.clientY}px`;
+                cursorOutline.animate({ left: `${e.clientX}px`, top: `${e.clientY}px` }, { duration: 500, fill: "forwards" });
+            }
+        });
+
+        window.addEventListener('resize', () => {
+             // Resize logic
+        });
+
+    </script>
+</body>
+</html>

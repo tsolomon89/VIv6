@@ -1,0 +1,14 @@
+{
+  "tenant_slug": "tim_solomon",
+  "account_id": "acc_tim_000000000000000002",
+  "domain": "timsolomon.com",
+  "owner": {
+    "email": "tim@timsolomon.com",
+    "name": "Tim Solomon"
+  },
+  "subscription": {
+    "plan_id": "plan_personal",
+    "status": "active"
+  },
+  "initial_records": []
+}

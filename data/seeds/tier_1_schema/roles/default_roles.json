@@ -1,0 +1,53 @@
+[
+  {
+    "type": "role",
+    "slug": "owner",
+    "name": "Owner",
+    "description": "Full access to the account.",
+    "data": {
+      "fieldGroups": [
+        {
+          "name": "Settings",
+          "fields": [
+            { "name": "Permissions", "inputType": "multiselect", "value": ["read", "write", "delete", "admin"] },
+            { "name": "Level", "inputType": "number", "value": 100 }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "role",
+    "slug": "editor",
+    "name": "Editor",
+    "description": "Can edit content but not manage users.",
+    "data": {
+      "fieldGroups": [
+        {
+          "name": "Settings",
+          "fields": [
+            { "name": "Permissions", "inputType": "multiselect", "value": ["read", "write"] },
+            { "name": "Level", "inputType": "number", "value": 50 }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "role",
+    "slug": "viewer",
+    "name": "Viewer",
+    "description": "Read-only access.",
+    "data": {
+      "fieldGroups": [
+        {
+          "name": "Settings",
+          "fields": [
+            { "name": "Permissions", "inputType": "multiselect", "value": ["read"] },
+            { "name": "Level", "inputType": "number", "value": 10 }
+          ]
+        }
+      ]
+    }
+  }
+]

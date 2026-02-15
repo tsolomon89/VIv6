@@ -1,0 +1,41 @@
+[
+  {
+    "type": "dimension_value",
+    "dimension": "persona",
+    "slug": "decision_maker",
+    "label": "Decision Maker",
+    "metadata": { 
+        "power_level": 3,
+        "kinetic_routing": {
+            "routing_target": "role_admin",
+            "decay_rate": 0.8
+        }
+    }
+  },
+  {
+    "type": "dimension_value",
+    "dimension": "persona",
+    "slug": "end_user",
+    "label": "End User",
+    "metadata": { 
+        "power_level": 1,
+        "kinetic_routing": {
+            "routing_target": "role_member",
+            "decay_rate": 0.2
+        }
+    }
+  },
+  {
+    "type": "dimension_value",
+    "dimension": "persona",
+    "slug": "influencer",
+    "label": "Influencer",
+    "metadata": { 
+        "power_level": 2,
+        "kinetic_routing": {
+            "routing_target": "role_editor",
+            "decay_rate": 0.5
+        }
+    }
+  }
+]

@@ -1,0 +1,16 @@
+<section style="padding: 4rem 0;">
+  <div class="container">
+    <h2 style="font-size: 2rem; margin-bottom: 3rem; text-align: center;">Features</h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      {{#each items}}
+        <div style="padding: 2rem; background: #18181b; border: 1px solid #27272a; border-radius: 1rem;">
+          <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">{{name}}</h3>
+          {{#if description}}
+            <p style="color: #a1a1aa;">{{description}}</p>
+          {{/if}}
+        </div>
+      {{/each}}
+    </div>
+  </div>
+</section>

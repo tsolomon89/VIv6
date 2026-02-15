@@ -1,0 +1,14 @@
+{
+  "tenant_slug": "keimenon",
+  "account_id": "acc_kei_000000000000000003",
+  "domain": "keimenon.com",
+  "owner": {
+    "email": "tim@keimenon.com",
+    "name": "Tim Solomon"
+  },
+  "subscription": {
+    "plan_id": "plan_developer",
+    "status": "active"
+  },
+  "initial_records": []
+}

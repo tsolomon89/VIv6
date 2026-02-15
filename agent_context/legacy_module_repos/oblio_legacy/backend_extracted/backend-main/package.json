@@ -1,0 +1,28 @@
+{
+  "name": "oblio-back",
+  "version": "1.0.0",
+  "description": "Oblio's Backend, written with love using Fastify and TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "clear && tsc -p tsconfig.json && NODE_ENV=dev node build/index.js",
+    "prod": "tsc -p tsconfig.json && NODE_ENV=prod node build/index.js",
+    "start": "PORT=3040 HOST=0.0.0.0 node build/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bruno Silva",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^7.0.0",
+    "@fastify/secure-session": "^4.1.1",
+    "@types/jsforce": "^1.9.42",
+    "dotenv": "^16.0.1",
+    "fastify": "^3.29.0",
+    "firebase-admin": "^10.2.0",
+    "jsforce": "^1.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.35",
+    "typescript": "^4.7.2"
+  }
+}

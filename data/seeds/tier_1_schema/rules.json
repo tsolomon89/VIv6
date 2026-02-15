@@ -1,0 +1,130 @@
+[
+  {
+    "id": "rule-00000000-0000-0000-0000-000000000001",
+    "type": "rule",
+    "slug": "opportunity-high-value-alert",
+    "name": "High Value Opportunity Alert",
+    "summary": "Logs when an opportunity over $50,000 is created",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "post_create",
+      "Trigger Entity Type": "opportunity",
+      "Conditions": "[{\"field\": \"amount\", \"op\": \"gte\", \"value\": 50000}]",
+      "Actions": "[{\"type\": \"log\", \"target\": \"High Value Alert\", \"data\": {\"message\": \"High value opportunity created: {{name}} (${{amount}})\"}}]",
+      "Priority": 10,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "rule-00000000-0000-0000-0000-000000000002",
+    "type": "rule",
+    "slug": "opportunity-stage-change-log",
+    "name": "Opportunity Stage Change Logger",
+    "summary": "Creates activity log when opportunity stage changes",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "post_update",
+      "Trigger Entity Type": "opportunity",
+      "Conditions": "[{\"field\": \"stage\", \"op\": \"changed\"}]",
+      "Actions": "[{\"type\": \"emit_event\", \"target\": \"opportunity.stage_changed\", \"data\": {\"opportunityId\": \"{{record.id}}\", \"newStage\": \"{{record.stage}}\", \"previousStage\": \"{{previous.stage}}\"}}]",
+      "Priority": 50,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "rule-00000000-0000-0000-0000-000000000003",
+    "type": "rule",
+    "slug": "opportunity-auto-probability",
+    "name": "Auto-Set Probability by Stage",
+    "summary": "Sets probability based on stage during creation",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_create",
+      "Trigger Entity Type": "opportunity",
+      "Conditions": "[{\"field\": \"probability\", \"op\": \"not_exists\"}]",
+      "Actions": "[{\"type\": \"set_field\", \"target\": \"probability\", \"data\": {\"value\": 10}}]",
+      "Priority": 5,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "rule-00000000-0000-0000-0000-000000000004",
+    "type": "rule",
+    "slug": "contact-welcome-activity",
+    "name": "New Contact Welcome Activity",
+    "summary": "Creates a welcome activity when a new contact is created",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "post_create",
+      "Trigger Entity Type": "contact",
+      "Conditions": "[]",
+      "Actions": "[{\"type\": \"log\", \"target\": \"New Contact\", \"data\": {\"message\": \"New contact created: {{name}} ({{email}})\"}}]",
+      "Priority": 100,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "rule-00000000-0000-0000-0000-000000000005",
+    "type": "rule",
+    "slug": "opportunity-won-celebration",
+    "name": "Opportunity Won Celebration",
+    "summary": "Emits celebration event when opportunity is won",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "post_update",
+      "Trigger Entity Type": "opportunity",
+      "Conditions": "[{\"field\": \"stage\", \"op\": \"changed_to\", \"value\": \"won\"}]",
+      "Actions": "[{\"type\": \"emit_event\", \"target\": \"opportunity.won\", \"data\": {\"opportunityId\": \"{{record.id}}\", \"name\": \"{{record.name}}\", \"amount\": \"{{record.amount}}\"}}]",
+      "Priority": 10,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "rule-00000000-0000-0000-0000-000000000006",
+    "type": "rule",
+    "slug": "activity-completed-timestamp",
+    "name": "Activity Completion Timestamp",
+    "summary": "Sets completed_at timestamp when activity status changes to completed",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_update",
+      "Trigger Entity Type": "activity",
+      "Conditions": "[{\"field\": \"status\", \"op\": \"changed_to\", \"value\": \"completed\"}]",
+      "Actions": "[{\"type\": \"set_field\", \"target\": \"completed_at\", \"data\": {\"value\": \"{{now}}\"}}]",
+      "Priority": 5,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "rule-00000000-0000-0000-0000-000000000007",
+    "type": "rule",
+    "slug": "campaign-budget-warning",
+    "name": "Campaign Budget Warning",
+    "summary": "Logs warning when campaign spend exceeds 90% of budget",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "post_update",
+      "Trigger Entity Type": "campaign",
+      "Conditions": "[{\"field\": \"spent\", \"op\": \"changed\"}, {\"field\": \"budget_status\", \"op\": \"eq\", \"value\": \"Near Limit\"}]",
+      "Actions": "[{\"type\": \"log\", \"target\": \"Budget Warning\", \"data\": {\"message\": \"Campaign {{name}} is approaching budget limit: ${{spent}} / ${{budget}}\"}}]",
+      "Priority": 20,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "rule-00000000-0000-0000-0000-000000000008",
+    "type": "rule",
+    "slug": "product-feature-added-log",
+    "name": "Product Feature Added Logger",
+    "summary": "Logs when a feature is linked to a product",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "post_create",
+      "Trigger Entity Type": "feature",
+      "Conditions": "[]",
+      "Actions": "[{\"type\": \"log\", \"target\": \"Feature Added\", \"data\": {\"message\": \"New feature created: {{name}}\"}}]",
+      "Priority": 100,
+      "Is Active": true
+    }
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "tenant_slug": "ftl_marketing",
+  "account_id": "acc_ftl_000000000000000004",
+  "domain": "www.ftlmarketing.localhost",
+  "owner": {
+    "email": "admin@ftlmarketing.localhost",
+    "name": "FTL Admin"
+  },
+  "subscription": {
+    "plan_id": "plan_standard",
+    "status": "active"
+  },
+  "initial_records": [
+    {
+      "type": "brand",
+      "slug": "ftl",
+      "name": "FTL Marketing",
+      "data": { "is_site_owner": true }
+    },
+    {
+       "type": "page",
+       "slug": "home",
+       "name": "Home Page",
+       "data": { "title": "Welcome to FTL" }
+    }
+  ]
+}

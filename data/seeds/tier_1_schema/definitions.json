@@ -1,0 +1,527 @@
+[
+  {
+    "type": "object_def",
+    "slug": "contact",
+    "name": "Contact",
+    "summary": "A person.",
+    "data": {
+      "icon": "user",
+      "fieldGroups": [
+        {
+          "name": "Identity",
+          "fields": [
+            { "name": "Email", "type": "email", "required": true },
+            { "name": "First Name", "type": "text" },
+            { "name": "Last Name", "type": "text" }
+          ]
+        },
+        {
+          "name": "Profile",
+          "fields": [
+            { "name": "Job Title", "type": "text" },
+            { "name": "Department", "type": "dimension", "dimension": "department" },
+            { "name": "Persona", "type": "dimension", "dimension": "persona" }
+          ]
+        },
+        {
+          "name": "Contact Info",
+          "fields": [
+            { "name": "Phone", "type": "phone" }
+          ]
+        },
+        {
+          "name": "Relationships",
+          "fields": [
+            { "name": "Account", "type": "ref", "ref_target": "account" },
+            { "name": "Owner", "type": "ref", "ref_target": "user" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "opportunity",
+    "name": "Opportunity",
+    "summary": "A potential sale or transaction.",
+    "data": {
+      "icon": "dollar-sign",
+      "fieldGroups": [
+        {
+          "name": "Deal Info",
+          "fields": [
+            { "name": "Name", "type": "text", "required": true },
+            { "name": "Amount", "type": "currency" },
+            { "name": "Stage", "type": "dimension", "dimension": "stage" },
+            { "name": "Probability", "type": "percentage" },
+            { "name": "Close Date", "type": "date" }
+          ]
+        },
+        {
+          "name": "Relationships",
+          "fields": [
+            { "name": "Account", "type": "ref", "ref_target": "account", "required": true },
+            { "name": "Primary Contact", "type": "ref", "ref_target": "contact" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "account",
+    "name": "Account",
+    "summary": "A company or organization.",
+    "data": {
+      "icon": "building",
+      "fieldGroups": [
+        {
+          "name": "Profile",
+          "fields": [
+            { "name": "Website", "type": "url" },
+            { "name": "Industry", "type": "dimension", "dimension": "industry" }
+          ]
+        },
+        {
+          "name": "Sales",
+          "fields": [
+            { "name": "Owner", "type": "ref", "ref_target": "user" },
+            { "name": "Status", "type": "dimension", "dimension": "account_status" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "product",
+    "name": "Product",
+    "summary": "A good or service.",
+    "data": {
+      "icon": "package",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Price", "type": "currency" },
+            { "name": "SKU", "type": "text" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "feature",
+    "name": "Feature",
+    "summary": "A capability of a product.",
+    "data": {
+      "icon": "zap",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Description", "type": "textarea" },
+            { "name": "Product", "type": "ref", "ref_target": "product" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "solution",
+    "name": "Solution",
+    "summary": "A bundle of products/features.",
+    "data": {
+      "icon": "layers",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Description", "type": "textarea" },
+            { "name": "Products", "type": "ref", "ref_target": "product" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "useCase",
+    "name": "Use Case",
+    "summary": "A problem solved by the product.",
+    "data": {
+      "icon": "target",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Description", "type": "textarea" },
+            { "name": "Solution", "type": "ref", "ref_target": "solution" },
+            { "name": "Persona", "type": "ref", "ref_target": "persona" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "persona",
+    "name": "Persona",
+    "summary": "A target user type.",
+    "data": {
+      "icon": "users",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Description", "type": "textarea" },
+            { "name": "Role Type", "type": "dimension", "dimension": "persona_role" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "activity",
+    "name": "Activity",
+    "summary": "An event capturing user/system actions with physics-based tracking.",
+    "data": {
+      "icon": "activity",
+      "fieldGroups": [
+        {
+          "name": "Activity Details",
+          "fields": [
+            { "name": "Verb", "type": "text", "required": true, "summary": "Action taken (opened, clicked, submitted, etc.)" },
+            { "name": "Archetype", "type": "select", "options": ["data", "asset", "engagement", "admin"], "summary": "Category of activity" },
+            { "name": "Status", "type": "select", "options": ["pending", "in_progress", "completed", "won", "lost"], "summary": "Current status of the activity" },
+            { "name": "Qualifiers Met", "type": "boolean", "summary": "Whether all qualifiers have been satisfied" }
+          ]
+        },
+        {
+          "name": "Timing",
+          "fields": [
+            { "name": "Duration Default", "type": "number", "summary": "Theoretical duration in minutes" },
+            { "name": "Duration Baseline", "type": "number", "summary": "Historical average duration" },
+            { "name": "Duration Actual", "type": "number", "summary": "Measured actual duration in minutes" },
+            { "name": "Occurred At", "type": "date", "summary": "When the activity occurred" }
+          ]
+        },
+        {
+          "name": "Relationships",
+          "fields": [
+            { "name": "Activity Def", "type": "ref", "ref_target": "activity_def", "summary": "Reference to the activity definition" },
+            { "name": "Actor", "type": "ref", "ref_target": "contact", "summary": "Who performed the action" },
+            { "name": "Object", "type": "ref", "summary": "The entity being acted upon" },
+            { "name": "Object Type", "type": "text", "summary": "Type of the object (asset, page, contact, etc.)" },
+            { "name": "Related Opportunity", "type": "ref", "ref_target": "opportunity", "summary": "Associated opportunity for pipeline tracking" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "tenant",
+    "name": "Tenant",
+    "summary": "System mapping for an Account.",
+    "data": {
+      "icon": "server",
+      "fieldGroups": [
+        {
+          "name": "Configuration",
+          "fields": [
+            { "name": "Account Ref", "type": "ref", "ref_target": "account" },
+            { "name": "Plan", "type": "text" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "subscription",
+    "name": "Subscription",
+    "summary": "Commercial relationship.",
+    "data": {
+      "icon": "credit-card",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Tenant", "type": "ref", "ref_target": "tenant" },
+            { "name": "Product", "type": "ref", "ref_target": "product" },
+            { "name": "Status", "type": "text" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "campaign",
+    "name": "Campaign",
+    "summary": "A marketing or sales campaign.",
+    "data": {
+      "icon": "megaphone",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Name", "type": "text", "required": true },
+            { "name": "Status", "type": "dimension", "dimension": "status" },
+            { "name": "Type", "type": "dimension", "dimension": "campaign_type" }
+          ]
+        },
+        {
+          "name": "Schedule",
+          "fields": [
+            { "name": "Start Date", "type": "date" },
+            { "name": "End Date", "type": "date" }
+          ]
+        },
+        {
+          "name": "Budget",
+          "fields": [
+            { "name": "Budget", "type": "currency" },
+            { "name": "Performance Metrics", "type": "virtual", "summary": "Computed performance stream (Donut Chart Source)" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "assetGroup",
+    "name": "Asset Group",
+    "summary": "A collection of marketing assets.",
+    "data": {
+      "icon": "folder",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Name", "type": "text", "required": true },
+            { "name": "Campaign", "type": "ref", "ref_target": "campaign" },
+            { "name": "Theme", "type": "text" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "asset",
+    "name": "Asset",
+    "summary": "A piece of content.",
+    "data": {
+      "icon": "file",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Name", "type": "text", "required": true },
+            { "name": "Type", "type": "dimension", "dimension": "asset_type" },
+            { "name": "Status", "type": "dimension", "dimension": "status" }
+          ]
+        },
+        {
+          "name": "Content",
+          "fields": [
+            { "name": "Content", "type": "textarea", "summary": "Markdown or HTML content" }
+          ]
+        },
+        {
+          "name": "Relationships",
+          "fields": [
+            { "name": "Group", "type": "ref", "ref_target": "assetGroup" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "pipeline",
+    "name": "Pipeline",
+    "summary": "A collection of opportunity stages.",
+    "data": {
+      "icon": "git-branch",
+      "fieldGroups": [
+        {
+          "name": "Metrics",
+          "fields": [
+            { "name": "Actual Deals", "type": "virtual", "summary": "Live count of closed won opportunities (Numerator)" },
+            { "name": "Deal Capacity", "type": "virtual", "summary": "Calculated capacity limit (Denominator)" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "role",
+    "name": "Role",
+    "summary": "A permission set for access control.",
+    "data": {
+      "icon": "shield",
+      "fieldGroups": [
+        {
+          "name": "Configuration",
+          "fields": [
+            { "name": "Permissions", "type": "multiselect", "options": ["read", "write", "delete", "admin"] },
+            { "name": "Level", "type": "number" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "user",
+    "name": "User",
+    "summary": "System user.",
+    "data": {
+      "icon": "user-circle",
+      "fieldGroups": [
+        {
+          "name": "Identity",
+          "fields": [
+            { "name": "Email", "type": "email", "required": true },
+            { "name": "First Name", "type": "text" },
+            { "name": "Last Name", "type": "text" }
+          ]
+        },
+        {
+          "name": "Work",
+          "fields": [
+            { "name": "Capacity Minutes", "type": "number", "summary": "Daily capacity in minutes" },
+            { "name": "Hourly Rate", "type": "currency" },
+            { "name": "Role", "type": "ref", "ref_target": "role" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "view",
+    "name": "View",
+    "summary": "A query definition that returns a set of records.",
+    "data": {
+      "icon": "eye",
+      "is_system": true,
+      "fieldGroups": [
+        {
+          "name": "Configuration",
+          "fields": [
+            { "name": "Source Type", "type": "select", "options": ["record", "relationship", "aggregate"], "required": true, "summary": "What the view queries" },
+            { "name": "Target Entity Type", "type": "text", "summary": "Entity type to query (e.g., contact, opportunity)" },
+            { "name": "Limit", "type": "number", "summary": "Maximum records to return" }
+          ]
+        },
+        {
+          "name": "Query",
+          "fields": [
+            { "name": "Filters", "type": "textarea", "summary": "JSON filter conditions: [{field, op, value}]" },
+            { "name": "Sort", "type": "textarea", "summary": "JSON sort spec: [{field, direction}]" },
+            { "name": "Context Params", "type": "textarea", "summary": "JSON list of typed input parameters: [{name, type, required}]" },
+            { "name": "Output Schema", "type": "textarea", "summary": "JSON output field definitions for UI binding" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "derivation",
+    "name": "Derivation",
+    "summary": "A computed field formula.",
+    "data": {
+      "icon": "calculator",
+      "is_system": true,
+      "fieldGroups": [
+        {
+          "name": "Configuration",
+          "fields": [
+            { "name": "Target Entity Type", "type": "text", "required": true, "summary": "Entity type this derivation applies to" },
+            { "name": "Field Name", "type": "text", "required": true, "summary": "Name of the computed field" },
+            { "name": "Return Type", "type": "select", "options": ["text", "number", "boolean", "date", "currency"], "required": true }
+          ]
+        },
+        {
+          "name": "Expression",
+          "fields": [
+            { "name": "Expression", "type": "textarea", "required": true, "summary": "Calculation expression (e.g., amount * probability)" },
+            { "name": "Dependencies", "type": "textarea", "summary": "JSON list of field paths this derivation reads" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "metric",
+    "name": "Metric",
+    "summary": "An aggregation/rollup rule.",
+    "data": {
+      "icon": "bar-chart",
+      "is_system": true,
+      "fieldGroups": [
+        {
+          "name": "Source",
+          "fields": [
+            { "name": "Source Entity Type", "type": "text", "required": true, "summary": "Entity type to aggregate from" },
+            { "name": "Source Field", "type": "text", "required": true, "summary": "Field to aggregate" },
+            { "name": "Aggregation", "type": "select", "options": ["sum", "count", "avg", "min", "max"], "required": true }
+          ]
+        },
+        {
+          "name": "Target",
+          "fields": [
+            { "name": "Target Entity Type", "type": "text", "required": true, "summary": "Entity type to store result on" },
+            { "name": "Target Field", "type": "text", "required": true, "summary": "Field to store result" },
+            { "name": "Relationship Path", "type": "text", "summary": "How source relates to target (e.g., belongs_to)" }
+          ]
+        },
+        {
+          "name": "Options",
+          "fields": [
+            { "name": "Filters", "type": "textarea", "summary": "JSON filter conditions on source records" },
+            { "name": "Track Lineage", "type": "boolean", "summary": "Whether to store which records contributed" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
+    "slug": "rule",
+    "name": "Rule",
+    "summary": "A trigger/automation pattern.",
+    "data": {
+      "icon": "zap",
+      "is_system": true,
+      "fieldGroups": [
+        {
+          "name": "Trigger",
+          "fields": [
+            { "name": "Trigger Event", "type": "select", "options": ["pre_create", "post_create", "pre_update", "post_update", "pre_delete", "post_delete", "scheduled"], "required": true },
+            { "name": "Trigger Entity Type", "type": "text", "required": true, "summary": "Entity type that triggers this rule" },
+            { "name": "Conditions", "type": "textarea", "summary": "JSON conditions that must be true: [{field, op, value}]" }
+          ]
+        },
+        {
+          "name": "Execution",
+          "fields": [
+            { "name": "Actions", "type": "textarea", "required": true, "summary": "JSON actions to execute: [{type, target, data}]" },
+            { "name": "Priority", "type": "number", "summary": "Execution order (lower = earlier)" },
+            { "name": "Is Active", "type": "boolean", "summary": "Whether this rule is enabled" }
+          ]
+        }
+      ]
+    }
+  }
+]

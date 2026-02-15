@@ -1,0 +1,10 @@
+Company Size Class,Size Emp#  Start,Size Emp# Size Stop,Headcount,Linkedin,Company ARR Range
+VSB,1,1,1,Myself Only,
+VSB,2,10,2 to 10,2-10 employees,
+VSB,11,50,11 to 50,11-50 employees,
+SMB,51,200,51 to 200,51-200 employees,2.5M ARR
+MID,201,500,201 to 500,201-500 employees,5M
+MID,501,1000,501 to 1000,501-1000 employees,10M
+ENT,1001,5000,1001 to 5000,1001-5000 employees,20M
+ENT,5001,10000,5001 to 10000,"5001-10,000 employees",
+ENT',10001,+',"10,001 up","10,001+ employees",

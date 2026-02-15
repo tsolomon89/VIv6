@@ -1,0 +1,31 @@
+{
+    "schemaVersion": 1,
+    "id": "minimal-landing",
+    "name": "Minimal Landing Page",
+    "pageContext": { "kind": "detail" },
+    "pageSubject": { "target": "brand", "cardinality": "one" },
+    "sections": [
+        {
+            "schemaVersion": 1,
+            "id": "hero-section",
+            "placement": { "slot": "start" },
+            "binding": { "kind": "self" },
+            "presentationKey": "self.hero.v1",
+            "overrides": { 
+                "height": { "value": 1500, "endValue": null, "isLinked": false },
+                "className": "bg-[#1A1A1B]"
+            }
+        },
+        {
+            "schemaVersion": 1,
+            "id": "cta-section",
+            "placement": { "slot": "end" },
+            "binding": { "kind": "self" },
+            "presentationKey": "self.cta.v1", 
+            "overrides": { 
+                "height": { "value": 800, "endValue": null, "isLinked": false },
+                "className": "bg-black"
+            } 
+        }
+    ]
+}

@@ -1,0 +1,139 @@
+[
+  {
+    "id": "view-00000000-0000-0000-0000-000000000001",
+    "type": "view",
+    "slug": "all-contacts",
+    "name": "All Contacts",
+    "summary": "Returns all contact records for the account",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Type": "record",
+      "Target Entity Type": "contact",
+      "Sort": "[{\"field\": \"name\", \"direction\": \"asc\"}]",
+      "Output Schema": "{\"id\": \"string\", \"name\": \"string\", \"slug\": \"string\", \"email\": \"string\"}"
+    }
+  },
+  {
+    "id": "view-00000000-0000-0000-0000-000000000002",
+    "type": "view",
+    "slug": "open-opportunities",
+    "name": "Open Opportunities",
+    "summary": "Returns opportunities not in won/lost state",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Type": "record",
+      "Target Entity Type": "opportunity",
+      "Filters": "[{\"field\": \"stage\", \"op\": \"not_in\", \"value\": [\"won\", \"lost\"]}]",
+      "Sort": "[{\"field\": \"close_date\", \"direction\": \"asc\"}]",
+      "Output Schema": "{\"id\": \"string\", \"name\": \"string\", \"amount\": \"number\", \"stage\": \"string\", \"probability\": \"number\"}"
+    }
+  },
+  {
+    "id": "view-00000000-0000-0000-0000-000000000003",
+    "type": "view",
+    "slug": "high-value-opportunities",
+    "name": "High Value Opportunities",
+    "summary": "Returns opportunities with amount > $10,000",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Type": "record",
+      "Target Entity Type": "opportunity",
+      "Filters": "[{\"field\": \"amount\", \"op\": \"gt\", \"value\": 10000}]",
+      "Sort": "[{\"field\": \"amount\", \"direction\": \"desc\"}]",
+      "Limit": 10,
+      "Output Schema": "{\"id\": \"string\", \"name\": \"string\", \"amount\": \"number\", \"stage\": \"string\"}"
+    }
+  },
+  {
+    "id": "view-00000000-0000-0000-0000-000000000004",
+    "type": "view",
+    "slug": "product-features",
+    "name": "Product Features",
+    "summary": "Returns features related to a product (requires source entity)",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Type": "relationship",
+      "Target Entity Type": "feature",
+      "Context Params": "[{\"name\": \"productId\", \"type\": \"record_id\", \"required\": true}]",
+      "Sort": "[{\"field\": \"name\", \"direction\": \"asc\"}]",
+      "Output Schema": "{\"id\": \"string\", \"name\": \"string\", \"summary\": \"string\"}"
+    }
+  },
+  {
+    "id": "view-00000000-0000-0000-0000-000000000005",
+    "type": "view",
+    "slug": "recent-activities",
+    "name": "Recent Activities",
+    "summary": "Returns the 20 most recent activities",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Type": "record",
+      "Target Entity Type": "activity",
+      "Sort": "[{\"field\": \"created_at\", \"direction\": \"desc\"}]",
+      "Limit": 20,
+      "Output Schema": "{\"id\": \"string\", \"name\": \"string\", \"verb\": \"string\", \"occurred_at\": \"date\"}"
+    }
+  },
+  {
+    "id": "view-00000000-0000-0000-0000-000000000006",
+    "type": "view",
+    "slug": "contacts-by-persona",
+    "name": "Contacts by Persona",
+    "summary": "Returns contacts filtered by persona parameter",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Type": "record",
+      "Target Entity Type": "contact",
+      "Filters": "[{\"field\": \"persona\", \"op\": \"eq\", \"value\": \"$persona\"}]",
+      "Context Params": "[{\"name\": \"persona\", \"type\": \"string\", \"required\": true}]",
+      "Sort": "[{\"field\": \"name\", \"direction\": \"asc\"}]",
+      "Output Schema": "{\"id\": \"string\", \"name\": \"string\", \"email\": \"string\", \"persona\": \"string\"}"
+    }
+  },
+  {
+    "id": "view-00000000-0000-0000-0000-000000000007",
+    "type": "view",
+    "slug": "active-employment-for-user",
+    "name": "Active Employment Opportunities for User",
+    "summary": "ODAC: Returns HR opportunities (employment contracts) that grant user access",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Type": "record",
+      "Target Entity Type": "opportunity",
+      "Filters": "[{\"field\": \"data.line_items[0].product_type\", \"op\": \"eq\", \"value\": \"HUM\"}, {\"field\": \"stage\", \"op\": \"eq\", \"value\": \"ftp\"}]",
+      "Context Params": "[{\"name\": \"userId\", \"type\": \"record_id\", \"required\": true}]",
+      "Sort": "[{\"field\": \"created_at\", \"direction\": \"desc\"}]",
+      "Output Schema": "{\"id\": \"string\", \"name\": \"string\", \"userId\": \"string\", \"stage\": \"string\", \"line_items\": \"array\"}"
+    }
+  },
+  {
+    "id": "view-00000000-0000-0000-0000-000000000008",
+    "type": "view",
+    "slug": "hr-products",
+    "name": "HR Products (Job Titles)",
+    "summary": "Returns all products of type HUM that represent job titles/roles",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Type": "record",
+      "Target Entity Type": "product",
+      "Filters": "[{\"field\": \"data.product_type\", \"op\": \"eq\", \"value\": \"HUM\"}]",
+      "Sort": "[{\"field\": \"name\", \"direction\": \"asc\"}]",
+      "Output Schema": "{\"id\": \"string\", \"name\": \"string\", \"slug\": \"string\", \"capabilities\": \"array\"}"
+    }
+  },
+  {
+    "id": "view-00000000-0000-0000-0000-000000000009",
+    "type": "view",
+    "slug": "user-accessible-accounts",
+    "name": "Accounts User Has Access To",
+    "summary": "ODAC: Returns accounts where user has active employment opportunities",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Source Type": "record",
+      "Target Entity Type": "account",
+      "Context Params": "[{\"name\": \"userId\", \"type\": \"record_id\", \"required\": true}]",
+      "Sort": "[{\"field\": \"name\", \"direction\": \"asc\"}]",
+      "Output Schema": "{\"id\": \"string\", \"name\": \"string\", \"slug\": \"string\", \"capabilities\": \"array\"}"
+    }
+  }
+]

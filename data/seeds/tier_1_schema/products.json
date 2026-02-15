@@ -1,0 +1,29 @@
+[
+  {
+    "type": "product",
+    "slug": "prod_foundation",
+    "name": "Oblio Foundation",
+    "data": { 
+        "description": "Core CRM & Tenant Management",
+        "entitlements": ["feat_crm"]
+    }
+  },
+  {
+    "type": "product",
+    "slug": "prod_growth",
+    "name": "Growth Suite",
+    "data": { 
+        "description": "Marketing & Email Automation",
+        "entitlements": ["feat_email", "feat_marketing"]
+    }
+  },
+  {
+    "type": "product",
+    "slug": "prod_builder",
+    "name": "Builder Pro",
+    "data": { 
+        "description": "Visual Editor & Site Builder",
+        "entitlements": ["feat_visual_editor"]
+    }
+  }
+]

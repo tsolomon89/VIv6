@@ -1,0 +1,11 @@
+[
+    {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "email": "admin@system.local",
+        "password": "admin",
+        "name": "System Administrator",
+        "avatar_url": null,
+        "global_preferences": {},
+        "primary_account_id": "00000000-0000-0000-0000-000000000000"
+    }
+]

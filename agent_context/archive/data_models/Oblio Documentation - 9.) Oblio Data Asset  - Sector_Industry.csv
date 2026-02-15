@@ -1,0 +1,149 @@
+Industry,Industry Sector
+Dairy,Agriculture
+Farming,Agriculture
+Fishery,Agriculture
+Ranching,Agriculture
+Arts & Crafts,Arts
+Fine Art,Arts
+Performing Arts,Arts
+Photography,Arts
+Building Materials,Construction
+Civil Engineering,Construction
+Construction,Construction
+Apparel & Fashion,Consumer Goods
+Consumer Electronics,Consumer Goods
+Consumer Goods,Consumer Goods
+Consumer Services,Consumer Goods
+Cosmetics,Consumer Goods
+Food & Beverages,Consumer Goods
+Furniture,Consumer Goods
+Luxury Goods & Jewelry,Consumer Goods
+Sporting Goods,Consumer Goods
+Tobacco,Consumer Goods
+Wine & Spirits,Consumer Goods
+Accounting,Corporate Services
+Business Supplies & Equipment,Corporate Services
+Environmental Services,Corporate Services
+Events Services,Corporate Services
+Executive Office,Corporate Services
+Facilities Services,Corporate Services
+Human Resources,Corporate Services
+Information Services,Corporate Services
+Management Consulting,Corporate Services
+Outsourcing/Offshoring,Corporate Services
+Professional Training & Coaching,Corporate Services
+Security & Investigations,Corporate Services
+Staffing & Recruiting,Corporate Services
+Architecture & Planning,Design
+Design,Design
+Graphic Design,Design
+E-learning,Education
+Education Management,Education
+Higher Education,Education
+Primary/Secondary Education,Education
+Research,Education
+Mining & Metals,Energy & Mining
+Oil & Energy,Energy & Mining
+Utilities,Energy & Mining
+Animation,Entertainment
+Broadcast Media,Entertainment
+Computer Games,Entertainment
+Entertainment,Entertainment
+Media Production,Entertainment
+Mobile Games,Entertainment
+Motion Pictures & Film,Entertainment
+Music,Entertainment
+Banking,Finance
+Capital Markets,Finance
+Financial Services,Finance
+Insurance,Finance
+Investment Banking,Finance
+Investment Management,Finance
+Venture Capital & Private Equity,Finance
+Computer Hardware,Hardware & Networking
+Computer Networking,Hardware & Networking
+Nanotechnology,Hardware & Networking
+Semiconductors,Hardware & Networking
+Telecommunications,Hardware & Networking
+Wireless,Hardware & Networking
+Biotechnology,Health Care
+Hospital & Health Care,Health Care
+Medical Device,Health Care
+Medical Practice,Health Care
+Mental Health Care,Health Care
+Pharmaceuticals,Health Care
+Veterinary,Health Care
+Alternative Dispute Resolution,Legal
+Law Practice,Legal
+Legal Services,Legal
+Automotive,Manufacturing
+Aviation & Aerospace,Manufacturing
+Chemicals,Manufacturing
+Defense & Space,Manufacturing
+Electrical & Electronic Manufacturing,Manufacturing
+Food Production,Manufacturing
+"Glass, Ceramics & Concrete",Manufacturing
+Industrial Automation,Manufacturing
+Machinery,Manufacturing
+Mechanical Or Industrial Engineering,Manufacturing
+Packaging & Containers,Manufacturing
+Paper & Forest Products,Manufacturing
+Plastics,Manufacturing
+Railroad Manufacture,Manufacturing
+Renewables & Environment,Manufacturing
+Shipbuilding,Manufacturing
+Textiles,Manufacturing
+Market Research,Media & Communications
+Marketing &vertising,Media & Communications
+Newspapers,Media & Communications
+Online Media,Media & Communications
+Printing,Media & Communications
+Public Relations & Communications,Media & Communications
+Publishing,Media & Communications
+Translation & Localization,Media & Communications
+Writing & Editing,Media & Communications
+Civic & Social Organization,Nonprofit
+Fundraising,Nonprofit
+Individual & Family Services,Nonprofit
+International Trade & Development,Nonprofit
+Libraries,Nonprofit
+Museums & Institutions,Nonprofit
+Non-profit Organization Management,Nonprofit
+Philanthropy,Nonprofit
+Program Development,Nonprofit
+Religious Institutions,Nonprofit
+Think Tanks,Nonprofit
+Governmentministration,Publicministration
+Government Relations,Publicministration
+International Affairs,Publicministration
+Judiciary,Publicministration
+Legislative Office,Publicministration
+Political Organization,Publicministration
+Public Policy,Publicministration
+Law Enforcement,Public Safety
+Military,Public Safety
+Public Safety,Public Safety
+Commercial Real Estate,Real Estate
+Real Estate,Real Estate
+Airlines/Aviation,Recreation & Travel
+Gambling & Casinos,Recreation & Travel
+Hospitality,Recreation & Travel
+"Leisure, Travel & Tourism",Recreation & Travel
+Recreational Facilities & Services,Recreation & Travel
+Restaurants,Recreation & Travel
+Sports,Recreation & Travel
+Retail,Retail
+Supermarkets,Retail
+Wholesale,Retail
+Computer & Network Security,Software & IT Services
+Computer Software,Software & IT Services
+Information Technology & Services,Software & IT Services
+Internet,Software & IT Services
+Import & Export,Transportation & Logistics
+Logistics & Supply Chain,Transportation & Logistics
+Maritime,Transportation & Logistics
+Package/Freight Delivery,Transportation & Logistics
+Transportation/Trucking/Railroad,Transportation & Logistics
+Warehousing,Transportation & Logistics
+Alternative Medicine,Wellness & Fitness
+"Health, Wellness & Fitness",Wellness & Fitness

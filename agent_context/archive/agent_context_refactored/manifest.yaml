@@ -1,0 +1,130 @@
+version: 2.2.0
+generated_at: 2026-02-02T17:34:00Z
+description: "Finalized Documentation Corpus for VIv5 / Oblio System (Pass 10 - Runtime Analysis)"
+
+modules:
+  - id: runtime-gaps
+    path: 60_open_questions/runtime_gaps.md
+    type: meta
+    description: "Open questions regarding runtime enforcement and automation."
+
+  - id: readme
+    path: README.md
+    type: root
+    description: "Entry point and Agent Guidelines."
+
+  - id: glossary
+    path: glossary.md
+    type: canonical
+    description: "Definitive vocabulary for the system. Synonyms are forbidden."
+
+
+  - id: ui-data-binding
+    path: architecture/ui-data-binding.md
+    type: architecture
+    description: "UI Data Architecture (Records vs Structs pattern)."
+
+  - id: editor-subsystem
+    path: architecture/editor-subsystem.md
+    type: architecture
+    description: "The 'One Editor, Three Views' (Forms/Sidebar/Overlay) architecture."
+
+  - id: visual-engine
+    path: implementation/visual-engine.md
+    type: architecture
+    description: "Visual Creator Mode, Scroll Timeline, and Storm Engine specs."
+
+  - id: api-contracts
+    path: implementation/api-contracts.md
+    type: contract
+    description: "API Surface, Core Functions, and MCP Tool definitions."
+    
+  - id: system-operations
+    path: infrastructure/system-operations.md
+    type: process
+    description: "Build pipeline, CLI tools, and multi-tenant operations."
+
+  - id: schema-contract
+    path: data-model/schema.md
+    type: contract
+    description: "SQL Schema definitions and EAV pattern contract."
+
+  - id: entity-account
+    path: data-model/entities/account.md
+    type: specification
+    description: "Account entity structure, strict tenancy, and membership model."
+
+  - id: entity-contact
+    path: data-model/entities/contact.md
+    type: specification
+    description: "Contact entity, Identity mapping (User vs Contact), and demographics."
+
+  - id: entity-campaign
+    path: data-model/entities/campaign.md
+    type: specification
+    description: "Campaign entity, audience segmentation, and asset groups."
+
+  - id: entity-catalog
+    path: data-model/entities/catalog-item.md
+    type: specification
+    description: "Catalog Item (Product/Feature/Solution/Asset) policies."
+
+  - id: entity-opportunity
+    path: data-model/entities/opportunity.md
+    type: specification
+    description: "Opportunity types, transaction stages, and qualification logic."
+
+  - id: entity-activity
+    path: data-model/entities/activity.md
+    type: specification
+    description: "Activity event log and immutable ledger rules."
+
+  - id: entity-dimension
+    path: data-model/entities/dimension-value.md
+    type: specification
+    description: "Controlled vocabulary structure and inheritance rules."
+
+  - id: logic-scoring
+    path: logic/scoring.md
+    type: logic
+    description: "Formulas for Contact/Account/Opportunity Health Scoring."
+
+  - id: logic-roles
+    path: logic/end-user-roles.md
+    type: logic
+    description: "End User permissions, roles (Admin/Leader/Senior/Junior), and assignment."
+
+  - id: logic-workflows
+    path: logic/workflow-automation.md
+    type: logic
+    description: "The 'Meta Model' of Campaigns, Workflows, Stages, and Steps."
+    
+  - id: logic-inventory-graph
+    path: logic/inventory-graph.md
+    type: logic
+    description: "Inventory Graph logic (Product -> Feature -> Solution -> UseCase) and derivation."
+
+  - id: workflow-page-generation
+    path: workflows/page-generation.md
+    type: process
+    description: "Process for deriving web pages from the Entity Graph."
+
+  - id: workflow-targeting
+    path: workflows/targeting-attribution.md
+    type: process
+    description: "URL parsing, attribution logic, and segment matching."
+
+  - id: adr-sqlite-eav
+    path: decisions/adr-001-sqlite-eav.md
+    type: decision
+    description: "ADR explaining the choice of SQLite and EAV Pattern."
+
+  - id: change-log
+    path: 90_provenance/change_log.md
+    type: meta
+    description: "Record of changes to the corpus."
+    
+  - id: deprecation-notice
+    path: DEPRECATION_NOTICE.md
+    type: meta
+    description: "Mapping of legacy documents to the new corpus."

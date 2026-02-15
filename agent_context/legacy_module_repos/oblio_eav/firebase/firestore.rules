@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{document} {
+      allow create: if request.auth.uid == document;
+      allow read: if request.auth.uid == document;
+      allow write: if request.auth.uid == document;
+      allow delete: if request.auth.uid == document;
+    }
+
+    match /organization/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /organization/{parent}/organization_user/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/organization_user/{document} {
+      allow read: if true;
+    }
+
+
+    match /organization/{parent}/organization_record/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/organization_record/{document} {
+      allow read: if true;
+    }
+
+
+    match /organization/{parent}/organization_activity/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/organization_activity/{document} {
+      allow read: if true;
+    }
+
+
+    match /oblio/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /oblio/{parent}/oblio_user/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/oblio_user/{document} {
+      allow read: if true;
+    }
+
+
+    match /oblio/{parent}/oblio_record/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/oblio_record/{document} {
+      allow read: if true;
+    }
+
+
+    match /oblio/{parent}/oblio_activity/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/oblio_activity/{document} {
+      allow read: if true;
+    }
+
+
+    match /data/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /data/{parent}/object/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/object/{document} {
+      allow read: if true;
+    }
+
+
+    match /data/{parent}/field_group/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/field_group/{document} {
+      allow read: if true;
+    }
+
+
+    match /data/{parent}/field/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/field/{document} {
+      allow read: if true;
+    }
+
+
+    match /data/{parent}/property/{document} {
+      allow create: if true;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /{path=**}/property/{document} {
+      allow read: if true;
+    }
+
+  }
+}

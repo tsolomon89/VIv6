@@ -1,0 +1,18 @@
+Opportunity Types - qualifier qualifierOperator qualifierValue,Product Name,Opportunity Types,qualifierType,qualifierRequired,qualifierPipeline,qualifier,qualifierOperator,qualifierValue,qualifierActivity,Activity Condition,Activity Value
+B2B - MQL - contacts : score : persona > 0.6,Starter,MQL,Data,,B2B - MQL,contacts : score : persona,>,60%,,,
+B2B - MQL - opportunities : primary : EndUser = TRUE,,MQL,Data,,B2B - MQL,opportunities : primary : EndUser,=,TRUE,,,
+B2B - MQL - opportunities : primary : Team = Non-Null,,MQL,Data,,B2B - MQL,opportunities : primary : Team,=,Non-Null,,,
+B2B - MQL - accounts : firmographics : Industry = Non-Null,Starter,MQL,Data,,B2B - MQL,accounts : firmographics : Industry,=,Non-Null,,,
+B2B - SQL - opportunities : primary : Billing = TRUE,Starter,SQL,Data,,B2B - SQL,opportunities : primary : Billing,=,TRUE,,,
+B2B - SQL - activities : content : type = call - demostartion,Starter,SQL,Engagement,,B2B - SQL,activities : content : type,=,call - demostartion,activities : basic : status,=,open
+B2B - SQL - activities : content : type = call - demostartion,Starter,SQL,Engagement,,B2B - SQL,activities : content : type,=,call - demostartion,activities : basic : status,=,Converted
+B2B - CCS - contents : basic : name = Starter Product Contract,Starter,CCS,Data,,B2B - CCS,contents : basic : name,=,Starter Product Contract,activities : basic : status,=,Converted
+"B2B - CCS - contents : basic : url = "".../thankyou""",Starter,CCS,Engagement,,B2B - CCS,contents : basic : url,=,""".../thankyou""",activities : basic : status,=,Converted
+B2B - RCS - contents : basic : url = Renewal Contract,,,,,B2B - RCS,contents : basic : url,=,Renewal Contract,,,
+,,,,,B2B - RCS,contents : basic : url,=,""".../welcome""",,,
+,,,,,,,,Account Owner,,,
+,,,,,,,,Opportunity Owner,,,
+,,,,,,,,Contact Owner,,,
+,,,,,,,,contact Product Interest,,,
+,,,,,,,,Primary DM,,,
+,,,,,,,,Primary End User,,,

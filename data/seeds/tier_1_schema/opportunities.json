@@ -1,0 +1,16 @@
+[
+    {
+        "id": "opp_test_001",
+        "type": "opportunity",
+        "slug": "seed-opportunity-1",
+        "name": "Seed Opportunity 1",
+        "summary": "A test opportunity from seed",
+        "description": "Created to verify field groups",
+        "amount": 50000,
+        "close_date": "2026-12-31",
+        "stage": "Proposal",
+        "probability": 60,
+        "account_id": "acc_test_1770728995172", 
+        "primary_contact_id": "cont_test_primary"
+    }
+]

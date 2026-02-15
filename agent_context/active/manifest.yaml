@@ -1,0 +1,92 @@
+corpus_name: "Oblio Canonical Context"
+version: "1.3.0"
+root: "agent_context_canonical"
+
+modules:
+  - id: "core_engine"
+    path: "core_engine"
+    files:
+      - name: "record_struct.md"
+        description: "The atomic unit of storage."
+      - name: "schema_as_data.md"
+        description: "How definitions are stored as records."
+      - name: "query_model.md"
+        description: "Pivots, Meta-Pivots, and Projections."
+      - name: "temporal_query.md"
+        description: "Time-Travel and State Reconstruction logic."
+
+  - id: "bootstrap"
+    path: "bootstrap"
+    files:
+      - name: "tier_0_hardcoded.md"
+        description: "The minimal hardcoded constants."
+      - name: "tier_1_oblio.md"
+        description: "The Platform Tenant (Dogfooding)."
+      - name: "tier_2_clients.md"
+        description: "Your Projects (Victory Initiative, etc.) as First Customers."
+      - name: "standard_definitions.md"
+        description: "The Standard Library of Activities, Dimensions, and Roles."
+      - name: "provisioning_lifecycle.md"
+        description: "How Tenants are created via CRM actions."
+      - name: "operations.md"
+        description: "Deployment, Build Pipeline, and CLI tools."
+
+  - id: "domain_model"
+    path: "domain_model"
+    files:
+      - name: "identity_flattening.md"
+        description: "Unified Contact/Account identity model."
+      - name: "product_catalog.md"
+        description: "Graph-based product/feature ontology."
+
+  - id: "logic"
+    path: "logic"
+    files:
+      - name: "resource_economy.md"
+        description: "Finite Actions (Metering) and Health (Scoring)."
+      - name: "business_physics.md"
+        description: "The Core Formulas (w, c, n, f) governing capacity."
+      - name: "workflow_engine.md"
+        description: "Scripted Agents (Campaigns) and Activity Generation."
+      - name: "stochastic_attribution.md"
+        description: "Markov Chain model for Attribution and Entropy."
+      - name: "simulator_service.md"
+        description: "The AI Player for predictive modeling."
+      - name: "visual_engine.md"
+        description: "Record-based configuration for the Visual Editor."
+
+  - id: "architecture"
+    path: "architecture"
+    files:
+      - name: "ui_contract.md"
+        description: "The separation of Immutable Structs and Mutable Records."
+      - name: "core_logic_and_physics.md"
+        description: "The Economic Physics, Opportunity-Centric Model, and Identity Flattening."
+      - name: "security_model.md"
+        description: "RBAC, Tenancy Isolation, and Sandbox Logic."
+      - name: "theme_system.md"
+        description: "The IFrame Bridge and Guest/Host Isolation."
+      - name: "editor_system.md"
+        description: "The 3-View Editor Architecture (Forms, Sidebar, Overlay)."
+      - name: "api_contract.md"
+        description: "The REST Interface and Resource Definitions."
+      - name: "mcp_server.md"
+        description: "The AI Agent Interface (Tools and Resources)."
+
+  - id: "reference"
+    path: "."
+    files:
+      - name: "glossary.md"
+        description: "Canonical definitions of all system terms."
+
+  - id: "workflows"
+    path: "workflows"
+    files:
+      - name: "targeting_attribution.md"
+        description: "URL -> Dimension Value -> Lead Attribution."
+
+  - id: "analysis"
+    path: "analysis"
+    files:
+      - name: "game_engine_alignment.md"
+        description: "Mapping of Game Engine/Sim concepts to the Fact Store."

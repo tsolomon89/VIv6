@@ -1,0 +1,60 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+dist
+.next
+out
+build
+
+# Data (Excluded per assessment)
+data/vi.sqlite
+data/vi.sqlite-shm
+data/vi.sqlite-wal
+data/*.db
+data/*.sqlite
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug/temp files
+debug_*.ts
+verify_*.ts
+check_*.ts
+*_log.txt
+*_output*.txt
+*_result.txt
+test_*.txt
+test_*.json
+temp_*.json
+api_response.json
+activities_log.json
+nul
+site.zip
+install_log.txt
+
+# Coverage
+coverage/
+
+# Claude Code local settings
+.claude/

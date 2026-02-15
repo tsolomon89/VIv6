@@ -1,0 +1,14 @@
+{
+  "tenant_slug": "victory_initiative",
+  "account_id": "acc_vi_000000000000000001",
+  "domain": "victoryinitiative.com",
+  "owner": {
+    "email": "tim@victory.com",
+    "name": "Tim Solomon"
+  },
+  "subscription": {
+    "plan_id": "plan_enterprise",
+    "status": "active"
+  },
+  "initial_records": []
+}

@@ -1,0 +1,152 @@
+[
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000001",
+    "type": "derivation",
+    "slug": "opportunity-weighted-value",
+    "name": "Opportunity Weighted Value",
+    "summary": "Calculates amount × probability for pipeline forecasting",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "opportunity",
+      "Field Name": "weighted_value",
+      "Expression": "amount * (probability / 100)",
+      "Return Type": "currency",
+      "Dependencies": "[\"amount\", \"probability\"]"
+    }
+  },
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000002",
+    "type": "derivation",
+    "slug": "opportunity-days-to-close",
+    "name": "Days to Close",
+    "summary": "Calculates days remaining until close date",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "opportunity",
+      "Field Name": "days_to_close",
+      "Expression": "daysdiff(now(), close_date)",
+      "Return Type": "number",
+      "Dependencies": "[\"close_date\"]"
+    }
+  },
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000003",
+    "type": "derivation",
+    "slug": "opportunity-deal-tier",
+    "name": "Deal Tier",
+    "summary": "Categorizes deals by amount into Enterprise/Mid-Market/SMB",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "opportunity",
+      "Field Name": "deal_tier",
+      "Expression": "amount >= 100000 ? 'Enterprise' : (amount >= 25000 ? 'Mid-Market' : 'SMB')",
+      "Return Type": "text",
+      "Dependencies": "[\"amount\"]"
+    }
+  },
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000004",
+    "type": "derivation",
+    "slug": "opportunity-deal-yield",
+    "name": "Deal Yield",
+    "summary": "Calculates (amount × probability) / days_to_close for velocity scoring",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "opportunity",
+      "Field Name": "deal_yield",
+      "Expression": "daysdiff(now(), close_date) > 0 ? (amount * (probability / 100)) / daysdiff(now(), close_date) : 0",
+      "Return Type": "currency",
+      "Dependencies": "[\"amount\", \"probability\", \"close_date\"]"
+    }
+  },
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000005",
+    "type": "derivation",
+    "slug": "contact-full-name",
+    "name": "Contact Full Name",
+    "summary": "Concatenates first and last name",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "contact",
+      "Field Name": "full_name",
+      "Expression": "concat(coalesce(firstName, ''), ' ', coalesce(lastName, ''))",
+      "Return Type": "text",
+      "Dependencies": "[\"firstName\", \"lastName\"]"
+    }
+  },
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000006",
+    "type": "derivation",
+    "slug": "activity-time-strain",
+    "name": "Activity Time Strain",
+    "summary": "Calculates actual / expected duration ratio for capacity analysis",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "activity",
+      "Field Name": "time_strain",
+      "Expression": "durationDefault > 0 ? durationActual / durationDefault : 1",
+      "Return Type": "number",
+      "Dependencies": "[\"durationActual\", \"durationDefault\"]"
+    }
+  },
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000007",
+    "type": "derivation",
+    "slug": "campaign-days-active",
+    "name": "Campaign Days Active",
+    "summary": "Calculates number of days since campaign start",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "campaign",
+      "Field Name": "days_active",
+      "Expression": "daysdiff(startDate, coalesce(endDate, now()))",
+      "Return Type": "number",
+      "Dependencies": "[\"startDate\", \"endDate\"]"
+    }
+  },
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000008",
+    "type": "derivation",
+    "slug": "campaign-budget-status",
+    "name": "Campaign Budget Status",
+    "summary": "Indicates if campaign is over/under/on budget",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "campaign",
+      "Field Name": "budget_status",
+      "Expression": "spent > budget ? 'Over Budget' : (spent >= budget * 0.9 ? 'Near Limit' : 'On Track')",
+      "Return Type": "text",
+      "Dependencies": "[\"budget\", \"spent\"]"
+    }
+  },
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000009",
+    "type": "derivation",
+    "slug": "employment-is-active",
+    "name": "Employment Is Active",
+    "summary": "ODAC: Determines if employment opportunity is currently active",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "opportunity",
+      "Field Name": "is_active_employment",
+      "Expression": "stage == 'ftp' && startDate <= now() && (endDate == null || endDate >= now())",
+      "Return Type": "boolean",
+      "Dependencies": "[\"stage\", \"startDate\", \"endDate\"]"
+    }
+  },
+  {
+    "id": "deriv-00000000-0000-0000-0000-000000000010",
+    "type": "derivation",
+    "slug": "employment-days-remaining",
+    "name": "Employment Days Remaining",
+    "summary": "ODAC: Days until employment contract ends (null if indefinite)",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "opportunity",
+      "Field Name": "employment_days_remaining",
+      "Expression": "endDate != null ? daysdiff(now(), endDate) : null",
+      "Return Type": "number",
+      "Dependencies": "[\"endDate\"]"
+    }
+  }
+]

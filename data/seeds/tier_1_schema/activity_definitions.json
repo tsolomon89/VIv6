@@ -1,0 +1,152 @@
+[
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000001",
+    "type": "activity_def",
+    "slug": "email_opened",
+    "name": "Email Opened",
+    "summary": "Recipient opened an email asset",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "engagement",
+      "verb": "opened",
+      "object_type": "asset",
+      "duration_default": 1,
+      "qualifiers": []
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000002",
+    "type": "activity_def",
+    "slug": "email_clicked",
+    "name": "Email Link Clicked",
+    "summary": "Recipient clicked a link in email",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "engagement",
+      "verb": "clicked",
+      "object_type": "asset",
+      "duration_default": 1,
+      "qualifiers": []
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000003",
+    "type": "activity_def",
+    "slug": "page_viewed",
+    "name": "Page Viewed",
+    "summary": "User viewed a page",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "engagement",
+      "verb": "viewed",
+      "object_type": "page",
+      "duration_default": 5,
+      "qualifiers": []
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000004",
+    "type": "activity_def",
+    "slug": "form_submitted",
+    "name": "Form Submitted",
+    "summary": "User submitted a form",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "data",
+      "verb": "submitted",
+      "object_type": "form",
+      "duration_default": 3,
+      "qualifiers": []
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000005",
+    "type": "activity_def",
+    "slug": "record_created",
+    "name": "Record Created",
+    "summary": "User created a new record",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "data",
+      "verb": "created",
+      "object_type": "any",
+      "duration_default": 5,
+      "qualifiers": []
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000006",
+    "type": "activity_def",
+    "slug": "record_updated",
+    "name": "Record Updated",
+    "summary": "User updated a record field",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "data",
+      "verb": "updated",
+      "object_type": "any",
+      "duration_default": 3,
+      "qualifiers": []
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000007",
+    "type": "activity_def",
+    "slug": "deal_approved",
+    "name": "Deal Approved",
+    "summary": "Manager approved a deal",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "admin",
+      "verb": "approved",
+      "object_type": "opportunity",
+      "duration_default": 2,
+      "qualifiers": ["budget_confirmed", "decision_maker_identified"]
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000008",
+    "type": "activity_def",
+    "slug": "asset_published",
+    "name": "Asset Published",
+    "summary": "Content asset was published",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "asset",
+      "verb": "published",
+      "object_type": "asset",
+      "duration_default": 30,
+      "qualifiers": ["review_complete"]
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000009",
+    "type": "activity_def",
+    "slug": "call_logged",
+    "name": "Call Logged",
+    "summary": "Phone call was logged",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "engagement",
+      "verb": "called",
+      "object_type": "contact",
+      "duration_default": 15,
+      "qualifiers": []
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000010",
+    "type": "activity_def",
+    "slug": "meeting_held",
+    "name": "Meeting Held",
+    "summary": "Meeting was conducted",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "engagement",
+      "verb": "met",
+      "object_type": "contact",
+      "duration_default": 30,
+      "qualifiers": []
+    }
+  }
+]

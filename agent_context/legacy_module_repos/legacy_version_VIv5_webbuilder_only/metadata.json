@@ -1,0 +1,5 @@
+{
+  "name": "Victory Initiative v5",
+  "description": "A high-performance, interactive WebGL prism background effect using OGL with configurable animation modes and visual effects.",
+  "requestFramePermissions": []
+}

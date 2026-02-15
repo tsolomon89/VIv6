@@ -1,0 +1,75 @@
+{
+    "schemaVersion": 1,
+    "id": "demo-landing",
+    "name": "Demo Landing Page",
+    "pageContext": { "kind": "detail" },
+    "pageSubject": { "target": "brand", "cardinality": "one" },
+    "sections": [
+        {
+            "schemaVersion": 1,
+            "id": "hero-section",
+            "placement": { "slot": "start" },
+            "binding": { "kind": "self" },
+            "presentationKey": "self.hero.v1",
+            "overrides": { 
+                "height": { "value": 1500, "endValue": null, "isLinked": false },
+                "className": "bg-[#1A1A1B]"
+            }
+        },
+        {
+            "schemaVersion": 1,
+            "id": "use-cases-section",
+            "placement": { "slot": "free", "order": 1 },
+            "binding": { "kind": "related", "target": "useCase", "cardinality": "many" }, 
+            "presentationKey": "related.useCase.many.grid.v1",
+            "overrides": { 
+                "height": { "value": 1600, "endValue": null, "isLinked": false },
+                "className": "bg-white rounded-t-3xl md:rounded-t-[4rem]"
+            }
+        },
+        {
+            "schemaVersion": 1,
+            "id": "products-section",
+            "placement": { "slot": "free", "order": 2 },
+            "binding": { "kind": "related", "target": "product", "cardinality": "many" },
+            "presentationKey": "related.product.many.marquee.v1",
+            "overrides": { 
+                "height": { "value": 2400, "endValue": null, "isLinked": false },
+                "className": "bg-white"
+            } 
+        },
+        {
+            "schemaVersion": 1,
+            "id": "features-section",
+            "placement": { "slot": "free", "order": 3 },
+            "binding": { "kind": "related", "target": "feature", "cardinality": "many" },
+            "presentationKey": "related.feature.many.grid.v1",
+            "overrides": { 
+                "height": { "value": 3200, "endValue": null, "isLinked": false },
+                "className": "bg-white"
+            } 
+        },
+        {
+            "schemaVersion": 1,
+            "id": "solutions-section",
+            "placement": { "slot": "free", "order": 4 },
+            "binding": { "kind": "related", "target": "solution", "cardinality": "many" },
+            "presentationKey": "related.solution.many.grid.v1",
+            "overrides": { 
+                "height": { "value": 2600, "endValue": null, "isLinked": false },
+                "className": "bg-neutral-50"
+            } 
+        },
+        {
+            "schemaVersion": 1,
+            "id": "cta-section",
+            "placement": { "slot": "end" },
+            "binding": { "kind": "self" },
+            "presentationKey": "self.cta.v1",
+            "overrides": { 
+                "height": { "value": 1600, "endValue": null, "isLinked": false },
+                "className": "bg-black"
+            } 
+        }
+    ]
+}

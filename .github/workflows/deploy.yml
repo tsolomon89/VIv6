@@ -1,0 +1,55 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+      VITE_ADMIN_KEY: ${{ secrets.VITE_ADMIN_KEY }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Install UI Dependencies
+      run: |
+        cd src/ui
+        npm ci
+
+    - name: Run Unit Tests
+      run: npm run test
+
+    - name: Run E2E Tests
+      run: npm run test:e2e
+
+    - name: Run UI Tests
+      run: npm run test:ui
+
+    - name: Build Web App (UI)
+      run: |
+        cd src/ui
+        npm run build
+
+    - name: Build Static Site
+      run: npm run build
+
+    - name: Archive Production Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: deploy-dist
+        path: dist/

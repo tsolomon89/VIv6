@@ -1,0 +1,34 @@
+[
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "type": "object_def",
+    "slug": "object_def",
+    "name": "Object Definition",
+    "summary": "Defines the structure of a Record (Table).",
+    "data": { "is_system": true }
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000002",
+    "type": "object_def", 
+    "slug": "field_def",
+    "name": "Field Definition",
+    "summary": "Defines a Property on an Object.",
+    "data": { "is_system": true }
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000003",
+    "type": "object_def",
+    "slug": "field_group",
+    "name": "Field Group",
+    "summary": "Visual grouping of fields.",
+    "data": { "is_system": true }
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000004",
+    "type": "object_def",
+    "slug": "activity_def",
+    "name": "Activity Definition",
+    "summary": "Defines an Event Log type.",
+    "data": { "is_system": true }
+  }
+]
