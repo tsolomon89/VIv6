@@ -74,23 +74,21 @@ export function setFieldValue(
  */
 export function setOpportunityStage(record: DataRecordInput, stage: string) {
     // We look for the field named "Opportunity Stage"
-    // In a real app we'd import the strict ID.
     const groupName = 'Commercial Details';
     const fieldName = 'Opportunity Stage';
-    
+
     if (!record.data) record.data = { fieldGroups: [] };
     if (!record.data.fieldGroups) record.data.fieldGroups = [];
-    
-    let group = record.data.fieldGroups.find(g => g.nameFieldGroup === groupName);
-    if (!group) return; // If group doesn't exist, we fallback?
-    
-    const field = group.fieldStructs.find(f => f.nameField === fieldName);
+
+    // ALWAYS set the legacy property for backward compatibility
+    (record.data as any).opportunity_stage = stage;
+
+    // Also try to set the canonical fieldStruct if it exists
+    const group = record.data.fieldGroups.find(g => g.nameFieldGroup === groupName);
+    if (!group) return; // Group doesn't exist, but legacy prop is already set
+
+    const field = group.fieldStructs?.find(f => f.nameField === fieldName);
     if (field) {
         field.propertyStructs = [{ valueProperty: stage }];
-    } else {
-        // Fallback: we cannot easily create it without the Def ID.
-        // But for CommercialEngine transition, we might still update the LEGACY prop to be safe?
-        // No, we want to move to new model.
-        console.warn(`[Modifier] Could not find 'Opportunity Stage' field to update in record ${record.id}`);
     }
 }

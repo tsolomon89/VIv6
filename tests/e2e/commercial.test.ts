@@ -5,12 +5,16 @@ import { startServer } from '../../src/api/server.js';
 import { AddressInfo } from 'net';
 import { resetDb } from '../../src/core/db.js';
 
+// Set ADMIN_KEY for test authentication before any server starts
+const TEST_ADMIN_KEY = 'test-admin-key-12345';
+process.env.ADMIN_KEY = TEST_ADMIN_KEY;
+
 describe('Commercial Engine E2E Lifecycle (Phase 12)', () => {
     let server: any;
     let API_URL: string;
- 
-    const ADMIN_KEY = 'secret';
-    const SYSTEM_ACCOUNT_ID = '00000000-0000-4000-8000-000000000000'; // Valid v4 UUID
+
+    const ADMIN_KEY = TEST_ADMIN_KEY;
+    const SYSTEM_ACCOUNT_ID = '00000000-0000-0000-0000-000000000000'; // System account UUID
     
     // We need axios config for Auth
     const axiosConfig = {

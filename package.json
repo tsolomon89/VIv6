@@ -10,7 +10,7 @@
     "test:e2e": "vitest run tests/e2e",
     "test:ui": "cd src/ui && npm run test",
     "test:all": "npm run test && npm run test:e2e && npm run test:ui",
-    "test:coverage": "vitest run --coverage src/core src/build src/scripts",
+    "test:coverage": "vitest run --coverage src/core src/build src/scripts src/api",
     "dev:api": "tsx watch src/api/server.ts",
     "dev:ui": "cd src/ui && npm run dev",
     "start:api": "tsx src/api/server.ts",

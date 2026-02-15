@@ -107,6 +107,9 @@ router.post('/preview', async (req: Request, res: Response, next: NextFunction) 
         allRecords.forEach(e => dbSlugToId.set(e.slug, e.id));
 
         for (const seedRecord of seedState.records) {
+            // Skip accounts - they're handled separately above
+            if (seedRecord.type === 'account') continue;
+
             const existing = dbRecordMap.get(seedRecord.slug);
             if (!existing) {
                 // ADD
@@ -115,7 +118,7 @@ router.post('/preview', async (req: Request, res: Response, next: NextFunction) 
                     type: 'record',
                     key: seedRecord.slug,
                     summary: `Create ${seedRecord.type}: ${seedRecord.name}`,
-                    payload: seedRecord 
+                    payload: seedRecord
                 });
             } else {
                 // UPDATE (Deep diff on data)

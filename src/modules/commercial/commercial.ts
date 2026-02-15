@@ -190,9 +190,12 @@ export class CommercialEngine {
             const renewalDate = new Date();
             renewalDate.setFullYear(renewalDate.getFullYear() + 1); // +1 Year
 
-            // Get values from canonical format
+            // Get values from canonical format or legacy properties
             const amountField = findField(fieldGroups, 'Amount');
-            const amount = getFieldValue(amountField) || 0;
+            const amount = getFieldValue(amountField)
+                || (data as any).amount
+                || (data as any).projected_revenue
+                || 0;
 
             // Create RTP with canonical format
             const rtpFieldGroups: any[] = [];
@@ -208,7 +211,12 @@ export class CommercialEngine {
                 slug: `renew-${record.slug}-${Date.now()}`, // Unique Slug
                 account_id: record.account_id,
                 data: {
-                    fieldGroups: rtpFieldGroups
+                    fieldGroups: rtpFieldGroups,
+                    // Legacy properties for backward compatibility
+                    opportunity_stage: 'rtp',
+                    source_opportunity_id: record.id,
+                    projected_revenue: amount,
+                    probability: STAGE_PROBABILITY['rtp']
                 }
             };
 
@@ -375,14 +383,19 @@ hooks.onPreCreate('opportunity', async (input: DataRecordInput) => {
 
     // Set probability in canonical format
     const probField = findField(fieldGroups, 'Probability');
+    const probability = STAGE_PROBABILITY[stage];
     if (!probField || getFieldValue(probField) === undefined) {
-        setOrCreateField(fieldGroups, 'Probability', 'number', STAGE_PROBABILITY[stage]);
+        setOrCreateField(fieldGroups, 'Probability', 'number', probability);
     }
+    // Also set legacy property for backward compatibility
+    (input.data as any).probability = probability;
 
     // Calculate Yield
     const tempRecord = { ...input } as any;
     const yieldVal = calculateDealYield(tempRecord);
     setOrCreateField(fieldGroups, 'Projected Yield', 'number', yieldVal);
+    // Also set legacy property for backward compatibility
+    (input.data as any).projected_yield = yieldVal;
 });
 
 // 2. Enforce Transition Logic on Update
@@ -423,13 +436,18 @@ hooks.onPreUpdate('opportunity', async (input: DataRecordInput) => {
         }
 
         // Update Probability in canonical format
-        setOrCreateField(fieldGroups, 'Probability', 'number', STAGE_PROBABILITY[newStage]);
+        const newProbability = STAGE_PROBABILITY[newStage];
+        setOrCreateField(fieldGroups, 'Probability', 'number', newProbability);
+        // Also set legacy property
+        (input.data as any).probability = newProbability;
     }
 
     // Always Recalculate Yield on Update (in case amount or date changed)
     const tempRecord = { ...input } as any;
     const newYield = calculateDealYield(tempRecord);
     setOrCreateField(fieldGroups, 'Projected Yield', 'number', newYield);
+    // Also set legacy property
+    (input.data as any).projected_yield = newYield;
 });
 
 // 3. Side Effects on Update

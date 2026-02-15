@@ -107,11 +107,23 @@ export class Reader {
          // Inject Virtual Relationship Fields (Works for both)
          // For RecordStruct, links would be in a property? No, Invariant says they are PropertyStructs.
          // But for Hybrid, we check data.links if available.
-         
+
          const linksSource = (data as any).data || data; // Handle if data is at root or nested
          this.injectRelationships(linksSource, fieldGroups);
- 
-         return { fieldGroups };
+
+         // Preserve legacy properties from the data object (e.g., opportunity_stage)
+         // These are properties at the root level that aren't part of fieldGroups
+         const legacyProps: Record<string, any> = {};
+         const dataObj = (data as any).data || data;
+         if (typeof dataObj === 'object' && dataObj !== null) {
+             for (const key of Object.keys(dataObj)) {
+                 if (key !== 'fieldGroups' && key !== 'links') {
+                     legacyProps[key] = dataObj[key];
+                 }
+             }
+         }
+
+         return { fieldGroups, ...legacyProps };
     }
 
     private static isRecordStruct(data: any): data is RecordStruct {
