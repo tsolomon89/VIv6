@@ -5,23 +5,28 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { db, initDb } from '../core/db.js';
+import { createLogger } from '../core/logger.js';
+import '../core/env.js'; // Validate environment at startup
 import recordsRouter from './routes/records.js';
 import relationshipsRouter from '../modules/content/api/relationships.js';
 import '../modules/crm/crm.ts'; // Register CRM Hooks (Tier 1)
 import '../modules/health/health.js'; // Register Health Hooks
 import '../modules/workflows/workflows.js'; // Register Workflow Hooks
 import { errorHandler } from './middleware/errorHandler.js';
+import { correlationIdMiddleware } from './middleware/correlationId.js';
 import configRouter from './routes/config.js';
 import { initSecurityHooks } from '../core/security.js';
 
+const logger = createLogger('server');
+
 // Global error handlers for uncaught errors
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('[Server] Unhandled Rejection at:', promise, 'reason:', reason);
+    logger.error({ reason, promise }, 'Unhandled Rejection');
     // Don't exit - log and continue
 });
 
 process.on('uncaughtException', (err) => {
-    console.error('[Server] Uncaught Exception:', err);
+    logger.fatal({ err }, 'Uncaught Exception - exiting');
     // Exit on uncaught - state may be corrupt
     process.exit(1);
 });
@@ -100,6 +105,9 @@ const authLimiter = rateLimit({
 
 // Apply general rate limit to all API routes
 app.use('/api', generalLimiter);
+
+// Correlation ID for request tracing
+app.use('/api', correlationIdMiddleware);
 
 // Audit Log (Phase 14)
 import { auditMiddleware } from './middleware/audit.js';
@@ -184,24 +192,24 @@ import type { Server } from 'http';
 let activeServer: Server | null = null;
 
 function gracefulShutdown(signal: string) {
-    console.log(`\n[Server] ${signal} received, shutting down gracefully...`);
+    logger.info({ signal }, 'Shutdown signal received, shutting down gracefully...');
 
     if (activeServer) {
         activeServer.close(() => {
-            console.log('[Server] HTTP server closed');
+            logger.info('HTTP server closed');
             // Close database connection
             try {
                 db.close();
-                console.log('[Server] Database connection closed');
+                logger.info('Database connection closed');
             } catch (err) {
-                console.error('[Server] Error closing database:', err instanceof Error ? err.message : String(err));
+                logger.error({ err }, 'Error closing database');
             }
             process.exit(0);
         });
 
         // Force exit after 10 seconds
         setTimeout(() => {
-            console.error('[Server] Forced shutdown after timeout');
+            logger.error('Forced shutdown after timeout');
             process.exit(1);
         }, 10000);
     } else {
@@ -216,22 +224,17 @@ export function startServer(port: number = Number(PORT)): Promise<Server> {
     return new Promise((resolve, reject) => {
         const server = app.listen(port, '0.0.0.0', () => {
             const addr = server.address();
-            if (addr && typeof addr === 'object') {
-                console.log(`API server running at http://0.0.0.0:${addr.port}`);
-            } else {
-                console.log(`API server running on port ${port}`);
-            }
-            console.log('Available endpoints:');
-            console.log('  GET    /api/health');
+            const actualPort = addr && typeof addr === 'object' ? addr.port : port;
+            logger.info({ port: actualPort, host: '0.0.0.0' }, 'API server started');
             activeServer = server; // Track for graceful shutdown
             resolve(server);
         });
 
         server.on('error', (err: NodeJS.ErrnoException) => {
             if (err.code === 'EADDRINUSE') {
-                console.error(`Port ${port} is already in use`);
+                logger.error({ port }, 'Port is already in use');
             } else {
-                console.error('Server error:', err.message);
+                logger.error({ err }, 'Server error');
             }
             reject(err);
         });
@@ -243,14 +246,14 @@ const nodePath = process.argv[1];
 const modulePath = fileURLToPath(import.meta.url);
 
 if (nodePath === modulePath) {
-    console.log('Initializing database...');
+    logger.info('Initializing database...');
     initDb();
     startServer().then(async () => {
         // Optionally start AI scheduler based on environment variable
         if (process.env.AI_SCHEDULER_AUTO_START === 'true') {
             const { startScheduler } = await import('../modules/ai/execution/scheduler.js');
             const intervalMs = parseInt(process.env.AI_SCHEDULER_INTERVAL || '30000');
-            console.log(`[AI] Starting background scheduler (interval: ${intervalMs}ms)`);
+            logger.info({ intervalMs }, 'Starting AI background scheduler');
             startScheduler('', intervalMs); // Empty string = all accounts
         }
 
@@ -258,7 +261,7 @@ if (nodePath === modulePath) {
         if (process.env.WORKFLOW_SCHEDULER_AUTO_START === 'true') {
             const { startWorkflowScheduler } = await import('../modules/workflows/scheduler.js');
             const intervalMs = parseInt(process.env.WORKFLOW_SCHEDULER_INTERVAL || '60000');
-            console.log(`[Workflows] Starting background scheduler (interval: ${intervalMs}ms)`);
+            logger.info({ intervalMs }, 'Starting Workflow background scheduler');
             startWorkflowScheduler('', intervalMs);
         }
 
@@ -266,7 +269,7 @@ if (nodePath === modulePath) {
         if (process.env.HEALTH_DAEMON_AUTO_START === 'true') {
             const { startHealthDaemon } = await import('../modules/health/daemon.js');
             const intervalMs = parseInt(process.env.HEALTH_DAEMON_INTERVAL || '300000');
-            console.log(`[Health] Starting decay daemon (interval: ${intervalMs}ms)`);
+            logger.info({ intervalMs }, 'Starting Health decay daemon');
             startHealthDaemon('', intervalMs);
         }
     });

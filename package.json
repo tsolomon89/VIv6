@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:ui\"",
     "start": "npm run dev",
-    "test": "vitest run src/core src/build src/scripts src/api",
+    "test": "vitest run src/core src/build src/scripts src/api src/mcp",
     "test:e2e": "vitest run tests/e2e",
     "test:ui": "cd src/ui && npm run test",
     "test:all": "npm run test && npm run test:e2e && npm run test:ui",
-    "test:coverage": "vitest run --coverage src/core src/build src/scripts src/api",
+    "test:coverage": "vitest run --coverage src/core src/build src/scripts src/api src/mcp",
     "dev:api": "tsx watch src/api/server.ts",
     "dev:ui": "cd src/ui && npm run dev",
     "start:api": "tsx src/api/server.ts",
@@ -25,6 +25,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.0",
+    "@google/generative-ai": "^0.21.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.23",
@@ -39,10 +41,14 @@
     "fs-extra": "^11.3.3",
     "gray-matter": "^4.0.3",
     "handlebars": "^4.7.8",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.563.0",
     "marked": "^17.0.1",
     "multer": "^2.0.2",
+    "openai": "^4.78.0",
+    "pino": "^10.3.1",
+    "pino-pretty": "^13.1.3",
     "postcss": "^8.5.6",
     "prop-types": "^15.8.1",
     "react-responsive-masonry": "^2.7.1",
@@ -52,7 +58,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.0.18",
     "@types/bcrypt": "^6.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cookie-parser": "^1.4.10",
@@ -63,10 +68,11 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^25.1.0",
+    "@vitest/coverage-v8": "^3.0.0",
     "bestzip": "^2.2.1",
     "concurrently": "^9.2.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "vitest": "^3.0.0"
   }
 }
