@@ -20,11 +20,17 @@ export interface Field {
   // Phase 4: Dimension field properties for cascading pick-lists
   dimension?: string;           // Dimension slug, e.g., "department", "industry"
   dependsOn?: string[];         // Field names this depends on, e.g., ["Sector"] for Industry
+  // Canonical format alternatives (for dual-format support)
+  nameField?: string;           // Canonical: field name
+  type?: string;                // Seed format: field type (alias for inputType)
 }
 
 export interface FieldGroup {
   name: string;
   fields: Field[];
+  // Canonical format alternatives (for dual-format support)
+  nameFieldGroup?: string;   // Canonical: group name
+  fieldStructs?: Field[];    // Canonical: field array
 }
 
 export interface EntityData {
@@ -220,6 +226,121 @@ export interface DerivedPage {
   segmentPages: Array<{ path: string; entity: string; template: string | null; segment?: string }>;
 }
 
+// --- Page Assets (New Webbuilder System) ---
+
+export interface Binding {
+  kind: 'self' | 'related' | 'view';
+  target?: string;
+  cardinality?: 'one' | 'many';
+  relationKey?: string;
+  scope?: {
+    filter?: Record<string, unknown>;
+    sort?: string;
+    limit?: number;
+  };
+}
+
+export interface BindingSignature {
+  kind: 'self' | 'related';
+  target?: string;
+  cardinality?: 'one' | 'many';
+}
+
+export interface SectionInstance {
+  schemaVersion?: number;
+  id: string;
+  binding: Binding;
+  presentationKey: string;
+  placement: { slot: 'start' | 'end' | 'free'; order?: number };
+  overrides?: Record<string, unknown>;
+}
+
+export interface AssetAttribution {
+  channel: 'website' | 'social' | 'display' | 'search' | 'email' | 'call' | 'event';
+  medium: 'page' | 'article' | 'video' | 'post' | 'document' | 'dynamic_ad' | 'message';
+  source: string;
+  referralType: 'organic' | 'paid';
+  version: string;
+}
+
+export interface PageConfig {
+  schemaVersion: number;
+  pageContext: { kind: 'detail' | 'index' };
+  pageSubject: { target: string; cardinality: 'one' | 'many' };
+  templateKey?: string;
+}
+
+export interface PageAssetData {
+  fieldGroups: FieldGroup[];
+  attribution: AssetAttribution;
+  pageConfig: PageConfig;
+  sections: SectionInstance[];
+}
+
+export interface PageAsset {
+  id: string;
+  slug: string;
+  name: string;
+  type: 'page';
+  account_id: string;
+  data: PageAssetData;
+  created_at: string;
+  updated_at: string;
+  // When fetched with resolve=true
+  compiledSections?: CompiledSection[];
+}
+
+export interface CompiledSection {
+  id: string;
+  placement: { slot: string; order?: number };
+  binding: Binding;
+  presentationKey?: string;
+  config: Record<string, unknown>;
+  resolvedData: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    type: string;
+    data?: Record<string, unknown>;
+  }>;
+}
+
+export interface CreatePageInput {
+  template_key?: string;
+  name: string;
+  slug: string;
+  subject_type?: string;
+  subject_id?: string;
+  account_id?: string;
+  source?: string;
+  version?: string;
+}
+
+export interface AddSectionInput {
+  binding: Binding;
+  preset_key: string;
+  placement?: { slot: 'start' | 'end' | 'free'; order?: number };
+  overrides?: Record<string, unknown>;
+}
+
+// --- Presentation Presets ---
+
+export interface PresentationPreset {
+  key: string;
+  name: string;
+  signature: BindingSignature;
+  config: Record<string, unknown>;
+  version?: number;
+  account_id?: string;
+}
+
+export interface PresetFilter {
+  signature_kind?: 'self' | 'related';
+  target?: string;
+  cardinality?: 'one' | 'many';
+  account_id?: string;
+}
+
 // --- Domains ---
 
 export type DomainType = 'www' | 'blog' | 'docs' | 'app' | 'custom';
@@ -262,6 +383,238 @@ export interface CsvImportResult {
   skipped: number;
   parents: number;
   total: number;
+}
+
+// --- AI Module Types ---
+
+export interface AICredential {
+  id: string;
+  provider: 'openai' | 'anthropic' | 'google';
+  keyHint: string | null;
+  name: string | null;
+  isDefault: boolean;
+  tokenBudgetDaily: number | null;
+  costBudgetDaily: number | null;
+  usageTokensToday: number;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+export interface AICredentialInput {
+  provider: 'openai' | 'anthropic' | 'google';
+  apiKey: string;
+  name?: string;
+  isDefault?: boolean;
+  tokenBudgetDaily?: number;
+  costBudgetDaily?: number;
+}
+
+export interface AIProvider {
+  name: string;
+  displayName: string;
+  models: Array<{
+    id: string;
+    name: string;
+    inputPrice: number;
+    outputPrice: number;
+  }>;
+}
+
+export interface AIActivity {
+  id: string;
+  name: string;
+  status: string;
+  queuedAt?: string;
+  startedAt?: string;
+  iterations?: number;
+}
+
+export interface AIExecutionResult {
+  success: boolean;
+  iterations: number;
+  tokenUsage: {
+    prompt?: number;
+    completion?: number;
+    total?: number;
+  };
+  costEstimate?: number;
+  error?: string;
+  won?: boolean;
+  qualifierResult?: {
+    allPassed: boolean;
+    results: Array<{
+      qualifier: string;
+      passed: boolean;
+      value: unknown;
+      expectedValue: unknown;
+      operator: string;
+    }>;
+    evaluatedAt: string;
+  };
+}
+
+export interface AISchedulerResult {
+  success: boolean;
+  processed: number;
+  succeeded: number;
+  failed: number;
+  won: number;
+  details: Array<{
+    activityId: string;
+    activityName: string;
+    executionSuccess: boolean;
+    won: boolean;
+    executionError?: string;
+  }>;
+}
+
+export interface AISchedulerStatus {
+  running: boolean;
+  accountId: string | null;
+}
+
+export interface AIChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+  toolCalls?: Array<{
+    id: string;
+    name: string;
+    arguments: Record<string, unknown>;
+    result?: unknown;
+    success?: boolean;
+  }>;
+}
+
+export interface AIChatHistory {
+  activityId: string;
+  messages: AIChatMessage[];
+  isActive: boolean;
+  contextRecordId?: string;
+}
+
+export interface AIChatResponse {
+  success: boolean;
+  content: string;
+  tokenUsage: {
+    prompt?: number;
+    completion?: number;
+    total?: number;
+  };
+  costEstimate?: number;
+  toolCalls?: Array<{
+    id: string;
+    name: string;
+    arguments: Record<string, unknown>;
+    result?: unknown;
+    success?: boolean;
+  }>;
+  error?: string;
+}
+
+export interface AIAgentTemplate {
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  provider: 'anthropic' | 'openai' | 'google';
+  model: string;
+  systemPrompt: string;
+  allowedTools: string[];
+  maxIterations: number;
+  tokenBudget: number;
+  suggestedRole: string;
+  suggestedDepartment: string;
+  tags: string[];
+}
+
+export interface AIAgentTemplateInstantiateInput {
+  name?: string;
+  credentialId: string;
+}
+
+export interface AIApprovalSummary {
+  id: string;
+  name: string;
+  originalActivityId: string;
+  originalActivityName: string;
+  triggeredRules: string[];
+  confidence: number;
+  createdAt: string;
+}
+
+export interface AIApprovalDetail {
+  id: string;
+  name: string;
+  status: string;
+  originalActivityId: string;
+  triggeredRules: string[];
+  proposedChanges: Array<{
+    field: string;
+    oldValue: unknown;
+    newValue: unknown;
+    confidence: number;
+  }>;
+  toolCalls: Array<{
+    name: string;
+    success: boolean;
+    error?: string;
+  }>;
+  confidence: number;
+  agentId: string;
+  agentName: string;
+  createdAt: string;
+}
+
+export interface AIUsageSummary {
+  today: { tokens: number; cost: number; operations: number };
+  week: { tokens: number; cost: number; operations: number };
+  month: { tokens: number; cost: number; operations: number };
+  byProvider: Record<string, { tokens: number; cost: number }>;
+  byModel: Record<string, { tokens: number; cost: number }>;
+}
+
+export interface AIUsageHistory {
+  date: string;
+  tokens: number;
+  cost: number;
+  operations: number;
+}
+
+export interface AICredentialUsage {
+  credentialId: string;
+  credentialName: string | null;
+  provider: string;
+  tokensUsed: number;
+  tokenLimit: number | null;
+  percentUsed: number | null;
+  costEstimate: number;
+}
+
+export interface AIAgentUsage {
+  agentId: string;
+  agentName: string;
+  tokens: number;
+  cost: number;
+  operations: number;
+}
+
+export interface AIUsageLogEntry {
+  id: string;
+  accountId: string;
+  credentialId: string;
+  agentId: string | null;
+  activityId: string | null;
+  model: string;
+  tokensPrompt: number;
+  tokensCompletion: number;
+  tokensTotal: number;
+  costEstimate: number;
+  operationType: string;
+  success: boolean;
+  errorMessage: string | null;
+  createdAt: string;
 }
 
 class ApiClient {
@@ -312,7 +665,13 @@ class ApiClient {
       }
     } else {
       // Legacy API Key bypass mode (for dev/scripts)
-      headers['X-API-Key'] = import.meta.env.VITE_ADMIN_KEY || 'secret';
+      const adminKey = import.meta.env.VITE_ADMIN_KEY;
+      if (!adminKey) {
+        console.warn('[API] VITE_ADMIN_KEY not configured - API requests may fail');
+      }
+      if (adminKey) {
+        headers['X-API-Key'] = adminKey;
+      }
       headers['x-user-id'] = '11111111-1111-1111-1111-111111111111';
       headers['x-account-id'] = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
     }
@@ -341,8 +700,9 @@ class ApiClient {
     const params = new URLSearchParams();
     if (type) params.append('type', type);
     if (accountId) params.append('account_id', accountId);
-    
-    return this.request<Entity[]>(`/records?${params.toString()}`);
+
+    const response = await this.request<{ data: Entity[], pagination: any }>(`/records?${params.toString()}`);
+    return response.data || [];
   }
 
   async getEntity(id: string): Promise<Entity> {
@@ -473,7 +833,9 @@ class ApiClient {
   async listDimensionValues(dimension?: string): Promise<DimensionValue[]> {
     const params = new URLSearchParams();
     if (dimension) params.append('dimension', dimension);
-    return this.request<DimensionValue[]>(`/dimensions?${params.toString()}`);
+    // Dimensions endpoint returns paginated response { data: [...], pagination: {...} }
+    const response = await this.request<{ data: DimensionValue[], pagination: any }>(`/dimensions?${params.toString()}`);
+    return response.data || [];
   }
 
   async getDimensionTypes(): Promise<DimensionType[]> {
@@ -611,6 +973,331 @@ class ApiClient {
 
   async completeActivity(activityId: string): Promise<Entity> {
       return this.request<Entity>(`/activities/${activityId}/complete`, { method: 'POST' });
+  }
+
+  // --- Page Assets (New Webbuilder System) ---
+
+  async listPages(accountId?: string, subjectType?: string): Promise<PageAsset[]> {
+    const params = new URLSearchParams();
+    if (accountId) params.append('account_id', accountId);
+    if (subjectType) params.append('subject_type', subjectType);
+    return this.request<PageAsset[]>(`/pages?${params.toString()}`);
+  }
+
+  async getPage(idOrSlug: string, resolve: boolean = true): Promise<PageAsset> {
+    const params = new URLSearchParams();
+    if (!resolve) params.append('resolve', 'false');
+    return this.request<PageAsset>(`/pages/${idOrSlug}?${params.toString()}`);
+  }
+
+  async createPage(input: CreatePageInput): Promise<PageAsset> {
+    return this.request<PageAsset>('/pages', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+  async updatePage(id: string, updates: Partial<PageAsset>): Promise<PageAsset> {
+    return this.request<PageAsset>(`/pages/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deletePage(id: string): Promise<void> {
+    return this.request<void>(`/pages/${id}`, { method: 'DELETE' });
+  }
+
+  async getPagePreview(id: string): Promise<{ page: PageAsset; compiled: CompiledSection[]; previewUrl: string }> {
+    return this.request(`/pages/${id}/preview`);
+  }
+
+  async addPageSection(pageId: string, section: AddSectionInput): Promise<{ section: SectionInstance; page: PageAsset }> {
+    return this.request(`/pages/${pageId}/sections`, {
+      method: 'POST',
+      body: JSON.stringify(section),
+    });
+  }
+
+  async updatePageSection(pageId: string, sectionId: string, updates: Record<string, unknown>): Promise<{ section: SectionInstance; page: PageAsset }> {
+    return this.request(`/pages/${pageId}/sections/${sectionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deletePageSection(pageId: string, sectionId: string): Promise<void> {
+    return this.request<void>(`/pages/${pageId}/sections/${sectionId}`, { method: 'DELETE' });
+  }
+
+  async linkPageToEntity(pageId: string, entityId: string, relationshipType?: string): Promise<{ relationship_type: string; from: string; to: string }> {
+    return this.request(`/pages/${pageId}/link`, {
+      method: 'POST',
+      body: JSON.stringify({ entity_id: entityId, relationship_type: relationshipType }),
+    });
+  }
+
+  async resolvePageBindings(pageId: string, accountId?: string): Promise<Array<{ sectionId: string; binding: Binding; resolved: { records: Array<{ id: string; slug: string; name: string; type: string }> } }>> {
+    const params = new URLSearchParams();
+    if (accountId) params.append('account_id', accountId);
+    return this.request(`/pages/${pageId}/bindings?${params.toString()}`);
+  }
+
+  // --- Presentation Presets ---
+
+  async listPresets(filter?: PresetFilter): Promise<PresentationPreset[]> {
+    const params = new URLSearchParams();
+    if (filter?.signature_kind) params.append('signature_kind', filter.signature_kind);
+    if (filter?.target) params.append('target', filter.target);
+    if (filter?.cardinality) params.append('cardinality', filter.cardinality);
+    if (filter?.account_id) params.append('account_id', filter.account_id);
+    return this.request<PresentationPreset[]>(`/presets?${params.toString()}`);
+  }
+
+  async getPreset(key: string): Promise<PresentationPreset> {
+    return this.request<PresentationPreset>(`/presets/${key}`);
+  }
+
+  async listCompatiblePresets(bindingKind: 'self' | 'related', target?: string, cardinality?: 'one' | 'many'): Promise<PresentationPreset[]> {
+    const params = new URLSearchParams({ binding_kind: bindingKind });
+    if (target) params.append('target', target);
+    if (cardinality) params.append('cardinality', cardinality);
+    return this.request<PresentationPreset[]>(`/presets/compatible?${params.toString()}`);
+  }
+
+  async createPreset(preset: Omit<PresentationPreset, 'version'>): Promise<PresentationPreset> {
+    return this.request<PresentationPreset>('/presets', {
+      method: 'POST',
+      body: JSON.stringify(preset),
+    });
+  }
+
+  async updatePreset(key: string, updates: Partial<PresentationPreset>): Promise<PresentationPreset> {
+    return this.request<PresentationPreset>(`/presets/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deletePreset(key: string): Promise<void> {
+    return this.request<void>(`/presets/${key}`, { method: 'DELETE' });
+  }
+
+  async clonePreset(key: string, newKey: string, accountId?: string): Promise<PresentationPreset> {
+    return this.request<PresentationPreset>(`/presets/${key}/clone`, {
+      method: 'POST',
+      body: JSON.stringify({ new_key: newKey, account_id: accountId }),
+    });
+  }
+
+  // ============================================================
+  // AI MODULE
+  // ============================================================
+
+  // --- Credentials ---
+
+  async listAICredentials(): Promise<AICredential[]> {
+    return this.request<AICredential[]>('/ai/credentials');
+  }
+
+  async createAICredential(input: AICredentialInput): Promise<AICredential> {
+    return this.request<AICredential>('/ai/credentials', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+  async updateAICredential(id: string, updates: Partial<AICredentialInput>): Promise<AICredential> {
+    return this.request<AICredential>(`/ai/credentials/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteAICredential(id: string): Promise<void> {
+    return this.request<void>(`/ai/credentials/${id}`, { method: 'DELETE' });
+  }
+
+  async testAICredential(id: string): Promise<{ valid: boolean; error?: string }> {
+    return this.request<{ valid: boolean; error?: string }>(`/ai/credentials/${id}/test`, {
+      method: 'POST',
+    });
+  }
+
+  // --- Providers ---
+
+  async listAIProviders(): Promise<{ providers: AIProvider[] }> {
+    return this.request<{ providers: AIProvider[] }>('/ai/providers');
+  }
+
+  // --- Activities ---
+
+  async listPendingAIActivities(): Promise<{ activities: AIActivity[] }> {
+    return this.request<{ activities: AIActivity[] }>('/ai/activities/pending');
+  }
+
+  async listRunningAIActivities(): Promise<{ activities: AIActivity[] }> {
+    return this.request<{ activities: AIActivity[] }>('/ai/activities/running');
+  }
+
+  async getAIActivityStatus(id: string): Promise<{ status: string; execution?: Record<string, unknown> }> {
+    return this.request<{ status: string; execution?: Record<string, unknown> }>(`/ai/activities/${id}/status`);
+  }
+
+  async queueAIActivity(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/ai/activities/${id}/queue`, {
+      method: 'POST',
+    });
+  }
+
+  async executeAIActivity(id: string): Promise<AIExecutionResult> {
+    return this.request<AIExecutionResult>(`/ai/activities/${id}/execute`, {
+      method: 'POST',
+    });
+  }
+
+  async evaluateAIActivityQualifiers(id: string): Promise<{
+    activityId: string;
+    allPassed: boolean;
+    won: boolean;
+    results: Array<{ qualifier: string; passed: boolean; value: unknown }>;
+    evaluatedAt: string;
+  }> {
+    return this.request(`/ai/activities/${id}/evaluate`, {
+      method: 'POST',
+    });
+  }
+
+  // --- Scheduler ---
+
+  async runAIScheduler(): Promise<AISchedulerResult> {
+    return this.request<AISchedulerResult>('/ai/scheduler/run', {
+      method: 'POST',
+    });
+  }
+
+  async startAIScheduler(intervalMs?: number): Promise<{ success: boolean; running: boolean; accountId: string; intervalMs: number }> {
+    return this.request('/ai/scheduler/start', {
+      method: 'POST',
+      body: JSON.stringify({ intervalMs }),
+    });
+  }
+
+  async stopAIScheduler(): Promise<{ success: boolean; running: boolean }> {
+    return this.request('/ai/scheduler/stop', {
+      method: 'POST',
+    });
+  }
+
+  async getAISchedulerStatus(): Promise<AISchedulerStatus> {
+    return this.request<AISchedulerStatus>('/ai/scheduler/status');
+  }
+
+  // --- Chat ---
+
+  async sendAIChatMessage(activityId: string, message: string): Promise<AIChatResponse> {
+    return this.request<AIChatResponse>(`/ai/chat/${activityId}/message`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  }
+
+  async getAIChatHistory(activityId: string): Promise<AIChatHistory> {
+    return this.request<AIChatHistory>(`/ai/chat/${activityId}/history`);
+  }
+
+  async clearAIChatHistory(activityId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/ai/chat/${activityId}/clear`, {
+      method: 'POST',
+    });
+  }
+
+  async closeAIChatSession(activityId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/ai/chat/${activityId}/close`, {
+      method: 'POST',
+    });
+  }
+
+  /**
+   * Stream AI chat response via SSE.
+   * Returns an EventSource that emits events: 'content', 'tool_call', 'tool_result', 'done', 'error'
+   */
+  createAIChatStream(activityId: string, message: string): EventSource {
+    const token = localStorage.getItem('vi_auth_token');
+    const accountId = localStorage.getItem('vi_active_account');
+    const encodedMessage = encodeURIComponent(message);
+
+    // Note: EventSource doesn't support custom headers, so we pass auth via query params
+    // This is less secure but necessary for SSE. Production should use cookies instead.
+    const url = `${API_BASE}/ai/chat/${activityId}/stream?message=${encodedMessage}&token=${token}&account=${accountId}`;
+
+    return new EventSource(url);
+  }
+
+  // --- Agent Templates ---
+
+  async listAgentTemplates(tag?: string, department?: string): Promise<{ templates: AIAgentTemplate[] }> {
+    const params = new URLSearchParams();
+    if (tag) params.append('tag', tag);
+    if (department) params.append('department', department);
+    return this.request<{ templates: AIAgentTemplate[] }>(`/ai/templates?${params.toString()}`);
+  }
+
+  async getAgentTemplate(slug: string): Promise<AIAgentTemplate> {
+    return this.request<AIAgentTemplate>(`/ai/templates/${slug}`);
+  }
+
+  async instantiateAgentTemplate(
+    slug: string,
+    input: AIAgentTemplateInstantiateInput
+  ): Promise<{ agent: Entity; template: AIAgentTemplate }> {
+    return this.request<{ agent: Entity; template: AIAgentTemplate }>(`/ai/templates/${slug}/instantiate`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
+
+  // --- Approvals ---
+
+  async listPendingApprovals(): Promise<{ approvals: AIApprovalSummary[] }> {
+    return this.request<{ approvals: AIApprovalSummary[] }>('/ai/approvals/pending');
+  }
+
+  async getApproval(id: string): Promise<AIApprovalDetail> {
+    return this.request<AIApprovalDetail>(`/ai/approvals/${id}`);
+  }
+
+  async handleApprovalDecision(
+    id: string,
+    decision: 'approved' | 'rejected',
+    comment?: string
+  ): Promise<{ success: boolean; decision: string; approvalActivityId: string }> {
+    return this.request(`/ai/approvals/${id}/decide`, {
+      method: 'POST',
+      body: JSON.stringify({ decision, comment }),
+    });
+  }
+
+  // --- Usage Dashboard ---
+
+  async getAIUsageSummary(): Promise<AIUsageSummary> {
+    return this.request<AIUsageSummary>('/ai/usage/summary');
+  }
+
+  async getAIUsageHistory(days: number = 30): Promise<{ history: AIUsageHistory[] }> {
+    return this.request<{ history: AIUsageHistory[] }>(`/ai/usage/history?days=${days}`);
+  }
+
+  async getAICredentialUsage(): Promise<{ credentials: AICredentialUsage[] }> {
+    return this.request<{ credentials: AICredentialUsage[] }>('/ai/usage/credentials');
+  }
+
+  async getAIAgentUsage(days: number = 30): Promise<{ agents: AIAgentUsage[] }> {
+    return this.request<{ agents: AIAgentUsage[] }>(`/ai/usage/agents?days=${days}`);
+  }
+
+  async getAIRecentUsage(limit: number = 50): Promise<{ entries: AIUsageLogEntry[] }> {
+    return this.request<{ entries: AIUsageLogEntry[] }>(`/ai/usage/recent?limit=${limit}`);
   }
 }
 

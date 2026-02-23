@@ -2,13 +2,29 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { initDb } from '../core/db.js';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { db, initDb } from '../core/db.js';
 import recordsRouter from './routes/records.js';
 import relationshipsRouter from '../modules/content/api/relationships.js';
 import '../modules/crm/crm.ts'; // Register CRM Hooks (Tier 1)
+import '../modules/health/health.js'; // Register Health Hooks
+import '../modules/workflows/workflows.js'; // Register Workflow Hooks
 import { errorHandler } from './middleware/errorHandler.js';
 import configRouter from './routes/config.js';
 import { initSecurityHooks } from '../core/security.js';
+
+// Global error handlers for uncaught errors
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[Server] Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit - log and continue
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('[Server] Uncaught Exception:', err);
+    // Exit on uncaught - state may be corrupt
+    process.exit(1);
+});
 
 // Initialize Security (Tier 0)
 initSecurityHooks();
@@ -21,6 +37,8 @@ import dimensionsRouter from './routes/dimensions.js';
 import reseedRouter from './routes/reseed.js';
 import domainsRouter from '../modules/delivery/api/domains.js';
 import schemaRouter from './routes/schema.js';
+import pagesRouter from './routes/pages.js';
+import presetsRouter from './routes/presets.js';
 
 import { initDeliveryModule } from '../modules/delivery/index.js';
 import { fileURLToPath } from 'url';
@@ -36,12 +54,52 @@ const PORT = process.env.API_PORT || 3001;
 // MOVED inside auto-start block or export
 
 // Middleware
+// CORS configuration - allow all localhost ports in development
+const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [];
 app.use(cors({
-  origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    // Allow all localhost/127.0.0.1 origins in development
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
+    // Check explicit allowlist
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' })); // Increased for reseed payloads
 app.use(cookieParser());
+
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled for now - needs tuning for React apps
+  crossOriginEmbedderPolicy: false, // Allow embedding for preview iframes
+}));
+
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // 500 requests per 15 minutes
+  message: { error: 'Too many requests, please try again later', status: 429 },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 auth attempts per 15 minutes
+  message: { error: 'Too many authentication attempts, please try again later', status: 429 },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply general rate limit to all API routes
+app.use('/api', generalLimiter);
 
 // Audit Log (Phase 14)
 import { auditMiddleware } from './middleware/audit.js';
@@ -61,12 +119,6 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 const THEME_DIST_DIR = path.resolve(process.cwd(), 'src/themes/victory-studio/dist');
 app.use('/preview-theme', express.static(THEME_DIST_DIR));
 
-// Request logging
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
-  next();
-});
-
 // API Routes
 app.use('/api/records', recordsRouter);
 app.use('/api/relationships', relationshipsRouter);
@@ -78,11 +130,15 @@ app.use('/api/builds', buildRouter);
 app.use('/api/dimensions', dimensionsRouter);
 app.use('/api/domains', domainsRouter);
 app.use('/api/schema', schemaRouter);
+app.use('/api/pages', pagesRouter);
+app.use('/api/presets', presetsRouter);
 // app.use('/api/domains', domainsRouter); // Duplicate removed
 
 import analyticsRouter from '../modules/crm/api/analytics.js';
 import '../modules/activities/activities.js'; // Register Activity Engine Hooks
 import '../modules/commercial/commercial.js'; // Register Commercial Engine Hooks
+// Invariant validations are now data-driven via ConstraintEngine
+// Legacy hook registration removed - validation_constraint records enforce invariants
 import activitiesRouter from '../modules/activities/api/routes.js';
 import commercialRouter from '../modules/commercial/api/routes.js';
 
@@ -101,7 +157,14 @@ app.use('/api/users', usersRouter);
 
 // Auth Module (ODAC - Opportunity-Driven Access Control)
 import authRouter from '../modules/auth/api/routes.js';
-app.use('/api/auth', authRouter);
+app.use('/api/auth', authLimiter, authRouter);
+
+// AI Module (AI Agent Integration)
+import aiRouter from '../modules/ai/api/routes.js';
+app.use('/api/ai', aiRouter);
+
+// Register AI hooks for automatic activity execution
+import('../modules/ai/index.js').then(ai => ai.registerAIHooks());
 
 import uploadRouter from './routes/upload.js';
 app.use('/api/upload', uploadRouter);
@@ -117,13 +180,60 @@ app.use(errorHandler);
 // Start server function
 import type { Server } from 'http';
 
+// Track active server for graceful shutdown
+let activeServer: Server | null = null;
+
+function gracefulShutdown(signal: string) {
+    console.log(`\n[Server] ${signal} received, shutting down gracefully...`);
+
+    if (activeServer) {
+        activeServer.close(() => {
+            console.log('[Server] HTTP server closed');
+            // Close database connection
+            try {
+                db.close();
+                console.log('[Server] Database connection closed');
+            } catch (err) {
+                console.error('[Server] Error closing database:', err instanceof Error ? err.message : String(err));
+            }
+            process.exit(0);
+        });
+
+        // Force exit after 10 seconds
+        setTimeout(() => {
+            console.error('[Server] Forced shutdown after timeout');
+            process.exit(1);
+        }, 10000);
+    } else {
+        process.exit(0);
+    }
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 export function startServer(port: number = Number(PORT)): Promise<Server> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const server = app.listen(port, '0.0.0.0', () => {
-            console.log(`API server running at http://0.0.0.0:${(server.address() as any).port}`);
+            const addr = server.address();
+            if (addr && typeof addr === 'object') {
+                console.log(`API server running at http://0.0.0.0:${addr.port}`);
+            } else {
+                console.log(`API server running on port ${port}`);
+            }
             console.log('Available endpoints:');
             console.log('  GET    /api/health');
+            activeServer = server; // Track for graceful shutdown
             resolve(server);
+        });
+
+        server.on('error', (err: NodeJS.ErrnoException) => {
+            if (err.code === 'EADDRINUSE') {
+                console.error(`Port ${port} is already in use`);
+            } else {
+                console.error('Server error:', err.message);
+            }
+            reject(err);
         });
     });
 }
@@ -135,7 +245,31 @@ const modulePath = fileURLToPath(import.meta.url);
 if (nodePath === modulePath) {
     console.log('Initializing database...');
     initDb();
-    startServer();
+    startServer().then(async () => {
+        // Optionally start AI scheduler based on environment variable
+        if (process.env.AI_SCHEDULER_AUTO_START === 'true') {
+            const { startScheduler } = await import('../modules/ai/execution/scheduler.js');
+            const intervalMs = parseInt(process.env.AI_SCHEDULER_INTERVAL || '30000');
+            console.log(`[AI] Starting background scheduler (interval: ${intervalMs}ms)`);
+            startScheduler('', intervalMs); // Empty string = all accounts
+        }
+
+        // Optionally start Workflow scheduler
+        if (process.env.WORKFLOW_SCHEDULER_AUTO_START === 'true') {
+            const { startWorkflowScheduler } = await import('../modules/workflows/scheduler.js');
+            const intervalMs = parseInt(process.env.WORKFLOW_SCHEDULER_INTERVAL || '60000');
+            console.log(`[Workflows] Starting background scheduler (interval: ${intervalMs}ms)`);
+            startWorkflowScheduler('', intervalMs);
+        }
+
+        // Optionally start Health decay daemon
+        if (process.env.HEALTH_DAEMON_AUTO_START === 'true') {
+            const { startHealthDaemon } = await import('../modules/health/daemon.js');
+            const intervalMs = parseInt(process.env.HEALTH_DAEMON_INTERVAL || '300000');
+            console.log(`[Health] Starting decay daemon (interval: ${intervalMs}ms)`);
+            startHealthDaemon('', intervalMs);
+        }
+    });
 }
 
 // Export for integration testing

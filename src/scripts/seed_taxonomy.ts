@@ -116,7 +116,8 @@ export function createDependency(
             account_id: null
         });
         return true;
-    } catch {
+    } catch (err) {
+        console.warn(`[Taxonomy] Insert dependency failed: ${err instanceof Error ? err.message : String(err)}`);
         return false;
     }
 }
@@ -290,6 +291,27 @@ function seedJobRoles() {
     console.log(`✅ Seeded ${seniorities.size} seniorities.`);
 }
 
+// --- OBJECT CATEGORIES ---
+// Phase 1 of Data-Driven Sidebar Categories
+
+function seedObjectCategories() {
+    console.log('📂 Seeding Object Categories...');
+
+    const categories = [
+        { label: 'CRM', metadata: { icon: 'users', order: 1, description: 'Customer Relationship Management' } },
+        { label: 'Creative', metadata: { icon: 'palette', order: 2, description: 'Content and asset management' } },
+        { label: 'Growth', metadata: { icon: 'trending-up', order: 3, description: 'Marketing and pipeline management' } },
+        { label: 'System', metadata: { icon: 'settings', order: 4, description: 'System configuration and administration' } },
+        { label: 'Custom', metadata: { icon: 'box', order: 99, description: 'User-defined object types' } },
+    ];
+
+    for (const cat of categories) {
+        upsertDimension('object_category', cat.label, null, cat.metadata);
+    }
+
+    console.log(`✅ Seeded ${categories.length} object categories.`);
+}
+
 // --- PHASE 4: DEPENDENCY SEEDERS ---
 
 function seedIndustryDependencies() {
@@ -369,6 +391,7 @@ export function seedTaxonomy() {
             seedIndustries();
             seedCompanySize();
             seedJobRoles();
+            seedObjectCategories();
 
             // Phase 4: Seed dependencies (after values exist)
             seedIndustryDependencies();
