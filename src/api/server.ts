@@ -2,8 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { securityHeaders } from './middleware/securityHeaders.js';
 import { db, initDb } from '../core/db.js';
 import { createLogger } from '../core/logger.js';
 import '../core/env.js'; // Validate environment at startup
@@ -80,11 +80,8 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' })); // Increased for reseed payloads
 app.use(cookieParser());
 
-// Security headers
-app.use(helmet({
-  contentSecurityPolicy: false, // Disabled for now - needs tuning for React apps
-  crossOriginEmbedderPolicy: false, // Allow embedding for preview iframes
-}));
+// Security headers (CSP, HSTS, X-Frame-Options, etc.)
+app.use(securityHeaders);
 
 // Rate limiting
 const generalLimiter = rateLimit({
