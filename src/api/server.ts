@@ -177,10 +177,13 @@ import('../modules/ai/index.js').then(ai => ai.registerAIHooks());
 import uploadRouter from './routes/upload.js';
 app.use('/api/upload', uploadRouter);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+// API Documentation (Swagger UI)
+import docsRouter from './routes/docs.js';
+app.use('/api/docs', docsRouter);
+
+// Health check endpoints (Kubernetes probes)
+import healthRouter from './routes/health.js';
+app.use('/api/health', healthRouter);
 
 // Error handler (must be last)
 app.use(errorHandler);

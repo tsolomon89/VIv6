@@ -8,7 +8,6 @@ const __dirname = path.dirname(__filename);
 
 const DB_PATH = path.resolve(process.cwd(), 'data/vi.sqlite');
 const SCHEMA_PATH = path.resolve(__dirname, 'schema.sql');
-console.log('[DB] Resolved SCHEMA_PATH:', SCHEMA_PATH);
 
 // Ensure data directory exists
 // Ensure data directory exists
@@ -35,9 +34,7 @@ export function initDb() {
 
 export function resetDb() {
     if (!isTest) throw new Error('Cannot reset DB in non-test environment');
-    
-    console.error('[DEBUG] resetDb() called');
-    
+
     // Drop all tables and re-init
     // Or just re-run schema if we assumes schema drops if exists? 
     // Schema usually has CREATE TABLE IF NOT EXISTS.
@@ -57,8 +54,5 @@ export function resetDb() {
     initDb();
 }
 
-// Simple migration runner (placeholder for more robust solution)
-export function runMigrations() {
-  initDb();
-  // Future: Read from src/core/migrations/ and apply
-}
+// Re-export migration runner functions
+export { runMigrations, getMigrationStatus, isMigrationApplied } from './migrations/runner.js';
