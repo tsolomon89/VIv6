@@ -1,0 +1,333 @@
+[
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000001",
+    "type": "validation_constraint",
+    "slug": "product_name_max_length",
+    "name": "Product name max 26 characters",
+    "summary": "Product names must be 26 characters or less for display consistency",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "product",
+      "trigger": "pre_create",
+      "constraint_type": "max_length",
+      "field": "name",
+      "max_length": 26,
+      "error_code": "INV-PRODUCT-NAME",
+      "error_message": "Product name must be 26 characters or less"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000002",
+    "type": "validation_constraint",
+    "slug": "product_name_max_length_update",
+    "name": "Product name max 26 characters (update)",
+    "summary": "Product names must be 26 characters or less when updating",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "product",
+      "trigger": "pre_update",
+      "constraint_type": "max_length",
+      "field": "name",
+      "max_length": 26,
+      "error_code": "INV-PRODUCT-NAME",
+      "error_message": "Product name must be 26 characters or less"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000003",
+    "type": "validation_constraint",
+    "slug": "activity_completion_duration",
+    "name": "Activity completion requires duration",
+    "summary": "Completed activities must have duration > 0 seconds",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "activity",
+      "trigger": "pre_update",
+      "constraint_type": "min_value",
+      "field": "duration_seconds",
+      "min_value": 1,
+      "condition": { "field": "status", "op": "eq", "value": "completed" },
+      "error_code": "INV-ACTIVITY-DURATION",
+      "error_message": "Activity completion requires duration > 0 seconds"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000004",
+    "type": "validation_constraint",
+    "slug": "opportunity_requires_product",
+    "name": "Opportunity requires primary product",
+    "summary": "All opportunities must have a primary_product_id reference",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "opportunity",
+      "trigger": "pre_create",
+      "constraint_type": "required_field",
+      "field": "primary_product_id",
+      "error_code": "INV-PRODUCT-TENSOR",
+      "error_message": "Opportunity must have a primary product reference (primary_product_id)"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000005",
+    "type": "validation_constraint",
+    "slug": "opportunity_requires_pipeline",
+    "name": "Opportunity requires pipeline_type",
+    "summary": "All opportunities must specify a valid pipeline_type from seeded pipeline_stage records",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "opportunity",
+      "trigger": "pre_create",
+      "constraint_type": "exists_in",
+      "field": "pipeline_type",
+      "validation": "exists_in_pipeline_stages",
+      "error_code": "INV-PIPELINE-TYPE",
+      "error_message": "Opportunity must specify a valid pipeline_type"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000006",
+    "type": "validation_constraint",
+    "slug": "opportunity_requires_anchors",
+    "name": "Opportunity requires Account and Contact",
+    "summary": "All opportunities should have both primary_account_id and primary_contact_id (warning only)",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "opportunity",
+      "trigger": "pre_create",
+      "constraint_type": "required_fields",
+      "fields": ["primary_account_id", "primary_contact_id"],
+      "severity": "warning",
+      "error_code": "INV-OPP-ANCHOR",
+      "error_message": "Opportunity recommended to have both primary_account_id and primary_contact_id"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000007",
+    "type": "validation_constraint",
+    "slug": "use_case_requires_solution_persona",
+    "name": "Use Case requires Solution and Persona",
+    "summary": "Use cases must link a solution to a persona",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "useCase",
+      "trigger": "pre_create",
+      "constraint_type": "required_fields",
+      "fields": ["linked_solution_id", "linked_persona_id"],
+      "error_code": "INV-USECASE",
+      "error_message": "Use case requires both a linked solution and persona (linked_solution_id and linked_persona_id)"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000008",
+    "type": "validation_constraint",
+    "slug": "b2b_requires_decision_maker",
+    "name": "B2B Product requires Decision Maker persona",
+    "summary": "B2B products must be linked to at least one persona with power_level >= 3",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "product",
+      "trigger": "validation_endpoint",
+      "constraint_type": "relationship_exists",
+      "condition": { "field": "product_type", "op": "eq", "value": "B2B" },
+      "relationship_type": "targets_persona",
+      "target_dimension": "persona",
+      "power_level_minimum": 3,
+      "error_code": "INV-B2B-PERSONA",
+      "error_message": "B2B product must have at least one Decision Maker persona linked"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000009",
+    "type": "validation_constraint",
+    "slug": "taxonomy_violation_triggers_activity",
+    "name": "Taxonomy violation triggers Data Activity",
+    "summary": "When a record has invalid taxonomy values, automatically create a Data Activity for cleanup",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "contact",
+      "trigger": "post_create",
+      "constraint_type": "trigger_activity",
+      "condition_field": "requires_data_cleanup",
+      "condition_value": true,
+      "activity_def_slug": "data_cleanup",
+      "error_code": "INV-TAXONOMY",
+      "error_message": "Invalid taxonomy value detected, data cleanup activity created"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000010",
+    "type": "validation_constraint",
+    "slug": "contact_email_format",
+    "name": "Contact email format validation",
+    "summary": "Contact email must be a valid email format when provided",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "contact",
+      "trigger": "pre_create",
+      "constraint_type": "pattern",
+      "field": "email",
+      "pattern": "^$|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+      "allow_empty": true,
+      "error_code": "INV-EMAIL-FORMAT",
+      "error_message": "Email must be a valid format (e.g., name@example.com)"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000011",
+    "type": "validation_constraint",
+    "slug": "contact_email_format_update",
+    "name": "Contact email format validation (update)",
+    "summary": "Contact email must be a valid email format when updating",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "contact",
+      "trigger": "pre_update",
+      "constraint_type": "pattern",
+      "field": "email",
+      "pattern": "^$|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+      "allow_empty": true,
+      "error_code": "INV-EMAIL-FORMAT",
+      "error_message": "Email must be a valid format (e.g., name@example.com)"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000012",
+    "type": "validation_constraint",
+    "slug": "contact_phone_format",
+    "name": "Contact phone format validation",
+    "summary": "Contact phone must contain only valid phone characters when provided",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "contact",
+      "trigger": "pre_create",
+      "constraint_type": "pattern",
+      "field": "phone",
+      "pattern": "^$|^[+]?[0-9\\s\\-().ext]+$",
+      "allow_empty": true,
+      "error_code": "INV-PHONE-FORMAT",
+      "error_message": "Phone must contain only numbers, spaces, dashes, parentheses, or + prefix"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000013",
+    "type": "validation_constraint",
+    "slug": "contact_phone_format_update",
+    "name": "Contact phone format validation (update)",
+    "summary": "Contact phone must contain only valid phone characters when updating",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "contact",
+      "trigger": "pre_update",
+      "constraint_type": "pattern",
+      "field": "phone",
+      "pattern": "^$|^[+]?[0-9\\s\\-().ext]+$",
+      "allow_empty": true,
+      "error_code": "INV-PHONE-FORMAT",
+      "error_message": "Phone must contain only numbers, spaces, dashes, parentheses, or + prefix"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000014",
+    "type": "validation_constraint",
+    "slug": "page_url_format",
+    "name": "Page URL path format validation",
+    "summary": "Page URL paths must be valid URL-safe strings",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "page",
+      "trigger": "pre_create",
+      "constraint_type": "pattern",
+      "field": "url_path",
+      "pattern": "^/[a-zA-Z0-9/_-]*$",
+      "error_code": "INV-URL-PATH",
+      "error_message": "URL path must start with / and contain only letters, numbers, underscores, or hyphens"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000015",
+    "type": "validation_constraint",
+    "slug": "page_url_format_update",
+    "name": "Page URL path format validation (update)",
+    "summary": "Page URL paths must be valid URL-safe strings when updating",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "page",
+      "trigger": "pre_update",
+      "constraint_type": "pattern",
+      "field": "url_path",
+      "pattern": "^/[a-zA-Z0-9/_-]*$",
+      "error_code": "INV-URL-PATH",
+      "error_message": "URL path must start with / and contain only letters, numbers, underscores, or hyphens"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000016",
+    "type": "validation_constraint",
+    "slug": "account_website_format",
+    "name": "Account website URL format validation",
+    "summary": "Account website must be a valid URL when provided",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "account",
+      "trigger": "pre_create",
+      "constraint_type": "pattern",
+      "field": "website",
+      "pattern": "^$|^https?://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(/.*)?$",
+      "allow_empty": true,
+      "error_code": "INV-WEBSITE-FORMAT",
+      "error_message": "Website must be a valid URL (e.g., https://example.com)"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000017",
+    "type": "validation_constraint",
+    "slug": "account_website_format_update",
+    "name": "Account website URL format validation (update)",
+    "summary": "Account website must be a valid URL when updating",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "account",
+      "trigger": "pre_update",
+      "constraint_type": "pattern",
+      "field": "website",
+      "pattern": "^$|^https?://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(/.*)?$",
+      "allow_empty": true,
+      "error_code": "INV-WEBSITE-FORMAT",
+      "error_message": "Website must be a valid URL (e.g., https://example.com)"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000018",
+    "type": "validation_constraint",
+    "slug": "user_email_format",
+    "name": "User email format validation",
+    "summary": "User email must be a valid email format",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "user",
+      "trigger": "pre_create",
+      "constraint_type": "pattern",
+      "field": "email",
+      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+      "error_code": "INV-USER-EMAIL",
+      "error_message": "User email must be a valid email format"
+    }
+  },
+  {
+    "id": "constraint-00000000-0000-0000-0000-000000000019",
+    "type": "validation_constraint",
+    "slug": "slug_format",
+    "name": "Slug format validation",
+    "summary": "Slugs must be URL-safe lowercase identifiers",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "*",
+      "trigger": "pre_create",
+      "constraint_type": "pattern",
+      "field": "slug",
+      "pattern": "^[a-z0-9]+(?:[-_][a-z0-9]+)*$",
+      "error_code": "INV-SLUG-FORMAT",
+      "error_message": "Slug must be lowercase letters, numbers, hyphens, or underscores (no spaces or special characters)"
+    }
+  }
+]
