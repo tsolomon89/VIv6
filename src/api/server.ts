@@ -2,8 +2,16 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import rateLimit from 'express-rate-limit';
 import { securityHeaders } from './middleware/securityHeaders.js';
+import {
+    generalLimiter,
+    authLimiter,
+    uploadLimiter,
+    buildLimiter,
+    reseedLimiter,
+    aiLimiter,
+    deriveLimiter,
+} from './middleware/rateLimiting.js';
 import { db, initDb } from '../core/db.js';
 import { createLogger } from '../core/logger.js';
 import '../core/env.js'; // Validate environment at startup
@@ -14,6 +22,7 @@ import '../modules/health/health.js'; // Register Health Hooks
 import '../modules/workflows/workflows.js'; // Register Workflow Hooks
 import { errorHandler } from './middleware/errorHandler.js';
 import { correlationIdMiddleware } from './middleware/correlationId.js';
+import { metricsMiddleware } from './middleware/metricsMiddleware.js';
 import configRouter from './routes/config.js';
 import { initSecurityHooks } from '../core/security.js';
 
@@ -83,28 +92,15 @@ app.use(cookieParser());
 // Security headers (CSP, HSTS, X-Frame-Options, etc.)
 app.use(securityHeaders);
 
-// Rate limiting
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // 500 requests per 15 minutes
-  message: { error: 'Too many requests, please try again later', status: 429 },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // 20 auth attempts per 15 minutes
-  message: { error: 'Too many authentication attempts, please try again later', status: 429 },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Apply general rate limit to all API routes
+// Apply general rate limit to all API routes (500 req/15min)
+// Specific endpoints have stricter limits applied at route level
 app.use('/api', generalLimiter);
 
 // Correlation ID for request tracing
 app.use('/api', correlationIdMiddleware);
+
+// Metrics collection (Prometheus)
+app.use('/api', metricsMiddleware);
 
 // Audit Log (Phase 14)
 import { auditMiddleware } from './middleware/audit.js';
@@ -130,8 +126,8 @@ app.use('/api/relationships', relationshipsRouter);
 app.use('/api/config', configRouter);
 app.use('/api/templates', templatesRouter);
 
-app.use('/api/derive', deriveRouter);
-app.use('/api/builds', buildRouter);
+app.use('/api/derive', deriveLimiter, deriveRouter);
+app.use('/api/builds', buildLimiter, buildRouter);
 app.use('/api/dimensions', dimensionsRouter);
 app.use('/api/domains', domainsRouter);
 app.use('/api/schema', schemaRouter);
@@ -152,7 +148,7 @@ app.use('/api/activities', activitiesRouter);
 app.use('/api/commercial', commercialRouter);
 
 import { protectedRoute } from '../modules/auth/middleware.js';
-app.use('/api/reseed', ...protectedRoute, reseedRouter);
+app.use('/api/reseed', reseedLimiter, ...protectedRoute, reseedRouter);
 // Phase 3: Headless Infrastructure
 import componentsRouter from './routes/components.js';
 app.use('/api/components', componentsRouter);
@@ -166,13 +162,13 @@ app.use('/api/auth', authLimiter, authRouter);
 
 // AI Module (AI Agent Integration)
 import aiRouter from '../modules/ai/api/routes.js';
-app.use('/api/ai', aiRouter);
+app.use('/api/ai', aiLimiter, aiRouter);
 
 // Register AI hooks for automatic activity execution
 import('../modules/ai/index.js').then(ai => ai.registerAIHooks());
 
 import uploadRouter from './routes/upload.js';
-app.use('/api/upload', uploadRouter);
+app.use('/api/upload', uploadLimiter, uploadRouter);
 
 // API Documentation (Swagger UI)
 import docsRouter from './routes/docs.js';
@@ -181,6 +177,10 @@ app.use('/api/docs', docsRouter);
 // Health check endpoints (Kubernetes probes)
 import healthRouter from './routes/health.js';
 app.use('/api/health', healthRouter);
+
+// Prometheus metrics endpoint
+import metricsRouter from './routes/metrics.js';
+app.use('/api/metrics', metricsRouter);
 
 // Error handler (must be last)
 app.use(errorHandler);
