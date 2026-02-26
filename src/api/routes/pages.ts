@@ -212,69 +212,6 @@ router.post('/', ...protectedRoute, async (req: Request, res: Response, next: Ne
 });
 
 /**
- * PUT /api/pages/:id - Update page
- */
-router.put('/:id', ...protectedRoute, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = req.params.id as string;
-    const updates = req.body;
-
-    const existing = getRecord(id);
-    if (!existing || !isPageRecord(existing)) {
-      res.status(404).json({
-        error: 'Page not found',
-        status: 404,
-      });
-      return;
-    }
-
-    const record = await updateRecord(id, updates);
-    if (!record) {
-      res.status(500).json({
-        error: 'Failed to update page',
-        status: 500,
-      });
-      return;
-    }
-
-    res.json(record);
-  } catch (err) {
-    next(err);
-  }
-});
-
-/**
- * DELETE /api/pages/:id - Delete page
- */
-router.delete('/:id', ...protectedRoute, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = req.params.id as string;
-
-    const existing = getRecord(id);
-    if (!existing || !isPageRecord(existing)) {
-      res.status(404).json({
-        error: 'Page not found',
-        status: 404,
-      });
-      return;
-    }
-
-    const deleted = await deleteRecord(id);
-    if (!deleted) {
-      res.status(500).json({
-        error: 'Failed to delete page',
-        status: 500,
-      });
-      return;
-    }
-
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
-
-/**
  * GET /api/pages/:id/preview - Get compiled page data for preview
  */
 router.get('/:id/preview', ...protectedRoute, async (req: Request, res: Response, next: NextFunction) => {

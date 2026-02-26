@@ -14,6 +14,9 @@
 - **Channel**: The distribution method of an Asset (e.g., `email`, `social`).
 - **Context**: The runtime state, including Current Account, User, and Environment.
 
+## D
+- **DataRecord**: The Data Transfer Object (DTO) representing the flat DB projection of a Record, used in API transit and business logic.
+
 ## F
 - **Feature**: A functional capability (`obj_feature`) sold as part of a Product.
 - **FieldDef**: A Meta-Record (`obj_field_def`) defining a single attribute of an Object.
@@ -37,7 +40,7 @@
 - **Product**: A sellable unit (`obj_product`) containing Features.
 
 ## R
-- **RecordStruct**: The storage format. Normalized, reference-based JSON.
+- **RecordStruct**: The strict, denormalized, hydrated UI format (TypeScript interface). Distinct from the flat `DataRecord`.
 - **Resource Economy**: The set of rules governing Action Capacity and Entity Health.
 
 ## S

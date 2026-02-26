@@ -60,7 +60,7 @@ Since the backend is an Event Log (Async), the UI MUST be Optimistic.
 ### B. The Reader: Flattened Structs (Assembler)
 - **Location**: `src/build/assembler.ts`
 - **Role**: Flattens the complex `Entity` structure into simple Key-Value pairs for the UI.
-- **Function**: `flattenEntityData(data: EntityData): Record<string, any>`
+- **Function**: `Reader.project(data: EntityData): Record<string, any>`
 
 ### C. The Visual Bridge
 - **Location**: `src/ui/src/features/VisualEditor/Bridge.ts`

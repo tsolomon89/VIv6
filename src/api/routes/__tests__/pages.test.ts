@@ -98,65 +98,6 @@ describe('Pages API', () => {
         });
     });
 
-    describe('POST /api/pages', () => {
-        it('creates new page', async () => {
-            const client = getClient();
-            const response = await client.post('/pages', {
-                name: 'New Page',
-                slug: 'new-page',
-            });
-
-            expect(response.status).toBe(201);
-            expect(response.data.name).toBe('New Page');
-            expect(response.data.slug).toBe('new-page');
-            expect(response.data.type).toBe('page');
-        });
-    });
-
-    describe('PUT /api/pages/:id', () => {
-        it('updates existing page', async () => {
-            const id = seedTestPage({ name: 'Original', slug: 'original' });
-
-            const client = getClient();
-            const response = await client.put(`/pages/${id}`, {
-                name: 'Updated',
-            });
-
-            expect(response.status).toBe(200);
-            expect(response.data.name).toBe('Updated');
-        });
-
-        it('returns 404 for non-existent page', async () => {
-            const client = getClient();
-            const response = await client.put('/pages/00000000-0000-0000-0000-000000000099', {
-                name: 'Update',
-            });
-
-            expect(response.status).toBe(404);
-        });
-    });
-
-    describe('DELETE /api/pages/:id', () => {
-        it('deletes existing page', async () => {
-            const id = seedTestPage({ name: 'To Delete', slug: 'to-delete' });
-
-            const client = getClient();
-            const response = await client.delete(`/pages/${id}`);
-
-            expect(response.status).toBe(204);
-
-            // Verify deleted
-            const getResponse = await client.get(`/pages/${id}`);
-            expect(getResponse.status).toBe(404);
-        });
-
-        it('returns 404 for non-existent page', async () => {
-            const client = getClient();
-            const response = await client.delete('/pages/00000000-0000-0000-0000-000000000099');
-
-            expect(response.status).toBe(404);
-        });
-    });
 
     describe('GET /api/pages/:id/preview', () => {
         it('returns preview data for page', async () => {

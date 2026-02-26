@@ -40,8 +40,8 @@ Success is raw JSON. Errors follow RFC 7807 (Problem Details).
 
 ## 3. Resource Endpoints
 
-### Entities (`/api/entities`)
-The core CRUD for the Fact Store.
+### Records (`/api/records`)
+The core CRUD for the Fact Store. Handles all polymorphic operations.
 
 | Method | Endpoint | payload | Description |
 | :--- | :--- | :--- | :--- |
