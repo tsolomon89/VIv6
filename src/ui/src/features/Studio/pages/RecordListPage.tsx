@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../../../lib/api';
+import { showToast } from '../../../hooks/useToast';
 import { Plus } from 'lucide-react';
 import { ContextSidebar } from '../components/ContextSidebar';
 import { RecordKanbanBoard } from '../components/RecordKanbanBoard';
@@ -54,7 +54,7 @@ export function RecordListPage() {
             // Note: Use deep merge for data in real app
         } catch (e) {
             console.error('Failed to update record', e);
-            alert('Failed to update record');
+            showToast.error('Failed to update record');
         }
     };
 

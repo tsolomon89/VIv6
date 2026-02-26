@@ -76,5 +76,139 @@ export const apiClient = {
         if (!res.ok) throw new Error('Failed to upload image');
         const data = await res.json();
         return data.url;
+    },
+
+    // =========================================================================
+    // Pages API (Webbuilder Integration)
+    // =========================================================================
+
+    /**
+     * List all page assets
+     */
+    async listPages(accountId?: string, subjectType?: string): Promise<PageAsset[]> {
+        const params = new URLSearchParams();
+        if (accountId) params.append('account_id', accountId);
+        if (subjectType) params.append('subject_type', subjectType);
+
+        const res = await fetch(`${API_BASE}/pages?${params}`);
+        if (!res.ok) throw new Error('Failed to fetch pages');
+        return res.json();
+    },
+
+    /**
+     * Get a page by ID or slug, optionally with resolved bindings
+     */
+    async getPage(idOrSlug: string, resolve = false): Promise<PageAsset> {
+        const res = await fetch(`${API_BASE}/pages/${idOrSlug}?resolve=${resolve}`);
+        if (!res.ok) throw new Error('Failed to fetch page');
+        return res.json();
+    },
+
+    /**
+     * Update a page
+     */
+    async updatePage(id: string, updates: Partial<PageAsset>): Promise<PageAsset> {
+        const res = await fetch(`${API_BASE}/pages/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+        });
+        if (!res.ok) throw new Error('Failed to update page');
+        return res.json();
+    },
+
+    // =========================================================================
+    // Presets API
+    // =========================================================================
+
+    /**
+     * List all presentation presets
+     */
+    async listPresets(): Promise<PresentationPresetAPI[]> {
+        const res = await fetch(`${API_BASE}/presets`);
+        if (!res.ok) throw new Error('Failed to fetch presets');
+        return res.json();
+    },
+
+    /**
+     * Get a preset by key
+     */
+    async getPreset(key: string): Promise<PresentationPresetAPI> {
+        const res = await fetch(`${API_BASE}/presets/${key}`);
+        if (!res.ok) throw new Error('Failed to fetch preset');
+        return res.json();
     }
 };
+
+// =========================================================================
+// Types for Pages/Presets API
+// =========================================================================
+
+export interface PageAsset {
+    id: string;
+    slug: string;
+    name: string;
+    type: string;
+    account_id: string;
+    data: {
+        attribution?: {
+            channel: string;
+            medium: string;
+            source: string;
+            referralType: string;
+            version: string;
+        };
+        pageConfig?: {
+            schemaVersion: number;
+            pageContext: { kind: string };
+            pageSubject: { target: string; cardinality: string };
+            templateKey?: string;
+        };
+        sections?: SectionInstanceAPI[];
+        fieldGroups?: unknown[];
+    };
+    compiledSections?: CompiledSectionAPI[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SectionInstanceAPI {
+    id: string;
+    binding: {
+        kind: 'self' | 'related' | 'view';
+        target?: string;
+        cardinality?: 'one' | 'many';
+        relationKey?: string;
+    };
+    presentationKey: string;
+    placement: { slot: string; order?: number };
+    overrides?: Record<string, unknown>;
+}
+
+export interface CompiledSectionAPI {
+    id: string;
+    binding: SectionInstanceAPI['binding'];
+    presentationKey?: string;
+    placement: { slot: string; order?: number };
+    config: Record<string, unknown>;
+    resolvedData: Array<{
+        id: string;
+        slug: string;
+        name: string;
+        type: string;
+        data?: Record<string, unknown>;
+    }>;
+}
+
+export interface PresentationPresetAPI {
+    id: string;
+    key: string;
+    name: string;
+    signature: {
+        kind: 'self' | 'related';
+        target?: string;
+        cardinality?: 'one' | 'many';
+    };
+    config: Record<string, unknown>;
+    version: number;
+}

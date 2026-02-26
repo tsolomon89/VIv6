@@ -25,6 +25,8 @@
 import { DataRecord, DataRecordInput, EntityType } from '../../core/types.js';
 import { listRecords, getRecordBySlug, createRecord, updateRecord, createRelationship, deleteRelationship } from '../content/services.js';
 import { events } from '../../core/events.js';
+import { InvariantViolation } from '../../core/invariants.js';
+import { computeDerivationBySlug } from './derivations.js';
 
 // --- Types ---
 
@@ -52,7 +54,8 @@ export type ActionType =
     | 'emit_event'
     | 'log'
     | 'allow'   // For access policy rules
-    | 'deny';   // For access policy rules
+    | 'deny'    // For access policy rules
+    | 'compute_derivation';  // Compute and set a derivation field
 
 export interface RuleAction {
     type: ActionType;
@@ -67,6 +70,10 @@ export interface RuleDefinition {
     actions: RuleAction[];
     priority: number;
     isActive: boolean;
+    /** If true, throw InvariantViolation when conditions match (blocks the operation) */
+    blocking?: boolean;
+    /** Error message when blocking rule triggers */
+    blockMessage?: string;
 }
 
 export interface RuleExecutionContext {
@@ -136,6 +143,7 @@ export function parseRuleDefinition(ruleRecord: DataRecord): RuleDefinition {
     };
 
     const isActive = getField('Is Active');
+    const blocking = getField('Blocking');
 
     return {
         triggerEvent: (getField('Trigger Event') || 'post_create') as TriggerEvent,
@@ -143,7 +151,9 @@ export function parseRuleDefinition(ruleRecord: DataRecord): RuleDefinition {
         conditions: parseJson(getField('Conditions')) || [],
         actions: parseJson(getField('Actions')) || [],
         priority: parseInt(getField('Priority'), 10) || 100,
-        isActive: isActive === true || isActive === 'true' || isActive === 1 || isActive === undefined
+        isActive: isActive === true || isActive === 'true' || isActive === 1 || isActive === undefined,
+        blocking: blocking === true || blocking === 'true' || blocking === 1,
+        blockMessage: getField('Block Message') || undefined
     };
 }
 
@@ -431,6 +441,30 @@ async function executeAction(
                 return { type: action.type, success: true, data: { denied: true, reason: data.reason } };
             }
 
+            case 'compute_derivation': {
+                // Compute a derivation and set the field on the record
+                const derivationSlug = action.target;
+                if (!derivationSlug) {
+                    return { type: action.type, success: false, error: 'No derivation slug specified' };
+                }
+
+                const result = computeDerivationBySlug(derivationSlug, context.record as DataRecord, context.accountId);
+
+                if (result.success) {
+                    // Set the computed value on the record
+                    const rec = context.record as any;
+                    if (!rec.data) rec.data = {};
+                    rec.data[result.fieldName] = result.value;
+                }
+
+                return {
+                    type: action.type,
+                    success: result.success,
+                    data: { fieldName: result.fieldName, value: result.value },
+                    error: result.error
+                };
+            }
+
             default:
                 return {
                     type: action.type,
@@ -526,6 +560,13 @@ export async function executeMatchingRules(
         const def = parseRuleDefinition(ruleRecord);
         const result = await executeRule(def, ruleRecord.slug, context);
         results.push(result);
+
+        // Check if this is a blocking rule and conditions were met
+        if (def.blocking && result.triggered && result.conditionsMet) {
+            const errorCode = `RULE_BLOCKED_${ruleRecord.slug.toUpperCase().replace(/-/g, '_')}`;
+            const message = def.blockMessage || `Operation blocked by rule: ${ruleRecord.name || ruleRecord.slug}`;
+            throw new InvariantViolation(message, errorCode);
+        }
     }
 
     return results;

@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
+import { presetStore } from '../../lib/presetStore';
 import { useSearchParams } from 'react-router-dom';
 import { Canvas } from './Canvas';
 import { LayersPanel } from './LayersPanel';
@@ -14,16 +14,17 @@ import { Overlay as EditorOverlay } from './Overlay';
 import { Layers, Settings, ArrowLeft, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Bridge } from './Bridge';
-import type { DerivedPage, DerivedSection, PageTemplate } from '../../lib/api';
-// SectionInstance type import removed as it was unused
+import { showToast } from '../../hooks/useToast';
+import type { DerivedPage, DerivedSection, PageTemplate, PageAsset, Entity, TemplateSection, Binding } from '../../lib/api';
+import type { ConfigState } from '../../lib/types';
 
-// Helper to convert API DerivedPage to Internal PageTemplate for editing
+// Helper to convert API DerivedPage to Internal PageTemplate for editing (legacy fallback)
 const derivedToTemplate = (derived: DerivedPage): PageTemplate => {
     return {
         key: `${derived.entityType}-draft`, // mock key
         name: derived.entityName,
         subject_target: derived.entityType,
-        subject_cardinality: 'one', 
+        subject_cardinality: 'one',
         sections: derived.sections.map(ds => ({
             id: ds.id,
             placement: ds.placement,
@@ -39,11 +40,33 @@ const derivedToTemplate = (derived: DerivedPage): PageTemplate => {
     };
 };
 
+// Helper to convert new PageAsset to Internal PageTemplate for editing
+const pageToTemplate = (page: PageAsset): PageTemplate => {
+    const pageConfig = page.data?.pageConfig;
+    const sections = page.data?.sections || [];
+
+    return {
+        key: page.slug || page.id,
+        name: page.name,
+        subject_target: pageConfig?.pageSubject?.target || 'brand',
+        subject_cardinality: pageConfig?.pageSubject?.cardinality || 'one',
+        sections: sections.map(s => ({
+            id: s.id,
+            placement: s.placement,
+            binding: s.binding,
+            presentationKey: s.presentationKey || 'section.generic.v1',
+            overrides: s.overrides || {}
+        }))
+    };
+};
+
 export function VisualEditorShell() {
     const [searchParams] = useSearchParams();
     const mode = searchParams.get('mode') || 'sidebar'; // 'sidebar' | 'overlay'
-    const [entities, setEntities] = useState<any[]>([]);
+    const [entities, setEntities] = useState<Entity[]>([]);
     const [pageId, setPageId] = useState<string>('');
+    const [currentPage, setCurrentPage] = useState<PageAsset | null>(null); // New page asset state
+    const [isPageMode, setIsPageMode] = useState(false); // Track if using new pages system
     const { setDerivedPage, derivedPage, select: setSelectedId, selectedId } = useEditorStore();
     const { isSandboxUnlocked } = useSystemStore();
     const [loading, setLoading] = useState(true);
@@ -52,11 +75,22 @@ export function VisualEditorShell() {
     // Template Manager for Overlay Logic
     const tm = useTemplateManager();
 
-    const baseUrl = 'http://localhost:3003/preview-theme';
+    const baseUrl = 'http://localhost:11306/preview-theme';
     const targetUrl = pageId ? `${baseUrl}?id=${pageId}` : baseUrl;
 
     const { theme } = useThemeStore();
     const [activeTab, setActiveTab] = useState<'props' | 'theme'>('props');
+
+    // Load presets from backend on mount
+    useEffect(() => {
+        presetStore.load()
+            .then(() => {
+                console.log('[VisualEditor] Presets loaded:', presetStore.keys());
+            })
+            .catch(err => {
+                console.error('[VisualEditor] Failed to load presets:', err);
+            });
+    }, []);
 
     // Load entities for navigation
     useEffect(() => {
@@ -64,7 +98,7 @@ export function VisualEditorShell() {
             .then(data => {
                 setEntities(data);
                 if (data.length > 0 && !pageId) {
-                    setPageId(data[0].id); 
+                    setPageId(data[0].id);
                 }
                 setLoading(false);
             })
@@ -74,29 +108,89 @@ export function VisualEditorShell() {
             });
     }, []);
 
-    // Fetch Derived Page Structure when pageId changes
+    // Fetch Page Structure when pageId changes
+    // Try new pages API first, then fall back to legacy derivePage
     useEffect(() => {
         if (!pageId) return;
-        
+
         // Inject TM into Store for sync
         useEditorStore.getState().setTemplateManager(tm);
 
         const entity = entities.find(e => e.id === pageId);
         if (!entity) return;
 
-        console.log("Fetching derived structure for:", entity.slug);
-        api.derivePage(entity.slug)
-            .then(data => {
+        const fetchPage = async () => {
+            console.log("[VisualEditor] Fetching page for entity:", entity.slug);
+
+            // Strategy: Try to find existing page for this entity
+            // 1. First try to get page by entity slug (pages often use entity slug as their slug)
+            // 2. If not found, try listing pages and filter by subject type
+            // 3. Fall back to legacy derivePage
+
+            try {
+                // Try direct page lookup by entity slug
+                const page = await api.getPage(entity.slug, true);
+                if (page) {
+                    console.log("[VisualEditor] Found page via new API:", page.slug);
+                    setCurrentPage(page);
+                    setIsPageMode(true);
+
+                    // Convert page to template format for editing
+                    const initialTemplate = pageToTemplate(page);
+                    tm.setTemplate(initialTemplate as any);
+
+                    // Also update derivedPage for LayersPanel compatibility
+                    // Map compiled sections to derived section format
+                    const mappedSections: DerivedSection[] = (page.compiledSections || []).map(cs => ({
+                        id: cs.id,
+                        binding: cs.binding as Binding,
+                        presentationKey: cs.presentationKey || null,
+                        placement: {
+                            slot: cs.placement?.slot || 'main',
+                            order: cs.placement?.order ?? 0
+                        },
+                        config: cs.config,
+                        entities: (cs.resolvedData || []).map(e => ({
+                            id: e.id,
+                            slug: e.slug,
+                            name: e.name,
+                            type: e.type,
+                            data: e.data || {}
+                        }))
+                    }));
+                    setDerivedPage({
+                        entityId: page.id,
+                        entitySlug: page.slug,
+                        entityType: 'page',
+                        entityName: page.name,
+                        route: `/${page.slug}`,
+                        sections: mappedSections,
+                        segmentPages: []
+                    });
+                    return;
+                }
+            } catch (err) {
+                // Page not found by slug, continue to fallback
+                console.log("[VisualEditor] No page found for slug, trying legacy derivePage");
+            }
+
+            // Fallback to legacy derivePage
+            try {
+                const data = await api.derivePage(entity.slug);
+                setCurrentPage(null);
+                setIsPageMode(false);
                 setDerivedPage(data);
-                // Sync Template Manager with new page data
+
+                // Sync Template Manager with derived data
                 const initialTemplate = derivedToTemplate(data);
-                // We need to cast our internal PageTemplate type vs API PageTemplate type
-                // They should be compatible enough for this logic
                 tm.setTemplate(initialTemplate as any);
-            })
-            .catch(err => {
-                console.error("Failed to derive page", err);
-            });
+                console.log("[VisualEditor] Using legacy derivePage for:", entity.slug);
+            } catch (err) {
+                console.error("[VisualEditor] Failed to derive page:", err);
+            }
+        };
+
+        fetchPage();
     }, [pageId, entities]); // setDerivedPage, tm are stable
 
     // Theme Sync: Broadcast theme changes to Canvas
@@ -112,9 +206,12 @@ export function VisualEditorShell() {
         
         // Map local template back to DerivedPage structure for store/canvas
         // This effectively "hydrates" the view with our local edits
-        const updatedSections: DerivedSection[] = tm.template.sections.map((s: any) => ({
+        const updatedSections: DerivedSection[] = tm.template.sections.map((s: TemplateSection) => ({
             id: s.id,
-            placement: s.placement,
+            placement: {
+                slot: s.placement?.slot || 'main',
+                order: s.placement?.order ?? 0
+            },
             binding: s.binding,
             presentationKey: s.presentationKey,
             config: { ...s.overrides }, // Flatten overrides as config
@@ -135,8 +232,41 @@ export function VisualEditorShell() {
 
     const handleSave = async () => {
         if (!pageId || !derivedPage) return;
-        
+
         try {
+            // If we're in page mode (new system), save to pages API
+            if (isPageMode && currentPage) {
+                console.log("[VisualEditor] Saving to pages API:", currentPage.id);
+
+                // Build updated page data with sections from TemplateManager
+                const updatedData = {
+                    ...currentPage.data,
+                    sections: tm.template.sections.map((s: TemplateSection) => ({
+                        id: s.id,
+                        placement: {
+                            slot: (s.placement?.slot || 'free') as 'start' | 'end' | 'free',
+                            order: s.placement?.order ?? 0
+                        },
+                        binding: {
+                            kind: (s.binding?.kind || 'self') as 'self' | 'related' | 'view',
+                            target: s.binding?.target,
+                            cardinality: s.binding?.cardinality as 'one' | 'many' | undefined
+                        },
+                        presentationKey: s.presentationKey,
+                        overrides: s.overrides || {}
+                    }))
+                };
+
+                const updatedPage = await api.updatePage(currentPage.id, {
+                    data: updatedData
+                });
+
+                setCurrentPage(updatedPage);
+                showToast.success(`Page '${updatedPage.name}' saved!`);
+                return;
+            }
+
+            // Fallback: Legacy template save
             const entity = entities.find(e => e.id === pageId);
             if (!entity) return;
 
@@ -154,18 +284,19 @@ export function VisualEditorShell() {
 
             try {
                 await api.createTemplate(templatePayload as any);
-                alert(`Template '${templateKey}' created!`);
-            } catch (err: any) {
-                if (err.status === 409 || err.message?.includes('exists')) {
+                showToast.success(`Template '${templateKey}' created!`);
+            } catch (err: unknown) {
+                const error = err as { status?: number; message?: string };
+                if (error.status === 409 || error.message?.includes('exists')) {
                     await api.updateTemplate(templateKey, templatePayload as any);
-                    alert(`Template '${templateKey}' updated!`);
+                    showToast.success(`Template '${templateKey}' updated!`);
                 } else {
                     throw err;
                 }
             }
         } catch (err) {
-            console.error('Failed to save template', err);
-            alert('Failed to save template.');
+            console.error('[VisualEditor] Failed to save:', err);
+            showToast.error('Failed to save. See console for details.');
         }
     };
 
@@ -182,9 +313,9 @@ export function VisualEditorShell() {
              )
         }
 
-        const activeSection = tm.template.sections.find((s: any) => s.id === selectedId);
+        const activeSection = tm.template.sections.find((s: TemplateSection) => s.id === selectedId);
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const singleConfig = activeSection ? (activeSection as any).overrides : null;
+        const singleConfig: ConfigState | null = activeSection?.overrides as ConfigState | null;
 
         return (
             <div className="relative h-screen bg-zinc-950 overflow-hidden">
@@ -214,7 +345,7 @@ export function VisualEditorShell() {
                     removeSection={tm.removeSection}
                     
                     singleConfig={singleConfig}
-                    updateSingleConfig={(k: any, v: any) => selectedId && tm.updateSingleConfig(selectedId, k, v)}
+                    updateSingleConfig={(k, v) => selectedId && tm.updateSingleConfig(selectedId, k, v)}
                     
                     addSceneObject={tm.addSceneObjectToSection}
                     updateSceneObject={tm.updateSceneObjectInSection}

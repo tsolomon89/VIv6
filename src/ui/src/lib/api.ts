@@ -165,6 +165,134 @@ export interface DimensionDependency {
   weight: number;
 }
 
+// --- Config Workspaces (GTM-style staging) ---
+
+export type WorkspaceStatus = 'draft' | 'review' | 'approved' | 'applied' | 'rejected' | 'rolled_back';
+export type ConfigTypeSlug =
+  | 'rule' | 'derivation' | 'validation_constraint' | 'metric' | 'view'
+  | 'interpreter_pipeline'
+  | 'interpreter_executor_def'
+  | 'workflow' | 'workflow_step' | 'workflow_step_type' | 'pipeline_stage'
+  | 'object_def' | 'field_def' | 'field_group' | 'activity_def' | 'health_config'
+  | 'access_policy' | 'persona' | 'state_machine';
+
+export interface ConfigWorkspace {
+  id: string;
+  account_id: string;
+  name: string;
+  description?: string;
+  status: WorkspaceStatus;
+  created_by?: string;
+  reviewed_by?: string;
+  applied_by?: string;
+  created_at: string;
+  updated_at: string;
+  reviewed_at?: string;
+  applied_at?: string;
+  rolled_back_at?: string;
+}
+
+export interface ConfigChange {
+  id: string;
+  workspace_id: string;
+  config_type: ConfigTypeSlug;
+  operation: 'create' | 'update' | 'delete';
+  target_id?: string;
+  target_slug?: string;
+  payload: Record<string, unknown>;
+  previous_state?: Record<string, unknown>;
+  validation_result?: {
+    valid: boolean;
+    errors?: Array<{ path: string; message: string }>;
+  };
+  safety_result?: {
+    safe: boolean;
+    concerns?: Array<{ severity: string; code: string; message: string }>;
+  };
+  status: 'pending' | 'applied' | 'rolled_back' | 'failed';
+  created_at: string;
+}
+
+export interface WorkspaceWithChanges extends ConfigWorkspace {
+  changes: ConfigChange[];
+}
+
+export interface WorkspacePreview {
+  canApply: boolean;
+  blockingReasons: string[];
+  stats: { created: number; updated: number; deleted: number };
+  validationErrors: Array<{ changeId: string; errors: string[] }>;
+  safetyConcerns: Array<{ severity: string; code: string; message: string }>;
+  dependencyImpact: Array<{ configType: string; id: string; slug: string }>;
+  summary: string;
+}
+
+export interface ConfigVersion {
+  id: string;
+  config_type: ConfigTypeSlug;
+  config_id: string;
+  version: number;
+  data: Record<string, unknown>;
+  changed_by?: string;
+  workspace_id?: string;
+  change_summary?: string;
+  created_at: string;
+}
+
+export interface ConfigTypeInfo {
+  slug: ConfigTypeSlug;
+  displayName: string;
+  description: string;
+  entityType: string;
+}
+
+export type InterpreterEvent =
+  | 'pre_create'
+  | 'post_create'
+  | 'pre_update'
+  | 'post_update'
+  | 'pre_delete'
+  | 'post_delete';
+
+export interface InterpreterExecutorInfo {
+  key: string;
+  isBuiltin: boolean;
+  isRegistered: boolean;
+  hasDefinition: boolean;
+  isActive: boolean | null;
+  supportedEvents: string[];
+  supportedEntityTypes: string[];
+  optionsContract: {
+    required?: string[];
+    allowed?: string[];
+    allow_additional?: boolean;
+  } | null;
+  description: string | null;
+}
+
+export interface InterpreterStageValidationInput {
+  account_id?: string;
+  event: InterpreterEvent;
+  entity_type: string;
+  stage: {
+    executor: string;
+    order?: number;
+    options?: Record<string, unknown>;
+  };
+}
+
+export interface InterpreterStageValidationResult {
+  valid: boolean;
+  errors: string[];
+  executor: {
+    key: string;
+    isBuiltin: boolean;
+    isRegistered: boolean;
+    hasDefinition: boolean;
+    definition: Record<string, unknown> | null;
+  };
+}
+
 // --- Builds ---
 
 export interface BuildEntry {
@@ -1298,6 +1426,228 @@ class ApiClient {
 
   async getAIRecentUsage(limit: number = 50): Promise<{ entries: AIUsageLogEntry[] }> {
     return this.request<{ entries: AIUsageLogEntry[] }>(`/ai/usage/recent?limit=${limit}`);
+  }
+
+  // --- Config Workspaces ---
+
+  async listWorkspaces(filters?: { status?: WorkspaceStatus; account_id?: string }): Promise<ConfigWorkspace[]> {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.account_id) params.append('account_id', filters.account_id);
+    const response = await this.request<{ data: ConfigWorkspace[] }>(`/workspaces?${params.toString()}`);
+    return response.data || [];
+  }
+
+  async getWorkspace(id: string): Promise<WorkspaceWithChanges> {
+    const response = await this.request<{ data: WorkspaceWithChanges }>(`/workspaces/${id}`);
+    return response.data;
+  }
+
+  async createWorkspace(input: { account_id: string; name: string; description?: string }): Promise<ConfigWorkspace> {
+    const response = await this.request<{ data: ConfigWorkspace }>('/workspaces', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return response.data;
+  }
+
+  async deleteWorkspace(id: string): Promise<void> {
+    return this.request<void>(`/workspaces/${id}`, { method: 'DELETE' });
+  }
+
+  async submitWorkspaceForReview(id: string): Promise<ConfigWorkspace> {
+    const response = await this.request<{ data: ConfigWorkspace }>(`/workspaces/${id}/submit`, {
+      method: 'POST',
+    });
+    return response.data;
+  }
+
+  async approveWorkspace(id: string): Promise<ConfigWorkspace> {
+    const response = await this.request<{ data: ConfigWorkspace }>(`/workspaces/${id}/approve`, {
+      method: 'POST',
+    });
+    return response.data;
+  }
+
+  async rejectWorkspace(id: string): Promise<ConfigWorkspace> {
+    const response = await this.request<{ data: ConfigWorkspace }>(`/workspaces/${id}/reject`, {
+      method: 'POST',
+    });
+    return response.data;
+  }
+
+  async previewWorkspace(id: string): Promise<WorkspacePreview> {
+    const response = await this.request<{ data: WorkspacePreview }>(`/workspaces/${id}/preview`, {
+      method: 'POST',
+    });
+    return response.data;
+  }
+
+  async applyWorkspace(id: string): Promise<{ workspace: ConfigWorkspace; appliedChanges: number; versionsCreated: number }> {
+    const response = await this.request<{ data: { workspace: ConfigWorkspace; appliedChanges: number; versionsCreated: number } }>(`/workspaces/${id}/apply`, {
+      method: 'POST',
+    });
+    return response.data;
+  }
+
+  async rollbackWorkspace(id: string): Promise<{ workspace: ConfigWorkspace; rolledBackChanges: number }> {
+    const response = await this.request<{ data: { workspace: ConfigWorkspace; rolledBackChanges: number } }>(`/workspaces/${id}/rollback`, {
+      method: 'POST',
+    });
+    return response.data;
+  }
+
+  // --- Workspace Changes ---
+
+  async addWorkspaceChange(
+    workspaceId: string,
+    change: { config_type: ConfigTypeSlug; operation: 'create' | 'update' | 'delete'; target_id?: string; target_slug?: string; payload: Record<string, unknown> }
+  ): Promise<ConfigChange> {
+    const response = await this.request<{ data: ConfigChange }>(`/workspaces/${workspaceId}/changes`, {
+      method: 'POST',
+      body: JSON.stringify(change),
+    });
+    return response.data;
+  }
+
+  async listWorkspaceChanges(workspaceId: string): Promise<ConfigChange[]> {
+    const response = await this.request<{ data: ConfigChange[] }>(`/workspaces/${workspaceId}/changes`);
+    return response.data || [];
+  }
+
+  async removeWorkspaceChange(workspaceId: string, changeId: string): Promise<void> {
+    return this.request<void>(`/workspaces/${workspaceId}/changes/${changeId}`, { method: 'DELETE' });
+  }
+
+  // --- Config Types & Validation ---
+
+  async listConfigTypes(): Promise<ConfigTypeInfo[]> {
+    const response = await this.request<{ data: ConfigTypeInfo[] }>('/workspaces/config-types');
+    return response.data || [];
+  }
+
+  async validateConfig(config_type: ConfigTypeSlug, data: Record<string, unknown>): Promise<{ valid: boolean; errors: Array<{ path: string; message: string }> }> {
+    const response = await this.request<{ data: { valid: boolean; errors: Array<{ path: string; message: string }> } }>('/workspaces/validate', {
+      method: 'POST',
+      body: JSON.stringify({ config_type, data }),
+    });
+    return response.data;
+  }
+
+  async listInterpreterExecutors(accountId?: string): Promise<InterpreterExecutorInfo[]> {
+    const params = new URLSearchParams();
+    if (accountId) params.append('account_id', accountId);
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    const response = await this.request<{ data: InterpreterExecutorInfo[] }>(`/interpreter-executors${suffix}`);
+    return response.data || [];
+  }
+
+  async validateInterpreterStage(input: InterpreterStageValidationInput): Promise<InterpreterStageValidationResult> {
+    const response = await this.request<{ data: InterpreterStageValidationResult }>('/interpreter-executors/validate-stage', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return response.data;
+  }
+
+  // --- Config Version History ---
+
+  async getConfigVersions(configType: string, configId: string, limit: number = 10): Promise<ConfigVersion[]> {
+    const response = await this.request<{ data: ConfigVersion[] }>(`/workspaces/versions/${configType}/${configId}?limit=${limit}`);
+    return response.data || [];
+  }
+
+  async restoreConfigVersion(configType: string, configId: string, version: number): Promise<{ restoredTo: number; newVersion: number }> {
+    const response = await this.request<{ data: { restoredTo: number; newVersion: number } }>(`/workspaces/versions/${configType}/${configId}/restore`, {
+      method: 'POST',
+      body: JSON.stringify({ version }),
+    });
+    return response.data;
+  }
+
+  // --- State Machines ---
+
+  async getStateMachine(entityType: string): Promise<{
+    targetEntityType: string;
+    stateField: string;
+    states: string[];
+    transitions: Array<{ from: string; to: string; action?: string; conditions?: Array<{ field: string; op: string; value: unknown }> }>;
+    initialState: string;
+  } | null> {
+    try {
+      const response = await this.request<{ data: {
+        targetEntityType: string;
+        stateField: string;
+        states: string[];
+        transitions: Array<{ from: string; to: string; action?: string; conditions?: Array<{ field: string; op: string; value: unknown }> }>;
+        initialState: string;
+      } }>(`/state-machines/${entityType}`);
+      return response.data;
+    } catch {
+      return null;
+    }
+  }
+
+  async getStateMachineTransitions(entityType: string, currentState: string): Promise<Array<{ to: string; action?: string }>> {
+    try {
+      const response = await this.request<{ data: { transitions: Array<{ to: string; action?: string }> } }>(`/state-machines/${entityType}/transitions?state=${currentState}`);
+      return response.data.transitions || [];
+    } catch {
+      return [];
+    }
+  }
+
+  // --- Workflows ---
+
+  async getWorkflow(workflowSlug: string): Promise<{
+    workflow: {
+      id: string;
+      slug: string;
+      name: string;
+      summary: string;
+      triggerType: string;
+      triggerEvent?: string;
+      isActive: boolean;
+      firstStepSlug?: string;
+    };
+    steps: Array<{
+      id: string;
+      slug: string;
+      name: string;
+      sequence: number;
+      stepType: string;
+      nextStepSlug?: string;
+      branchStepSlug?: string;
+      data: Record<string, unknown>;
+    }>;
+  } | null> {
+    try {
+      const response = await this.request<{ data: {
+        workflow: {
+          id: string;
+          slug: string;
+          name: string;
+          summary: string;
+          triggerType: string;
+          triggerEvent?: string;
+          isActive: boolean;
+          firstStepSlug?: string;
+        };
+        steps: Array<{
+          id: string;
+          slug: string;
+          name: string;
+          sequence: number;
+          stepType: string;
+          nextStepSlug?: string;
+          branchStepSlug?: string;
+          data: Record<string, unknown>;
+        }>;
+      } }>(`/workflows/${workflowSlug}`);
+      return response.data;
+    } catch {
+      return null;
+    }
   }
 }
 

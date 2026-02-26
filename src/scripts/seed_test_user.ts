@@ -1,9 +1,13 @@
-
 import { addUserToAccount } from '../modules/identity/services.js';
 import { db, initDb } from '../core/db.js';
+import bcrypt from 'bcrypt';
 
 const VICTORY_ACCOUNT_ID = 'acc_vi_000000000000000001';
 const TEST_USER_ID = 'usr_test_000000000000000001';
+
+// Generate proper bcrypt hash for test password
+// Password: 'test-password-123' (for local testing only)
+const TEST_PASSWORD_HASH = bcrypt.hashSync('test-password-123', 10);
 
 async function main() {
     console.log('Initializing DB...');
@@ -25,7 +29,7 @@ async function main() {
                 ON CONFLICT(id) DO NOTHING
             `);
             
-            insertUser.run(TEST_USER_ID, 'test_admin@victory.com', 'Test Admin', 'hash_placeholder');
+            insertUser.run(TEST_USER_ID, 'test_admin@victory.com', 'Test Admin', TEST_PASSWORD_HASH);
 
             // 2. Add user as admin
             // Note: addUserToAccount takes (userId, accountId, role)
@@ -43,7 +47,7 @@ async function main() {
 
             // Create Member User
             const MEMBER_ID = 'usr_member_000000000000000001';
-            insertUser.run(MEMBER_ID, 'test_member@victory.com', 'Test Member', 'hash_placeholder');
+            insertUser.run(MEMBER_ID, 'test_member@victory.com', 'Test Member', TEST_PASSWORD_HASH);
             
             try {
                 addUserToAccount(MEMBER_ID, VICTORY_ACCOUNT_ID, 'member');

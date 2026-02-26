@@ -7,17 +7,17 @@ import type { Entity } from '../../../lib/api';
  * 2. Field lookup by exact name.
  * 3. Field lookup by slugified match (e.g. 'email' -> 'Email', 'primaryPersona' -> 'Primary Persona').
  */
-export const getRecordValue = (entity: Entity, key: string | undefined): any => {
+export const getRecordValue = (entity: Entity, key: string | undefined): unknown => {
     if (!key || !entity) return undefined;
 
     // 1. Direct Property Access
     if (key in entity) {
-        return (entity as any)[key];
+        return (entity as unknown as Record<string, unknown>)[key];
     }
 
     // 1.5 Loose Data Access (for non-fieldGroup structures)
     if (entity.data && key in entity.data) {
-        return (entity.data as any)[key];
+        return (entity.data as unknown as Record<string, unknown>)[key];
     }
 
     // 2. Data/Fields Traversal
@@ -49,6 +49,22 @@ export const getRecordValue = (entity: Entity, key: string | undefined): any => 
  */
 export const getRecordMultiValue = (entity: Entity, keys: string[]): string => {
     return keys.map(k => getRecordValue(entity, k)).filter(Boolean).join(' • ');
+};
+
+/**
+ * Safely converts unknown value to string for rendering.
+ * Returns empty string for null/undefined, otherwise String(value).
+ */
+export const toDisplayString = (value: unknown): string => {
+    if (value === null || value === undefined) return '';
+    return String(value);
+};
+
+/**
+ * Gets a record value as a string (safe for rendering).
+ */
+export const getRecordValueAsString = (entity: Entity, key: string | undefined): string => {
+    return toDisplayString(getRecordValue(entity, key));
 };
 
 /**

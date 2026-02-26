@@ -4,6 +4,7 @@ import { createRecord, getRecordBySlug } from '../../core/records.js'; // Use un
 import { addUserToAccount } from '../../modules/identity/services.js';
 import { randomUUID } from 'crypto';
 import { SYSTEM_ACCOUNT_ID } from '../../core/constants.js';
+import { db } from '../../core/db.js';
 
 const router = Router();
 
@@ -38,51 +39,77 @@ router.post('/invite', ...protectedRoute, async (req: Request, res: Response, ne
     // For "Invite", usually implies adding an existing person OR creating new.
     
     // Strategy:
-    // A. Try to find user by slug in System Account (00..00).
-    let user = getRecordBySlug(SYSTEM_ACCOUNT_ID, slug);
-    let isNew = false;
-    
-    if (!user) {
-        // B. Create new User Record in System Account
-        isNew = true;
-        const now = new Date().toISOString();
-        const userData = {
-            fieldGroups: [
-                {
-                    name: 'Identity',
-                    fields: [
-                        { name: 'Email', inputType: 'text', value: email, required: true },
-                        { name: 'First Name', inputType: 'text', value: '' }, // To be filled
-                        { name: 'Last Name', inputType: 'text', value: '' }
-                    ]
-                },
-                {
-                    name: 'Activity',
-                    fields: [
-                        { name: 'Status', inputType: 'select', value: 'Pending', options: ['Active', 'Suspended', 'Pending'] },
-                        { name: 'Last Login', inputType: 'date', value: null }
-                    ]
-                }
-            ]
-        };
+    // A. Check if user exists in users table (canonical source for auth)
+    const existingAuthUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email) as { id: string } | undefined;
 
-        user = createRecord({
-            id: randomUUID(),
-            account_id: SYSTEM_ACCOUNT_ID, // Users owned by System
+    // B. Check if user exists in records table (for display)
+    let user = getRecordBySlug(SYSTEM_ACCOUNT_ID, slug);
+    let isNew = !existingAuthUser;
+
+    const now = new Date().toISOString();
+    const userData = {
+        fieldGroups: [
+            {
+                name: 'Identity',
+                fields: [
+                    { name: 'Email', inputType: 'text', value: email, required: true },
+                    { name: 'First Name', inputType: 'text', value: '' },
+                    { name: 'Last Name', inputType: 'text', value: '' }
+                ]
+            },
+            {
+                name: 'Activity',
+                fields: [
+                    { name: 'Status', inputType: 'select', value: 'Pending', options: ['Active', 'Suspended', 'Pending'] },
+                    { name: 'Last Login', inputType: 'date', value: null }
+                ]
+            }
+        ]
+    };
+
+    if (!existingAuthUser) {
+        // C. New user: Create in BOTH users table (for auth/FK) and records table (for display)
+        const userId = randomUUID();
+
+        // C1. Insert into users table (for ODAC auth and user_accounts FK constraint)
+        db.prepare(`
+            INSERT INTO users (id, email, name, primary_account_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).run(userId, email, email, context.accountId, now, now);
+
+        // C2. Create in records table for unified data display
+        user = await createRecord({
+            id: userId,
+            account_id: SYSTEM_ACCOUNT_ID,
             type: 'user',
             slug: slug,
-            name: email, // Default name to email
+            name: email,
             description: `Invited to ${context.accountId}`,
+            data: userData
+        });
+    } else if (!user) {
+        // D. User exists in users table but not in records - sync them
+        user = await createRecord({
+            id: existingAuthUser.id,
+            account_id: SYSTEM_ACCOUNT_ID,
+            type: 'user',
+            slug: slug,
+            name: email,
+            description: `Synced from users table`,
             data: userData
         });
     }
 
     // 3. Link to Current Account
+    // Users are now created in both users table (for FK) and records table (for display)
     try {
-        addUserToAccount(user.id, context.accountId, role || 'viewer');
+        await addUserToAccount(user.id, context.accountId, role || 'viewer');
     } catch (e: any) {
-        // Ignore UNIQUE constraint if already linked, otherwise throw
-        if (!e.message.includes('UNIQUE constraint failed')) {
+        // Only ignore UNIQUE constraint errors (user already linked)
+        if (e.message?.includes('UNIQUE constraint')) {
+            console.warn('[Users] User already linked to account:', user.id);
+        } else {
+            console.error('[Users] Failed to link user to account:', e.message);
             throw e;
         }
     }

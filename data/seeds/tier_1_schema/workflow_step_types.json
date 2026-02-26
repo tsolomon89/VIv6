@@ -1,0 +1,115 @@
+[
+  {
+    "id": "wfst-00000000-0000-0000-0000-000000000001",
+    "type": "workflow_step_type",
+    "slug": "wait",
+    "name": "Wait Step",
+    "summary": "Pause workflow for specified duration",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "handler": "wait",
+      "requires_fields": ["delay_hours"],
+      "generates_activity": false,
+      "description": "Waits for delay_hours before advancing to next step"
+    }
+  },
+  {
+    "id": "wfst-00000000-0000-0000-0000-000000000002",
+    "type": "workflow_step_type",
+    "slug": "send",
+    "name": "Send Engagement",
+    "summary": "Generate an engagement activity (email, call, etc.)",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "handler": "send",
+      "requires_fields": ["activity_def_slug"],
+      "generates_activity": true,
+      "activation_energy_default": 10,
+      "description": "Creates activity of specified type for contact"
+    }
+  },
+  {
+    "id": "wfst-00000000-0000-0000-0000-000000000003",
+    "type": "workflow_step_type",
+    "slug": "update",
+    "name": "Update Field",
+    "summary": "Update fields on the contact or related records",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "handler": "update",
+      "requires_fields": ["field_updates"],
+      "generates_activity": false,
+      "description": "Applies field_updates to contact record"
+    }
+  },
+  {
+    "id": "wfst-00000000-0000-0000-0000-000000000004",
+    "type": "workflow_step_type",
+    "slug": "branch",
+    "name": "Conditional Branch",
+    "summary": "Route to different steps based on conditions",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "handler": "branch",
+      "requires_fields": ["conditions", "branch_step_slug"],
+      "generates_activity": false,
+      "description": "Evaluates conditions, routes to branch_step_slug if true, next_step_slug if false"
+    }
+  },
+  {
+    "id": "wfst-00000000-0000-0000-0000-000000000005",
+    "type": "workflow_step_type",
+    "slug": "complete",
+    "name": "Complete Workflow",
+    "summary": "Mark workflow as completed (win/loss)",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "handler": "complete",
+      "requires_fields": [],
+      "generates_activity": false,
+      "description": "Terminates enrollment with success/failure status"
+    }
+  },
+  {
+    "id": "wfst-00000000-0000-0000-0000-000000000006",
+    "type": "workflow_step_type",
+    "slug": "query",
+    "name": "Query Records",
+    "summary": "Query related records and store result in context",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "handler": "query",
+      "requires_fields": ["query_type"],
+      "generates_activity": false,
+      "description": "Queries records based on query_type and stores result in enrollment context"
+    }
+  },
+  {
+    "id": "wfst-00000000-0000-0000-0000-000000000007",
+    "type": "workflow_step_type",
+    "slug": "advance_stage",
+    "name": "Advance Pipeline Stage",
+    "summary": "Advance opportunity to next pipeline stage",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "handler": "advance_stage",
+      "requires_fields": [],
+      "generates_activity": false,
+      "description": "Advances the linked opportunity to its next pipeline stage"
+    }
+  },
+  {
+    "id": "wfst-00000000-0000-0000-0000-000000000008",
+    "type": "workflow_step_type",
+    "slug": "generate_activities",
+    "name": "Generate Stage Activities",
+    "summary": "Generate required activities for current stage",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "handler": "generate_activities",
+      "requires_fields": [],
+      "generates_activity": true,
+      "description": "Generates the required activities for the opportunity's current pipeline stage"
+    }
+  }
+]

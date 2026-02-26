@@ -1,7 +1,7 @@
 import type { Entity } from '../../../lib/api';
 import type { RecordTileConfig } from '../config/studio-config';
 import { User, Mail, Phone, Link as LinkIcon, Activity } from 'lucide-react';
-import { getRecordValue } from '../utils/record-utils';
+import { getRecordValueAsString } from '../utils/record-utils';
 import { RecordField } from './RecordField';
 import { RecordTileProjection } from './RecordTileProjection';
 
@@ -65,7 +65,7 @@ export function RecordTileDynamic({ config, entity, definition, isEditing, onCha
                      {config.leading === 'progress' && (
                         <div className="w-10 h-10 rounded-full border-4 border-green-500/20 flex items-center justify-center">
                             <span className="text-[10px] font-bold text-green-400">
-                                {getRecordValue(entity, config.health) || 'N/A'}
+                                {getRecordValueAsString(entity, config.health) || 'N/A'}
                             </span>
                         </div>
                     )}

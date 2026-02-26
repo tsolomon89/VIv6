@@ -115,20 +115,25 @@ export const ControlSlider = ({ label, param, min, max, step = 1, onChange, unit
         };
 
         return editing ? (
-            <input 
+            <input
                 autoFocus
-                type="text" 
+                type="text"
                 value={text}
                 onChange={e => setText(e.target.value)}
                 onBlur={commit}
                 onKeyDown={e => e.key === 'Enter' && commit()}
                 className="w-14 bg-white/20 text-white text-[10px] font-mono px-1 py-0.5 rounded text-right outline-none"
-                step={step} // Added step attribute here
+                step={step}
+                aria-label={`${label} value`}
             />
         ) : (
-            <span 
+            <span
+                role="button"
+                tabIndex={0}
                 onClick={() => setEditing(true)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setEditing(true)}
                 className="cursor-text hover:bg-white/10 px-1 py-0.5 rounded text-[10px] font-mono text-white/50 hover:text-white transition-colors min-w-[3ch] text-right"
+                aria-label={`Edit ${label} value: ${val.toFixed(2)}`}
             >
                 {val.toFixed(2)}
             </span>
@@ -140,9 +145,11 @@ export const ControlSlider = ({ label, param, min, max, step = 1, onChange, unit
             <div className="flex justify-between items-center text-xs">
                 <div className="flex items-center gap-2">
                     {/* Link Toggle */}
-                    <button 
+                    <button
                         onClick={toggleLink}
                         title="Link to Scroll"
+                        aria-label={param.isLinked ? `Unlink ${label} from scroll` : `Link ${label} to scroll`}
+                        aria-pressed={param.isLinked}
                         className={`p-1 rounded transition-all ${param.isLinked ? 'bg-blue-500/20 text-blue-400' : 'text-white/20 hover:text-white/60'}`}
                     >
                         {param.isLinked ? <Link2 className="w-3 h-3" /> : <Unlink className="w-3 h-3" />}
@@ -159,15 +166,21 @@ export const ControlSlider = ({ label, param, min, max, step = 1, onChange, unit
                     {/* Secondary Input & Delete */}
                     {hasEnd && (
                         <>
-                            <button 
+                            <button
                                 onClick={swapValues}
                                 className="text-white/20 hover:text-white transition-colors p-0.5"
                                 title="Reverse Direction"
+                                aria-label={`Reverse ${label} direction`}
                             >
                                 {param.endValue! >= param.value ? <ArrowRight className="w-3 h-3" /> : <ArrowLeft className="w-3 h-3" />}
                             </button>
                             <NumberInput val={param.endValue!} onUpdate={n => handleSliderChange(n, true)} />
-                            <button onClick={removeEndValue} className="text-white/20 hover:text-red-400 p-0.5 transition-colors" title="Remove End Point">
+                            <button
+                                onClick={removeEndValue}
+                                className="text-white/20 hover:text-red-400 p-0.5 transition-colors"
+                                title="Remove End Point"
+                                aria-label={`Remove ${label} end point`}
+                            >
                                 <X className="w-3 h-3" />
                             </button>
                         </>
@@ -175,11 +188,27 @@ export const ControlSlider = ({ label, param, min, max, step = 1, onChange, unit
                 </div>
             </div>
 
-            <div 
-                className="relative h-2 w-full cursor-pointer touch-none"
+            <div
+                role="slider"
+                aria-label={label}
+                aria-valuenow={param.value}
+                aria-valuemin={min}
+                aria-valuemax={max}
+                tabIndex={0}
+                className="relative h-2 w-full cursor-pointer touch-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-full"
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
+                onKeyDown={(e) => {
+                    const stepAmount = e.shiftKey ? step * 10 : step;
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        handleSliderChange(param.value - stepAmount, false);
+                    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        handleSliderChange(param.value + stepAmount, false);
+                    }
+                }}
             >
                 {/* Track Background */}
                 <div className="absolute inset-0 rounded-full bg-white/10 overflow-hidden pointer-events-none">

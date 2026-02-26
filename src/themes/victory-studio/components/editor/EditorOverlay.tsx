@@ -9,7 +9,7 @@ import { PlacementControls } from './PlacementControls';
 import { PresentationControls } from './PresentationControls';
 import { ConfigState, SceneObject, ShapeType, PageTemplate, Binding, Placement } from '../../types';
 import { getSectionLabel, resolveBindingData, injectBindingData } from '../../utils/resolution';
-import { PRESET_REGISTRY } from '../../presets/registry';
+import { getPreset } from '../../presets/loader';
 
 interface EditorOverlayProps {
     isDebugMode: boolean;
@@ -127,7 +127,7 @@ export const EditorOverlay: React.FC<EditorOverlayProps> = ({
     const { effectiveConfig, activeObjects, sectionHeight, sectionPinHeight, sectionClassName } = useMemo(() => {
         if (!currentSectionInstance) return { effectiveConfig: null, activeObjects: [], sectionHeight: 1000, sectionPinHeight: 800, sectionClassName: '' };
         
-        const preset = PRESET_REGISTRY[currentSectionInstance.presentationKey];
+        const preset = getPreset(currentSectionInstance.presentationKey);
         const base = preset ? JSON.parse(JSON.stringify(preset.config)) : {};
         
         // Merge overrides (Shallow merge of children)

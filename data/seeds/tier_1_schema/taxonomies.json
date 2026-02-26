@@ -60,20 +60,44 @@
     "type": "taxonomy_term",
     "slug": "persona_decision_maker",
     "name": "Decision Maker",
-    "data": { "dimension": "persona", "power_level": 3 }
+    "data": {
+      "dimension": "persona",
+      "power_level": 3,
+      "initial_health": 90,
+      "kinetic_routing": {
+        "routing_target": "role_admin",
+        "decay_rate": 0.8
+      }
+    }
   },
   {
     "id": "e0000000-0000-0000-0000-000000000031",
     "type": "taxonomy_term",
     "slug": "persona_influencer",
     "name": "Influencer",
-    "data": { "dimension": "persona", "power_level": 2 }
+    "data": {
+      "dimension": "persona",
+      "power_level": 2,
+      "initial_health": 70,
+      "kinetic_routing": {
+        "routing_target": "role_editor",
+        "decay_rate": 0.5
+      }
+    }
   },
   {
     "id": "e0000000-0000-0000-0000-000000000032",
     "type": "taxonomy_term",
     "slug": "persona_end_user",
     "name": "End User",
-    "data": { "dimension": "persona", "power_level": 1 }
+    "data": {
+      "dimension": "persona",
+      "power_level": 1,
+      "initial_health": 50,
+      "kinetic_routing": {
+        "routing_target": "role_member",
+        "decay_rate": 0.2
+      }
+    }
   }
 ]

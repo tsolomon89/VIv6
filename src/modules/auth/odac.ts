@@ -13,6 +13,7 @@
 
 import { db } from '../../core/db.js';
 import { getRecord } from '../../core/records.js';
+import { getFieldDisplayName, OpportunityFields } from '../../core/utils/field_lookup.js';
 
 export interface UserCapabilities {
     userId: string;
@@ -83,8 +84,9 @@ export function getUserCapabilities(userId: string, accountId: string): UserCapa
             const userIdField = findFieldValue(data, 'User ID');
             if (userIdField !== userId) continue;
 
-            // Check stage is WON (ftp)
-            const stage = findFieldValue(data, 'Opportunity Stage');
+            // Check stage is WON (ftp) - using schema-aware field name
+            const stageFieldName = getFieldDisplayName('opportunity', OpportunityFields.STAGE);
+            const stage = findFieldValue(data, stageFieldName);
             if (stage !== 'ftp') continue;
 
             // Check temporal validity
@@ -296,7 +298,7 @@ export async function grantAccess(
                     },
                     {
                         idRefFieldRecord: crypto.randomUUID(),
-                        nameField: 'Opportunity Stage',
+                        nameField: getFieldDisplayName('opportunity', OpportunityFields.STAGE),
                         inputType: 'select',
                         displayPosition: 1,
                         isSelectMany: false,
@@ -395,5 +397,3 @@ export async function revokeAccess(opportunityId: string): Promise<void> {
 
     updateRecord(opportunityId, { data: { fieldGroups } });
 }
-
-console.log('[ODAC] Loaded.');

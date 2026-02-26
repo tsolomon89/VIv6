@@ -75,10 +75,10 @@ router.post(
   '/',
   ...protectedRoute,
   validate(RecordRelationshipInputSchema),
-  (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { from_id, to_id, type, properties } = req.body;
-      const relationship = createRelationship({
+      const relationship = await createRelationship({
         from_record_id: from_id,
         to_record_id: to_id,
         relationship_type: type,

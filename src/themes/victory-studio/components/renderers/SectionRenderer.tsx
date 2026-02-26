@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { SectionInstance, ConfigState, SceneObject } from '../../types';
-import { PRESET_REGISTRY } from '../../presets/registry';
+import { getPreset, getPresetRegistry } from '../../presets/loader';
 import { SectionFrame } from '../scene/SectionFrame';
 import { validateSection } from '../../utils/validation';
 import { ValidationNotice } from '../sections/ValidationNotice';
@@ -16,15 +16,19 @@ interface SectionRendererProps {
 
 export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, setRef }) => {
     // 1. Validation
-    const errors = useMemo(() => validateSection(section, PRESET_REGISTRY), [section]);
-    
+    const registry = getPresetRegistry();
+    const errors = useMemo(() => validateSection(section, registry), [section, registry]);
+
     if (errors.length > 0) {
         return <ValidationNotice errors={errors} sectionId={section.id} />;
     }
 
     // 2. Preset Lookup
-    const preset = PRESET_REGISTRY[section.presentationKey];
-    // Clone to create a base config 
+    const preset = getPreset(section.presentationKey);
+    if (!preset) {
+        return <ValidationNotice errors={[{ code: 'UNKNOWN_PRESET', message: `Unknown preset: ${section.presentationKey}` }]} sectionId={section.id} />;
+    }
+    // Clone to create a base config
     const baseConfig = JSON.parse(JSON.stringify(preset.config)) as ConfigState;
 
     // 3. Apply Overrides (Phase C2)
@@ -80,7 +84,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, setRe
     const objects = [rootObj];
     
     // 6. Dimension Resolution
-    const { height, pinHeight } = resolveSectionDimensions(section, PRESET_REGISTRY);
+    const { height, pinHeight } = resolveSectionDimensions(section, registry);
 
     // 7. Extract Config for Frame
     const clip = rootObj.clipWithinSection ?? true;

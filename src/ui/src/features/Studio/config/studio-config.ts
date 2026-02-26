@@ -1,15 +1,19 @@
 
-import { 
-    LayoutDashboard, 
-    Contact, 
-    Building2, 
-    Activity, 
-    DollarSign, 
-    Package, 
-    Megaphone, 
+import {
+    LayoutDashboard,
+    Contact,
+    Building2,
+    Activity,
+    DollarSign,
+    Package,
+    Megaphone,
     GitMerge,
+    GitBranch,
     Workflow,
     Database,
+    Bot,
+    Shield,
+    BarChart3,
 
     Phone,
     Mail,
@@ -52,6 +56,10 @@ export const BUILDER_NAV_ITEMS = {
     '': [
          // Placeholder for Builder Dashboard
     ],
+    'WEBBUILDER': [
+        { route: '/pages', icon: Monitor, name: 'Pages' },
+        { route: '/editor', icon: Layers, name: 'Visual Editor' },
+    ],
     'ONTOLOGY': [
         { route: '/records/object_def', icon: Database, name: 'Objects / Schemas' },
         { route: '/records/field_def', icon: Database, name: 'Fields' },
@@ -60,6 +68,14 @@ export const BUILDER_NAV_ITEMS = {
     'SYSTEM': [
         { route: '/records/role', icon: AlertTriangle, name: 'Roles & Permissions' },
         { route: '/records/user', icon: Contact, name: 'Users' },
+        { route: '/config', icon: Database, name: 'Configuration' },
+        { route: '/workspaces', icon: GitBranch, name: 'Config Workspaces' },
+    ],
+    'AI': [
+        { route: '/ai/settings', icon: Bot, name: 'AI Settings' },
+        { route: '/ai/approvals', icon: Shield, name: 'Approvals' },
+        { route: '/ai/activities', icon: Activity, name: 'Activities' },
+        { route: '/ai/usage', icon: BarChart3, name: 'Usage' },
     ]
 };
 
@@ -152,7 +168,7 @@ export const RECORD_COLUMNS: Record<string, Record<string, { name: string, size:
     'field_def': {
         'name': { name: 'Name', size: 0 },
         'type': { name: 'Type', size: 0 },
-        'object_def': { name: 'Object', size: 0 },
+        'used_by': { name: 'Used By', size: 0 },
         'ref_target': { name: 'Target Schema', size: 0 }
     }
 };
@@ -268,9 +284,22 @@ export interface RecordCardConfig {
     id: string;
     type: 'dynamic' | 'campaigns' | 'pipelines' | 'relation' | 'algo3';
     title: string;
-    tiles?: RecordTileConfig[]; 
+    tiles?: RecordTileConfig[];
     relation?: RecordRelationConfig;
     isExpandable?: boolean;
+}
+
+// Schema field definition for dynamic form generation
+export interface SchemaField {
+    name: string;
+    type?: string;
+    ref_target?: string;
+}
+
+// Schema field group from object_def.data.fieldGroups
+export interface SchemaFieldGroup {
+    name?: string;
+    fields?: SchemaField[];
 }
 
 export const RECORD_DETAIL_CONFIG: Record<string, RecordCardConfig[]> = {
@@ -515,7 +544,7 @@ export const RECORD_DETAIL_CONFIG: Record<string, RecordCardConfig[]> = {
  * @returns Array of RecordCardConfig for rendering
  */
 export function getConfigFromSchema(
-    objectDef: { data?: { fieldGroups?: any[] } } | null,
+    objectDef: { data?: { fieldGroups?: SchemaFieldGroup[] } } | null,
     recordType: string
 ): RecordCardConfig[] {
     // Irreducible entities: Use hardcoded config if available
@@ -535,13 +564,13 @@ export function getConfigFromSchema(
     }
 
     // Generate config from fieldGroups (per seed_system.md spec)
-    return fieldGroups.map((group: any, index: number) => {
+    return fieldGroups.map((group: SchemaFieldGroup, index: number) => {
         const groupId = group.name?.toLowerCase().replace(/\s+/g, '-') || `group-${index}`;
         const fields = group.fields || [];
 
         // Generate tiles from fields
         // Use the original field name for value lookup (getRecordValue matches by name)
-        const tiles: RecordTileConfig[] = fields.map((field: any) => {
+        const tiles: RecordTileConfig[] = fields.map((field: SchemaField) => {
             const fieldName = field.name || 'unknown';
 
             // Determine leading type based on field type

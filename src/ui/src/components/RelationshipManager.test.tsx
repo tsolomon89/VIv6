@@ -2,9 +2,28 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RelationshipManager } from './RelationshipManager';
 import { api } from '../lib/api';
+import type { Entity, Relationship } from '../lib/api';
 
 // Type the mocked api
 const mockApi = vi.mocked(api);
+
+// Helper to create properly typed Entity fixtures
+const mockEntity = (partial: { id: string; name: string; type: string; slug: string }): Entity => ({
+    ...partial,
+    account_id: 'test-account',
+    data: { fieldGroups: [] },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+});
+
+// Helper to create properly typed Relationship fixtures
+const mockRelationship = (partial: { id: string; from_id: string; to_id: string; type: string }): Relationship => ({
+    ...partial,
+    from_type: 'product',
+    to_type: 'feature',
+    properties: {},
+    created_at: new Date().toISOString()
+});
 
 describe('RelationshipManager', () => {
     const mockOnUpdate = vi.fn();
@@ -48,12 +67,12 @@ describe('RelationshipManager', () => {
     describe('listing existing relationships', () => {
         it('displays linked entities with their names', async () => {
             mockApi.listEntities.mockResolvedValue([
-                { id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one', data: {} },
-                { id: 'feature-2', name: 'Feature Two', type: 'feature', slug: 'feature-two', data: {} },
+                mockEntity({ id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one' }),
+                mockEntity({ id: 'feature-2', name: 'Feature Two', type: 'feature', slug: 'feature-two' }),
             ]);
 
             const relationships = [
-                { id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' },
+                mockRelationship({ id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' }),
             ];
 
             render(
@@ -67,11 +86,11 @@ describe('RelationshipManager', () => {
 
         it('shows relationship type badge', async () => {
             mockApi.listEntities.mockResolvedValue([
-                { id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one', data: {} },
+                mockEntity({ id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one' }),
             ]);
 
             const relationships = [
-                { id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' },
+                mockRelationship({ id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' }),
             ];
 
             render(
@@ -87,8 +106,8 @@ describe('RelationshipManager', () => {
     describe('adding relationships', () => {
         it('shows dropdown with available entities', async () => {
             mockApi.listEntities.mockResolvedValue([
-                { id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one', data: {} },
-                { id: 'feature-2', name: 'Feature Two', type: 'feature', slug: 'feature-two', data: {} },
+                mockEntity({ id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one' }),
+                mockEntity({ id: 'feature-2', name: 'Feature Two', type: 'feature', slug: 'feature-two' }),
             ]);
 
             render(<RelationshipManager {...defaultProps} />);
@@ -100,12 +119,12 @@ describe('RelationshipManager', () => {
 
         it('filters out already linked entities from dropdown', async () => {
             mockApi.listEntities.mockResolvedValue([
-                { id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one', data: {} },
-                { id: 'feature-2', name: 'Feature Two', type: 'feature', slug: 'feature-two', data: {} },
+                mockEntity({ id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one' }),
+                mockEntity({ id: 'feature-2', name: 'Feature Two', type: 'feature', slug: 'feature-two' }),
             ]);
 
             const relationships = [
-                { id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' },
+                mockRelationship({ id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' }),
             ];
 
             render(
@@ -122,9 +141,9 @@ describe('RelationshipManager', () => {
 
         it('calls createRelationship when Link button is clicked', async () => {
             mockApi.listEntities.mockResolvedValue([
-                { id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one', data: {} },
+                mockEntity({ id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one' }),
             ]);
-            mockApi.createRelationship.mockResolvedValue({ id: 'new-rel', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' });
+            mockApi.createRelationship.mockResolvedValue(mockRelationship({ id: 'new-rel', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' }));
 
             render(<RelationshipManager {...defaultProps} />);
 
@@ -146,9 +165,9 @@ describe('RelationshipManager', () => {
 
         it('calls onUpdate after successful relationship creation', async () => {
             mockApi.listEntities.mockResolvedValue([
-                { id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one', data: {} },
+                mockEntity({ id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one' }),
             ]);
-            mockApi.createRelationship.mockResolvedValue({ id: 'new-rel', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' });
+            mockApi.createRelationship.mockResolvedValue(mockRelationship({ id: 'new-rel', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' }));
 
             render(<RelationshipManager {...defaultProps} />);
 
@@ -166,7 +185,7 @@ describe('RelationshipManager', () => {
 
         it('disables Link button when no entity is selected', async () => {
             mockApi.listEntities.mockResolvedValue([
-                { id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one', data: {} },
+                mockEntity({ id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one' }),
             ]);
 
             render(<RelationshipManager {...defaultProps} />);
@@ -198,19 +217,12 @@ describe('RelationshipManager', () => {
 
         it('creates entity and relationship when Create & Link is clicked', async () => {
             mockApi.listEntities.mockResolvedValue([]);
-            mockApi.createEntity.mockResolvedValue({
-                id: 'new-feature-id',
-                name: 'New Feature',
-                type: 'feature',
-                slug: 'new-feature',
-                data: {},
-            });
-            mockApi.createRelationship.mockResolvedValue({
-                id: 'new-rel',
-                from_id: 'entity-123',
-                to_id: 'new-feature-id',
-                type: 'has_feature',
-            });
+            mockApi.createEntity.mockResolvedValue(
+                mockEntity({ id: 'new-feature-id', name: 'New Feature', type: 'feature', slug: 'new-feature' })
+            );
+            mockApi.createRelationship.mockResolvedValue(
+                mockRelationship({ id: 'new-rel', from_id: 'entity-123', to_id: 'new-feature-id', type: 'has_feature' })
+            );
 
             render(<RelationshipManager {...defaultProps} />);
 
@@ -288,12 +300,12 @@ describe('RelationshipManager', () => {
             vi.spyOn(window, 'confirm').mockReturnValue(true);
 
             mockApi.listEntities.mockResolvedValue([
-                { id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one', data: {} },
+                mockEntity({ id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one' }),
             ]);
             mockApi.deleteRelationship.mockResolvedValue(undefined);
 
             const relationships = [
-                { id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' },
+                mockRelationship({ id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' }),
             ];
 
             render(
@@ -318,11 +330,11 @@ describe('RelationshipManager', () => {
             vi.spyOn(window, 'confirm').mockReturnValue(false);
 
             mockApi.listEntities.mockResolvedValue([
-                { id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one', data: {} },
+                mockEntity({ id: 'feature-1', name: 'Feature One', type: 'feature', slug: 'feature-one' }),
             ]);
 
             const relationships = [
-                { id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' },
+                mockRelationship({ id: 'rel-1', from_id: 'entity-123', to_id: 'feature-1', type: 'has_feature' }),
             ];
 
             render(

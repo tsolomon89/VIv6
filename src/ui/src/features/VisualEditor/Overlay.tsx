@@ -2,10 +2,12 @@
 import React, { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Layers, Settings2, Eye, Plus, Trash2, ArrowUp, ArrowDown, Maximize2, Minimize2, Copy, AlertCircle, Info as InfoIcon } from 'lucide-react';
 import type { ConfigState, PageTemplate, Binding, Placement } from '../../lib/types';
+import type { PresentationPreset } from '../../lib/api';
 import { BindingControls } from './controls/BindingControls';
 import { PlacementControls } from './controls/PlacementControls';
 import { PresentationControls } from './controls/PresentationControls';
 import { ConfigControls } from './controls/ConfigControls';
+import { PresetGallery } from '../../components/PageBuilder';
 
 interface EditorOverlayProps {
     isDebugMode: boolean; // "Sandbox Mode" status
@@ -29,7 +31,7 @@ interface EditorOverlayProps {
     updateSectionPlacement: (id: string, p: Placement) => void;
     updateSectionPresentation: (id: string, k: string) => void;
     
-    addSection: () => void;
+    addSection: (presetKey?: string) => void;
     removeSection: (id: string) => void;
     
     // Single Config (Override) Logic
@@ -71,6 +73,12 @@ export const Overlay: React.FC<EditorOverlayProps> = ({
     const [activeTab, setActiveTab] = useState<'semantics' | 'visuals' | 'position'>('visuals');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
+    const [showPresetGallery, setShowPresetGallery] = useState(false);
+
+    const handlePresetSelect = (preset: PresentationPreset) => {
+        addSection(preset.key);
+        setShowPresetGallery(false);
+    };
 
     // If debug mode is locked, show nothing (or maybe a minimal badge? But Shell handles that)
     if (!isDebugMode) return null;
@@ -410,8 +418,8 @@ export const Overlay: React.FC<EditorOverlayProps> = ({
                                  </button>
                              </div>
                              
-                             <button 
-                                onClick={addSection}
+                             <button
+                                onClick={() => setShowPresetGallery(true)}
                                 className="px-6 py-3 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 hover:text-blue-200 border border-blue-600/50 transition-all font-bold text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(37,99,235,0.2)]"
                              >
                                  New Section
@@ -424,8 +432,8 @@ export const Overlay: React.FC<EditorOverlayProps> = ({
                         <Layers className="w-12 h-12 mb-4 opacity-20" />
                         <h3 className="text-sm font-bold text-white mb-2">No Selection</h3>
                         <p className="text-xs mb-6 max-w-[200px]">Select a section to begin editing semantics, visuals, or layout.</p>
-                        <button 
-                            onClick={addSection}
+                        <button
+                            onClick={() => setShowPresetGallery(true)}
                             className="px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/10 transition-colors text-xs font-bold"
                          >
                              Add First Section
@@ -433,6 +441,15 @@ export const Overlay: React.FC<EditorOverlayProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Preset Gallery Modal */}
+            {showPresetGallery && (
+                <PresetGallery
+                    onSelect={handlePresetSelect}
+                    onClose={() => setShowPresetGallery(false)}
+                    title="Choose a Section Template"
+                />
+            )}
         </div>
     );
 };

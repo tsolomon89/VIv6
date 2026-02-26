@@ -5,6 +5,7 @@
     "name": "Contact",
     "summary": "A person.",
     "data": {
+      "category": "crm",
       "icon": "user",
       "fieldGroups": [
         {
@@ -45,6 +46,7 @@
     "name": "Opportunity",
     "summary": "A potential sale or transaction.",
     "data": {
+      "category": "crm",
       "icon": "dollar-sign",
       "fieldGroups": [
         {
@@ -73,6 +75,7 @@
     "name": "Account",
     "summary": "A company or organization.",
     "data": {
+      "category": "crm",
       "icon": "building",
       "fieldGroups": [
         {
@@ -98,6 +101,7 @@
     "name": "Product",
     "summary": "A good or service.",
     "data": {
+      "category": "crm",
       "icon": "package",
       "fieldGroups": [
         {
@@ -116,6 +120,7 @@
     "name": "Feature",
     "summary": "A capability of a product.",
     "data": {
+      "category": "crm",
       "icon": "zap",
       "fieldGroups": [
         {
@@ -134,6 +139,7 @@
     "name": "Solution",
     "summary": "A bundle of products/features.",
     "data": {
+      "category": "crm",
       "icon": "layers",
       "fieldGroups": [
         {
@@ -152,6 +158,7 @@
     "name": "Use Case",
     "summary": "A problem solved by the product.",
     "data": {
+      "category": "crm",
       "icon": "target",
       "fieldGroups": [
         {
@@ -171,6 +178,7 @@
     "name": "Persona",
     "summary": "A target user type.",
     "data": {
+      "category": "crm",
       "icon": "users",
       "fieldGroups": [
         {
@@ -189,6 +197,7 @@
     "name": "Activity",
     "summary": "An event capturing user/system actions with physics-based tracking.",
     "data": {
+      "category": "crm",
       "icon": "activity",
       "fieldGroups": [
         {
@@ -228,6 +237,7 @@
     "name": "Tenant",
     "summary": "System mapping for an Account.",
     "data": {
+      "category": "system",
       "icon": "server",
       "fieldGroups": [
         {
@@ -246,6 +256,7 @@
     "name": "Subscription",
     "summary": "Commercial relationship.",
     "data": {
+      "category": "system",
       "icon": "credit-card",
       "fieldGroups": [
         {
@@ -265,6 +276,7 @@
     "name": "Campaign",
     "summary": "A marketing or sales campaign.",
     "data": {
+      "category": "growth",
       "icon": "megaphone",
       "fieldGroups": [
         {
@@ -298,6 +310,7 @@
     "name": "Asset Group",
     "summary": "A collection of marketing assets.",
     "data": {
+      "category": "creative",
       "icon": "folder",
       "fieldGroups": [
         {
@@ -317,6 +330,7 @@
     "name": "Asset",
     "summary": "A piece of content.",
     "data": {
+      "category": "creative",
       "icon": "file",
       "fieldGroups": [
         {
@@ -344,10 +358,38 @@
   },
   {
     "type": "object_def",
+    "slug": "page",
+    "name": "Page",
+    "summary": "A web page.",
+    "data": {
+      "category": "creative",
+      "icon": "monitor",
+      "fieldGroups": [
+        {
+          "name": "Details",
+          "fields": [
+            { "name": "Title", "type": "text", "required": true },
+            { "name": "Path", "type": "text", "required": true },
+            { "name": "Status", "type": "dimension", "dimension": "status" }
+          ]
+        },
+        {
+          "name": "SEO",
+          "fields": [
+            { "name": "Meta Title", "type": "text" },
+            { "name": "Meta Description", "type": "textarea" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
     "slug": "pipeline",
     "name": "Pipeline",
     "summary": "A collection of opportunity stages.",
     "data": {
+      "category": "growth",
       "icon": "git-branch",
       "fieldGroups": [
         {
@@ -362,10 +404,37 @@
   },
   {
     "type": "object_def",
+    "slug": "workflow",
+    "name": "Workflow",
+    "summary": "An automated process or sequence.",
+    "data": {
+      "category": "growth",
+      "icon": "git-merge",
+      "fieldGroups": [
+        {
+          "name": "Configuration",
+          "fields": [
+            { "name": "Name", "type": "text", "required": true },
+            { "name": "Status", "type": "select", "options": ["draft", "active", "paused", "archived"] },
+            { "name": "Trigger Type", "type": "select", "options": ["manual", "scheduled", "event"] }
+          ]
+        },
+        {
+          "name": "Steps",
+          "fields": [
+            { "name": "Steps", "type": "textarea", "summary": "JSON array of workflow steps" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_def",
     "slug": "role",
     "name": "Role",
     "summary": "A permission set for access control.",
     "data": {
+      "category": "system",
       "icon": "shield",
       "fieldGroups": [
         {
@@ -384,6 +453,7 @@
     "name": "User",
     "summary": "System user.",
     "data": {
+      "category": "system",
       "icon": "user-circle",
       "fieldGroups": [
         {
@@ -411,6 +481,7 @@
     "name": "View",
     "summary": "A query definition that returns a set of records.",
     "data": {
+      "category": "system",
       "icon": "eye",
       "is_system": true,
       "fieldGroups": [
@@ -440,6 +511,7 @@
     "name": "Derivation",
     "summary": "A computed field formula.",
     "data": {
+      "category": "system",
       "icon": "calculator",
       "is_system": true,
       "fieldGroups": [
@@ -467,6 +539,7 @@
     "name": "Metric",
     "summary": "An aggregation/rollup rule.",
     "data": {
+      "category": "system",
       "icon": "bar-chart",
       "is_system": true,
       "fieldGroups": [
@@ -502,6 +575,7 @@
     "name": "Rule",
     "summary": "A trigger/automation pattern.",
     "data": {
+      "category": "system",
       "icon": "zap",
       "is_system": true,
       "fieldGroups": [

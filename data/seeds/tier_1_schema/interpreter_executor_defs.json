@@ -1,0 +1,108 @@
+[
+  {
+    "id": "ied-00000000-0000-0000-0000-000000000001",
+    "type": "interpreter_executor_def",
+    "slug": "constraints",
+    "name": "Constraints Executor",
+    "summary": "Runs data-driven validation constraints for pre-create and pre-update lifecycle events.",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "key": "constraints",
+      "description": "Validates records against validation_constraint definitions",
+      "is_active": true,
+      "supported_events": ["pre_create", "pre_update"]
+    }
+  },
+  {
+    "id": "ied-00000000-0000-0000-0000-000000000002",
+    "type": "interpreter_executor_def",
+    "slug": "state-machine",
+    "name": "State Machine Executor",
+    "summary": "Enforces state transition rules during pre-update.",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "key": "state_machine",
+      "description": "Checks state transitions using state_machine records",
+      "is_active": true,
+      "supported_events": ["pre_update"]
+    }
+  },
+  {
+    "id": "ied-00000000-0000-0000-0000-000000000003",
+    "type": "interpreter_executor_def",
+    "slug": "code-hooks",
+    "name": "Code Hooks Executor",
+    "summary": "Executes registered code-based lifecycle hooks.",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "key": "code_hooks",
+      "description": "Runs TypeScript hook handlers registered for an entity type",
+      "is_active": true
+    }
+  },
+  {
+    "id": "ied-00000000-0000-0000-0000-000000000004",
+    "type": "interpreter_executor_def",
+    "slug": "rules",
+    "name": "Rules Executor",
+    "summary": "Executes data-driven rule automations.",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "key": "rules",
+      "description": "Runs rule records matching the lifecycle event",
+      "is_active": true
+    }
+  },
+  {
+    "id": "ied-00000000-0000-0000-0000-000000000005",
+    "type": "interpreter_executor_def",
+    "slug": "custom-compute-derivations",
+    "name": "Custom Derivation Compute Executor",
+    "summary": "Computes derivations during lifecycle execution.",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "key": "custom.compute_derivations",
+      "description": "Computes configured derivations and merges output into record.data",
+      "is_active": true,
+      "supported_events": ["pre_create", "pre_update", "post_update"],
+      "supported_entity_types": ["contact", "opportunity", "campaign", "activity"],
+      "options_contract": {
+        "required": [],
+        "allowed": ["derivationSlugs", "mergeIntoData", "failOnError", "outputField"],
+        "allow_additional": false
+      },
+      "metadata": {
+        "runtime_registration": {
+          "module": "src/modules/ops/custom_interpreter_executors.ts",
+          "export": "registerCustomInterpreterExecutors"
+        }
+      }
+    }
+  },
+  {
+    "id": "ied-00000000-0000-0000-0000-000000000006",
+    "type": "interpreter_executor_def",
+    "slug": "custom-compute-metrics",
+    "name": "Custom Metrics Compute Executor",
+    "summary": "Computes rollup metrics during lifecycle execution.",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "key": "custom.compute_metrics",
+      "description": "Computes configured metrics and merges numeric values into record.data",
+      "is_active": true,
+      "supported_events": ["pre_update", "post_update"],
+      "supported_entity_types": ["account", "campaign", "contact", "product"],
+      "options_contract": {
+        "required": [],
+        "allowed": ["metricSlugs", "mergeIntoData", "failOnError", "outputField", "includeDetails"],
+        "allow_additional": false
+      },
+      "metadata": {
+        "runtime_registration": {
+          "module": "src/modules/ops/custom_interpreter_executors.ts",
+          "export": "registerCustomInterpreterExecutors"
+        }
+      }
+    }
+  }
+]

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Database, Settings, Link2, FileCode, Globe, Layers, Hammer } from 'lucide-react';
+import { LayoutDashboard, Database, Settings, Link2, FileCode, Globe, Layers, Hammer, FileText, Paintbrush, Bot, Shield, Activity, BarChart3 } from 'lucide-react';
 
 const navItems = [
   { group: 'Manage', items: [
@@ -10,8 +10,15 @@ const navItems = [
     { to: '/dimensions', icon: Layers, label: 'Dimensions' },
   ]},
   { group: 'Design System', items: [
+    { to: '/pages', icon: FileText, label: 'Pages' },
     { to: '/templates', icon: FileCode, label: 'Templates' },
-    { to: '/editor', icon: LayoutDashboard, label: 'Visual Editor' },
+    { to: '/editor', icon: Paintbrush, label: 'Visual Editor' },
+  ]},
+  { group: 'AI Integration', items: [
+    { to: '/ai/settings', icon: Bot, label: 'AI Settings' },
+    { to: '/ai/approvals', icon: Shield, label: 'Approvals' },
+    { to: '/ai/activities', icon: Activity, label: 'Activities' },
+    { to: '/ai/usage', icon: BarChart3, label: 'Usage' },
   ]},
   { group: 'System', items: [
     { to: '/builds', icon: Hammer, label: 'Builds' },
@@ -26,13 +33,14 @@ export function Sidebar() {
   const { brands, activeBrandId, setActiveBrandId, isLoading } = useBrand();
 
   return (
-    <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
+    <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col" aria-label="Main navigation">
       <div className="p-4 border-b border-zinc-800">
         <h1 className="text-xl font-bold text-white mb-2">VI Studio</h1>
-        
+
         {/* Brand Switcher */}
         <div className="relative group">
-          <select 
+          <select
+            aria-label="Select brand"
             className="w-full appearance-none bg-zinc-800 text-zinc-300 text-xs px-2 py-1.5 rounded border border-zinc-700 focus:outline-none focus:border-indigo-500 cursor-pointer"
             value={activeBrandId || ''}
             onChange={(e) => setActiveBrandId(e.target.value)}
@@ -45,7 +53,7 @@ export function Sidebar() {
           <ChevronsUpDown size={12} className="absolute right-2 top-2 text-zinc-500 pointer-events-none" />
         </div>
       </div>
-      <nav className="flex-1 p-2">
+      <nav className="flex-1 p-2" aria-label="Sidebar navigation">
         {navItems.map((group) => (
           <div key={group.group} className="mb-6">
             <h3 className="px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">

@@ -259,6 +259,11 @@ export function inflateRecord(input: any, accountId: string = SYSTEM_ACCOUNT_ID)
     };
 }
 
+// --- CONFIG RECORD TYPES ---
+// These record types store configuration data directly, not fieldGroups.
+// They should NOT be passed through inflateRecord().
+const CONFIG_RECORD_TYPES = ['pipeline_stage', 'qualifier_def', 'activity_def', 'validation_constraint', 'workflow_step_type', 'health_config', 'workflow', 'workflow_step', 'workflow_enrollment', 'field_config', 'state_machine', 'interpreter_pipeline', 'interpreter_executor_def'];
+
 // --- LOADER ---
 export function loadSeedState(): SeedState {
     const state: SeedState = {
@@ -324,10 +329,32 @@ export function loadSeedState(): SeedState {
                         continue;
                     }
 
+                    // Config record types: pass through data directly without inflation
+                    if (CONFIG_RECORD_TYPES.includes(item.type)) {
+                        const record: DataRecord = {
+                            id: item.id || uuidv4(),
+                            account_id: item.account_id || SYSTEM_ACCOUNT_ID,
+                            type: item.type,
+                            slug: item.slug,
+                            name: item.name || item.slug,
+                            summary: item.summary || '',
+                            description: item.description || '',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            data: item.data || {} // Pass through directly
+                        };
+                        state.records.push(record);
+                        continue;
+                    }
+
                     const inflated = inflateRecord(item);
-                    
+
                     // Pass through canonical format directly - no deflation needed
                     // inflateRecord() produces fieldGroupStructs with canonical property names
+                    // Preserve metadata fields (category, icon, is_system, etc.) from original data
+                    const originalData = item.data || {};
+                    const { fieldGroups: _ignored, ...metadata } = originalData;
+
                     const record: DataRecord = {
                         id: item.id || inflated.idRecord,
                         account_id: item.account_id || SYSTEM_ACCOUNT_ID,
@@ -339,6 +366,7 @@ export function loadSeedState(): SeedState {
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString(),
                         data: {
+                             ...metadata, // Preserve category, icon, is_system, etc.
                              fieldGroups: inflated.objectStruct?.fieldGroupStructs || []
                         }
                     };

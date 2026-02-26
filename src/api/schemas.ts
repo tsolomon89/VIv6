@@ -18,7 +18,8 @@ export const FieldInputTypeSchema = z.enum([
   'url',
   'richtext',
   'boolean',
-  'ref'
+  'ref',
+  'Record'  // Canonical reference type (ref is legacy alias)
 ]);
 
 // Flexible value schema for fields

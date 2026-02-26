@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, FileCode, RefreshCw, Trash2 } from 'lucide-react';
 import { api } from '../lib/api';
+import { showToast } from '../hooks/useToast';
 
 const BINDING_KINDS = ['self', 'related'];
 const ENTITY_TYPES = ['brand', 'product', 'feature', 'solution', 'useCase'];
@@ -55,7 +56,7 @@ export function TemplateList() {
         setLoading(true);
         api.listTemplates()
             .then(setTemplates)
-            .catch(() => alert('Failed to load templates'))
+            .catch(() => showToast.error('Failed to load templates'))
             .finally(() => setLoading(false));
     };
 
@@ -69,7 +70,7 @@ export function TemplateList() {
             await api.deleteTemplate(key);
             fetchTemplates();
         } catch {
-            alert('Failed to delete');
+            showToast.error('Failed to delete');
         }
     };
 

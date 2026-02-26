@@ -7,6 +7,23 @@ import { randomUUID } from 'crypto';
 
 // --- Records ---
 
+function enrichHookContext(context: any, extras: Record<string, any>): any {
+  if (context && typeof context === 'object') {
+    const ctx = context as any;
+    if (!ctx.userId && ctx.user?.id) {
+      ctx.userId = ctx.user.id;
+    }
+    for (const [key, value] of Object.entries(extras)) {
+      if (ctx[key] === undefined) {
+        ctx[key] = value;
+      }
+    }
+    return ctx;
+  }
+
+  return { ...extras };
+}
+
 export async function createRecord(input: DataRecordInput, context?: any): Promise<DataRecord> {
   const id = input.id || randomUUID();
   const now = new Date().toISOString();
@@ -21,8 +38,10 @@ export async function createRecord(input: DataRecordInput, context?: any): Promi
     data: input.data || { fieldGroups: [] }
   };
 
+  const hookContext = enrichHookContext(context, { account_id: initialRecord.account_id });
+
   // Pre-Create Hook
-  await hooks.emitPreCreate(input.type, initialRecord, context);
+  await hooks.emitPreCreate(input.type, initialRecord, hookContext);
 
   // Re-construct record with potentially modified data from hooks
   const record: DataRecord = {
@@ -53,7 +72,7 @@ export async function createRecord(input: DataRecordInput, context?: any): Promi
   });
 
   // Post-Create Hook
-  await hooks.emitPostCreate(record.type, record, context);
+  await hooks.emitPostCreate(record.type, record, hookContext);
 
   // Emit event for build pipeline
   events.emit('record.created', record.id);
@@ -97,8 +116,13 @@ export async function updateRecord(id: string, input: Partial<DataRecordInput>, 
       type: current.type, // Ensure type is present for hook routing
       account_id: current.account_id 
   };
+
+  const hookContext = enrichHookContext(context, {
+    account_id: current.account_id,
+    previousRecord: current,
+  });
   
-  await hooks.emitPreUpdate(current.type, fullInput, context);
+  await hooks.emitPreUpdate(current.type, fullInput, hookContext);
 
   const updated: DataRecord = {
     ...fullInput, // Use the state potentially modified by hooks
@@ -130,7 +154,7 @@ export async function updateRecord(id: string, input: Partial<DataRecordInput>, 
   });
 
   // Post-Update Hook
-  await hooks.emitPostUpdate(updated.type, updated, context);
+  await hooks.emitPostUpdate(updated.type, updated, hookContext);
 
   // Emit event for build pipeline
   events.emit('record.updated', updated.id);
@@ -140,9 +164,13 @@ export async function updateRecord(id: string, input: Partial<DataRecordInput>, 
 
 export async function deleteRecord(id: string, context?: any): Promise<boolean> {
   const current = getRecord(id);
+  const hookContext = current
+    ? enrichHookContext(context, { account_id: current.account_id, previousRecord: current })
+    : context;
+
   // Emit Pre-Delete Hook
   if (current) {
-      await hooks.emitPreDelete(current.type, current, context);
+      await hooks.emitPreDelete(current.type, current, hookContext);
   }
 
   const stmt = db.prepare('DELETE FROM records WHERE id = ?');
@@ -152,7 +180,7 @@ export async function deleteRecord(id: string, context?: any): Promise<boolean> 
 
   // Emit Post-Delete Hook
   if (success && current) {
-      await hooks.emitPostDelete(current.type, current, context);
+      await hooks.emitPostDelete(current.type, current, hookContext);
       // Emit event for build pipeline
       events.emit('record.deleted', current.id);
   }

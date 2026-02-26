@@ -1,9 +1,9 @@
 
+import { useEffect, useState } from 'react';
 import { Calendar, Plus, UserPlus, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 import { api, type Entity } from '../../../lib/api';
-import { timeAgo, getRecordValue } from '../utils/record-utils';
+import { timeAgo, getRecordValueAsString } from '../utils/record-utils';
 
 interface ContextSidebarProps {
     isOpen: boolean;
@@ -21,29 +21,39 @@ export function ContextSidebar({ isOpen, onToggle, contextRecord }: ContextSideb
                 if (contextRecord) {
                     // Filter activities related to this record
                     filtered = filtered.filter(a => {
-                        const relatedType = a.data?.fieldGroups?.find((g: any) => g.fields.some((f: any) => f.name === 'ContextType' && f.value === contextRecord.type));
-                        const relatedId = a.data?.fieldGroups?.find((g: any) => g.fields.some((f: any) => f.name === 'ContextId' && f.value === contextRecord.id));
-                        
-                        // Fallback: Check 'Contact' or 'Account' fields if they match 
+                        // Helper to get fields from group (handles both canonical and seed formats)
+                        const getFields = (g: any) => g.fields || g.fieldStructs || [];
+                        const getFieldName = (f: any) => f.name || f.nameField || '';
+
+                        const relatedType = a.data?.fieldGroups?.find((g: any) =>
+                            getFields(g).some((f: any) => getFieldName(f) === 'ContextType' && f.value === contextRecord.type)
+                        );
+                        const relatedId = a.data?.fieldGroups?.find((g: any) =>
+                            getFields(g).some((f: any) => getFieldName(f) === 'ContextId' && f.value === contextRecord.id)
+                        );
+
+                        // Fallback: Check 'Contact' or 'Account' fields if they match
                         // This is a loose check based on the schema conventions
                         const groups = a.data?.fieldGroups || [];
-                        const hasRef = groups.some((g: any) => g.fields.some((f: any) => f.value === contextRecord.id));
-                        
+                        const hasRef = groups.some((g: any) => getFields(g).some((f: any) => f.value === contextRecord.id));
+
                         return relatedType || relatedId || hasRef;
                     });
                 }
 
-                const sorted = filtered.sort((a, b) => 
+                const sorted = filtered.sort((a, b) =>
                     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
                 );
                 setActivities(sorted.slice(0, 5));
-            }).catch(() => {});
+            }).catch((err) => {
+                console.warn('[ContextSidebar] Failed to load activities:', err instanceof Error ? err.message : String(err));
+            });
         }
     }, [isOpen, contextRecord]);
 
     if (!isOpen) return null;
 
-    const addActivityLink = contextRecord 
+    const addActivityLink = contextRecord
         ? `/records/activity/new?related_to=${contextRecord.id}&related_type=${contextRecord.type}`
         : "/records/activity/new";
 
@@ -57,7 +67,7 @@ export function ContextSidebar({ isOpen, onToggle, contextRecord }: ContextSideb
                     <span className="sr-only">Close</span>
                 </button>
             </div>
-            
+
             <div className="p-4 space-y-3">
                 <Link to={addActivityLink} className="w-full flex items-center gap-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 hover:border-zinc-700 transition-all group text-left">
                     <div className="w-8 h-8 rounded bg-rose-500/10 flex items-center justify-center text-rose-500 group-hover:bg-rose-500/20">
@@ -101,19 +111,14 @@ export function ContextSidebar({ isOpen, onToggle, contextRecord }: ContextSideb
                         <div className="text-xs text-zinc-500 italic">No recent activity.</div>
                     )}
                     {activities.map((activity, i) => {
-                        const verb = getRecordValue(activity, 'Verb') || 'Acted on';
-                        const objectRef = getRecordValue(activity, 'Object');
-                        // Object might be a ref string or resolved? Usually generic ref field stores ID.
-                        // Assuming it's a string ID or name if inflated. 
-                        // Actually, 'Object' in definitions.json was type 'ref'. 
-                        // The backend might not resolve it automatically in listEntities unless configured.
-                        // For now we just show what we have.
-                        
+                        const verb: string = getRecordValueAsString(activity, 'Verb') || 'Acted on';
+                        const objectRef: string = getRecordValueAsString(activity, 'Object');
+
                         return (
                             <div key={activity.id} className="flex gap-3 relative">
                                 {/* Line */}
                                 {i !== activities.length - 1 && <div className="absolute left-1.5 top-2 bottom-[-1rem] w-px bg-zinc-800"></div>}
-                                
+
                                 <div className="w-3 h-3 rounded-full bg-zinc-700 border-2 border-zinc-900 mt-1.5 shrink-0 z-10" />
                                 <div>
                                     <div className="text-sm text-zinc-300">

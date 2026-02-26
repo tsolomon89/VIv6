@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { PageTemplate, SectionInstance, Binding, Placement, ShapeType, ConfigState, SceneObject } from '../types';
 import { INITIAL_PAGE_TEMPLATE, TEMPLATES, mkParam, DEFAULT_CONFIG } from '../data';
 import { validatePageTemplate } from '../utils/validation';
-import { PRESET_REGISTRY } from '../presets/registry';
+import { getPreset, getAllPresets, getPresetRegistry } from '../presets/loader';
 import { matchesSignature } from '../utils/binding';
+import { apiClient } from '../api/client';
 
 const STORAGE_KEY = 'vi_page_template_v1_1'; // Bumped for data model change
 
@@ -61,19 +62,19 @@ export const useTemplateManager = () => {
                 ...prev,
                 sections: prev.sections.map(s => {
                     if (s.id !== sectionId) return s;
-                    
+
                     // Check if current presentation is compatible with new binding
-                    const currentPreset = PRESET_REGISTRY[s.presentationKey];
+                    const currentPreset = getPreset(s.presentationKey);
                     let newKey = s.presentationKey;
-                    
+
                     // If incompatible, try to find a compatible one
                     if (!currentPreset || !matchesSignature(binding, currentPreset.signature)) {
-                        const compatible = Object.values(PRESET_REGISTRY).find(p => matchesSignature(binding, p.signature));
+                        const compatible = getAllPresets().find(p => matchesSignature(binding, p.signature));
                         if (compatible) {
                             newKey = compatible.key;
                         } else {
                             // Fallback to generic if nothing matches (safeguard)
-                            newKey = 'section.generic.v1'; 
+                            newKey = 'section.generic.v1';
                         }
                     }
 
@@ -174,7 +175,7 @@ export const useTemplateManager = () => {
     // Helper: Ensure overrides.children is populated from preset if empty
     const ensureChildrenOverride = (section: SectionInstance): SceneObject[] => {
         if (section.overrides?.children) return section.overrides.children;
-        const preset = PRESET_REGISTRY[section.presentationKey];
+        const preset = getPreset(section.presentationKey);
         // Deep clone preset children to start overriding
         return preset?.config?.children ? JSON.parse(JSON.stringify(preset.config.children)) : [];
     };
@@ -291,8 +292,8 @@ export const useTemplateManager = () => {
     const importTemplate = (jsonString: string): { success: boolean; error?: string } => {
         try {
             const parsed = JSON.parse(jsonString) as PageTemplate;
-            const errors = validatePageTemplate(parsed, PRESET_REGISTRY);
-            
+            const errors = validatePageTemplate(parsed, getPresetRegistry());
+
             if (errors.length > 0) {
                 console.error("Import Validation Errors:", errors);
                 return { success: false, error: `Validation failed: ${errors[0].message}` };
@@ -354,6 +355,76 @@ export const useTemplateManager = () => {
         setTemplate(blankTemplate);
     };
 
+    /**
+     * Save the current template state to the backend API.
+     * This persists the page sections to the pages API.
+     */
+    const saveToBackend = async (pageId: string): Promise<void> => {
+        if (!pageId) {
+            console.warn('[TM] No pageId provided, saving to localStorage only');
+            return;
+        }
+
+        try {
+            // Convert template sections to API format
+            const sectionsData = template.sections.map(s => ({
+                id: s.id,
+                binding: s.binding,
+                placement: s.placement,
+                presentationKey: s.presentationKey,
+                overrides: s.overrides
+            }));
+
+            await apiClient.updatePage(pageId, {
+                data: {
+                    sections: sectionsData,
+                    pageConfig: {
+                        schemaVersion: template.schemaVersion,
+                        pageContext: template.pageContext,
+                        pageSubject: template.pageSubject
+                    }
+                }
+            });
+
+            console.log(`[TM] Saved to backend: ${pageId}`);
+        } catch (err) {
+            console.error('[TM] Failed to save to backend:', err instanceof Error ? err.message : String(err));
+            throw err;
+        }
+    };
+
+    /**
+     * Load a page from the backend API and set it as the current template.
+     */
+    const loadFromBackend = async (pageId: string): Promise<void> => {
+        try {
+            const page = await apiClient.getPage(pageId, true);
+
+            // Convert API page format to internal template format
+            const loadedTemplate: PageTemplate = {
+                schemaVersion: page.data.pageConfig?.schemaVersion ?? 1,
+                id: page.id,
+                name: page.name,
+                pageContext: page.data.pageConfig?.pageContext ?? { kind: 'detail' },
+                pageSubject: page.data.pageConfig?.pageSubject ?? { target: 'brand', cardinality: 'one' },
+                sections: (page.data.sections ?? []).map(s => ({
+                    schemaVersion: 1,
+                    id: s.id,
+                    binding: s.binding,
+                    placement: s.placement,
+                    presentationKey: s.presentationKey,
+                    overrides: s.overrides ?? {}
+                }))
+            };
+
+            setTemplate(loadedTemplate);
+            console.log(`[TM] Loaded from backend: ${pageId}`);
+        } catch (err) {
+            console.error('[TM] Failed to load from backend:', err instanceof Error ? err.message : String(err));
+            throw err;
+        }
+    };
+
     return {
         template,
         setTemplate,
@@ -377,7 +448,10 @@ export const useTemplateManager = () => {
         importTemplate,
         loadTemplate,
         resetTemplate,
-        createBlankPage
+        createBlankPage,
+        // Backend Persistence
+        saveToBackend,
+        loadFromBackend
     };
 };
 

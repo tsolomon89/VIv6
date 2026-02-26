@@ -1,0 +1,32 @@
+[
+  {
+    "id": "sm-00000000-0000-0000-0000-000000000001",
+    "type": "state_machine",
+    "slug": "activity-lifecycle",
+    "name": "Activity Lifecycle",
+    "summary": "Valid state transitions for activities",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "activity",
+      "State Field": "status",
+      "States": "[\"pending\", \"in_progress\", \"paused\", \"completed\", \"cancelled\"]",
+      "Initial State": "pending",
+      "Transitions": "[{\"from\": \"pending\", \"to\": \"in_progress\", \"action\": \"start\"}, {\"from\": \"pending\", \"to\": \"cancelled\", \"action\": \"cancel\"}, {\"from\": \"in_progress\", \"to\": \"paused\", \"action\": \"pause\"}, {\"from\": \"in_progress\", \"to\": \"completed\", \"action\": \"complete\"}, {\"from\": \"in_progress\", \"to\": \"cancelled\", \"action\": \"cancel\"}, {\"from\": \"paused\", \"to\": \"in_progress\", \"action\": \"resume\"}, {\"from\": \"paused\", \"to\": \"cancelled\", \"action\": \"cancel\"}]"
+    }
+  },
+  {
+    "id": "sm-00000000-0000-0000-0000-000000000002",
+    "type": "state_machine",
+    "slug": "opportunity-lifecycle",
+    "name": "Opportunity Lifecycle",
+    "summary": "Valid stage transitions for opportunities",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Target Entity Type": "opportunity",
+      "State Field": "opportunity_stage",
+      "States": "[\"mql\", \"sql\", \"ftp\", \"rtp\", \"lost\"]",
+      "Initial State": "mql",
+      "Transitions": "[{\"from\": \"mql\", \"to\": \"sql\", \"action\": \"qualify\"}, {\"from\": \"mql\", \"to\": \"lost\", \"action\": \"disqualify\"}, {\"from\": \"sql\", \"to\": \"ftp\", \"action\": \"close_won\"}, {\"from\": \"sql\", \"to\": \"lost\", \"action\": \"close_lost\"}, {\"from\": \"sql\", \"to\": \"mql\", \"action\": \"recycle\"}, {\"from\": \"ftp\", \"to\": \"rtp\", \"action\": \"renew\"}]"
+    }
+  }
+]

@@ -38,7 +38,7 @@ describe('Records API', () => {
             const response = await client.get('/records');
 
             expect(response.status).toBe(200);
-            expect(response.data).toEqual([]);
+            expect(response.data.data).toEqual([]);
         });
 
         it('returns all records', async () => {
@@ -57,7 +57,7 @@ describe('Records API', () => {
             const response = await client.get('/records');
 
             expect(response.status).toBe(200);
-            expect(response.data).toHaveLength(2);
+            expect(response.data.data).toHaveLength(2);
         });
 
         it('filters records by type', async () => {
@@ -78,8 +78,8 @@ describe('Records API', () => {
             });
 
             expect(response.status).toBe(200);
-            expect(response.data).toHaveLength(1);
-            expect(response.data[0].name).toBe('Product 1');
+            expect(response.data.data).toHaveLength(1);
+            expect(response.data.data[0].name).toBe('Product 1');
         });
 
         it('returns records with data property as EntityData structure', async () => {
@@ -94,7 +94,7 @@ describe('Records API', () => {
             const response = await client.get('/records');
 
             expect(response.status).toBe(200);
-            expect(response.data[0]).toHaveProperty('data');
+            expect(response.data.data[0]).toHaveProperty('data');
         });
     });
 

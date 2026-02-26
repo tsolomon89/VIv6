@@ -1,0 +1,505 @@
+[
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000001",
+    "type": "pipeline_stage",
+    "slug": "b2b_mql",
+    "name": "B2B - MQL",
+    "summary": "Marketing Qualified Lead stage for B2B deals",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "b2b",
+      "stage": "mql",
+      "sequence": 1,
+      "probability": 0.1,
+      "required_activities": [
+        { "activity_def_slug": "record_created", "auto_generate": true, "assignment_rule": "auto" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "contacts : score : persona", "qualifierOperator": ">", "qualifierValue": 60, "qualifierType": "Data" },
+        { "qualifier": "opportunities : primary : EndUser", "qualifierOperator": "=", "qualifierValue": "TRUE", "qualifierType": "Data" },
+        { "qualifier": "opportunities : primary : Team", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" },
+        { "qualifier": "accounts : firmographics : Industry", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" }
+      ],
+      "next_stage": "sql"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000002",
+    "type": "pipeline_stage",
+    "slug": "b2b_sql",
+    "name": "B2B - SQL",
+    "summary": "Sales Qualified Lead stage for B2B deals",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "b2b",
+      "stage": "sql",
+      "sequence": 2,
+      "probability": 0.4,
+      "required_activities": [
+        { "activity_def_slug": "call_logged", "auto_generate": true, "assignment_rule": "owner" },
+        { "activity_def_slug": "meeting_held", "auto_generate": true, "assignment_rule": "owner" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "opportunities : primary : Billing", "qualifierOperator": "=", "qualifierValue": "TRUE", "qualifierType": "Data" },
+        { "qualifier": "opportunities : primary : DecisionMaker", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" }
+      ],
+      "next_stage": "ftp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000003",
+    "type": "pipeline_stage",
+    "slug": "b2b_ftp",
+    "name": "B2B - FTP",
+    "summary": "First Time Purchase - Closed Won stage for B2B deals",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "b2b",
+      "stage": "ftp",
+      "sequence": 3,
+      "probability": 1.0,
+      "required_activities": [
+        { "activity_def_slug": "deal_approved", "auto_generate": true, "assignment_rule": "owner" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "opportunities : value : sumPrice", "qualifierOperator": ">", "qualifierValue": 0, "qualifierType": "Data" }
+      ],
+      "next_stage": "rtp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000004",
+    "type": "pipeline_stage",
+    "slug": "b2b_rtp",
+    "name": "B2B - RTP",
+    "summary": "Retention/Renewal stage for B2B deals",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "b2b",
+      "stage": "rtp",
+      "sequence": 4,
+      "probability": 0.8,
+      "required_activities": [
+        { "activity_def_slug": "call_logged", "auto_generate": true, "assignment_rule": "owner" }
+      ],
+      "exit_qualifiers": [],
+      "next_stage": null
+    }
+  },
+
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000011",
+    "type": "pipeline_stage",
+    "slug": "b2c_mql",
+    "name": "B2C - MQL",
+    "summary": "Marketing Qualified Lead stage for B2C (consumer) deals",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "b2c",
+      "stage": "mql",
+      "sequence": 1,
+      "probability": 0.1,
+      "anchor_type": "contact",
+      "required_activities": [
+        { "activity_def_slug": "record_created", "auto_generate": true, "assignment_rule": "auto" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "contacts : score : persona", "qualifierOperator": ">", "qualifierValue": 50, "qualifierType": "Data" },
+        { "qualifier": "contacts : details : email", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" }
+      ],
+      "next_stage": "sql"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000012",
+    "type": "pipeline_stage",
+    "slug": "b2c_sql",
+    "name": "B2C - SQL",
+    "summary": "Sales Qualified Lead stage for B2C deals",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "b2c",
+      "stage": "sql",
+      "sequence": 2,
+      "probability": 0.4,
+      "anchor_type": "contact",
+      "required_activities": [
+        { "activity_def_slug": "email_clicked", "auto_generate": false },
+        { "activity_def_slug": "page_viewed", "auto_generate": false }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "contacts : concent : marketing OptIn", "qualifierOperator": "=", "qualifierValue": "TRUE", "qualifierType": "Data" }
+      ],
+      "next_stage": "ftp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000013",
+    "type": "pipeline_stage",
+    "slug": "b2c_ftp",
+    "name": "B2C - FTP",
+    "summary": "First Time Purchase for B2C deals",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "b2c",
+      "stage": "ftp",
+      "sequence": 3,
+      "probability": 1.0,
+      "anchor_type": "contact",
+      "required_activities": [
+        { "activity_def_slug": "form_submitted", "auto_generate": false }
+      ],
+      "exit_qualifiers": [],
+      "next_stage": "rtp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000014",
+    "type": "pipeline_stage",
+    "slug": "b2c_rtp",
+    "name": "B2C - RTP",
+    "summary": "Retention/Renewal for B2C deals",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "b2c",
+      "stage": "rtp",
+      "sequence": 4,
+      "probability": 0.8,
+      "anchor_type": "contact",
+      "required_activities": [],
+      "exit_qualifiers": [],
+      "next_stage": null
+    }
+  },
+
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000021",
+    "type": "pipeline_stage",
+    "slug": "employment_mql",
+    "name": "Employment - MQL",
+    "summary": "Marketing Qualified - Initial employment interest (Contact to Account link)",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "employment",
+      "stage": "mql",
+      "sequence": 1,
+      "probability": 0.1,
+      "description": "Employment opportunities define the relationship between Contacts and Accounts via work history",
+      "required_activities": [
+        { "activity_def_slug": "record_created", "auto_generate": true, "assignment_rule": "auto" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "contacts : primary : job Title", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" },
+        { "qualifier": "contacts : primary : accountID", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" }
+      ],
+      "next_stage": "sql"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000022",
+    "type": "pipeline_stage",
+    "slug": "employment_sql",
+    "name": "Employment - SQL",
+    "summary": "Sales Qualified - Employment verified",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "employment",
+      "stage": "sql",
+      "sequence": 2,
+      "probability": 0.4,
+      "required_activities": [
+        { "activity_def_slug": "record_updated", "auto_generate": true, "assignment_rule": "auto" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "contacts : primary : Department", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" },
+        { "qualifier": "contacts : primary : seniority", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" }
+      ],
+      "next_stage": "ftp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000023",
+    "type": "pipeline_stage",
+    "slug": "employment_ftp",
+    "name": "Employment - FTP",
+    "summary": "First Time Purchase - Employment confirmed (hired)",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "employment",
+      "stage": "ftp",
+      "sequence": 3,
+      "probability": 1.0,
+      "required_activities": [],
+      "exit_qualifiers": [],
+      "next_stage": "rtp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000024",
+    "type": "pipeline_stage",
+    "slug": "employment_rtp",
+    "name": "Employment - RTP",
+    "summary": "Retention - Ongoing employment",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "employment",
+      "stage": "rtp",
+      "sequence": 4,
+      "probability": 0.8,
+      "required_activities": [],
+      "exit_qualifiers": [],
+      "next_stage": null
+    }
+  },
+
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000031",
+    "type": "pipeline_stage",
+    "slug": "partnership_mql",
+    "name": "Partnership - MQL",
+    "summary": "Marketing Qualified - Initial partnership interest",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "partnership",
+      "stage": "mql",
+      "sequence": 1,
+      "probability": 0.1,
+      "anchor_type": "account",
+      "required_activities": [
+        { "activity_def_slug": "record_created", "auto_generate": true, "assignment_rule": "auto" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "accounts : firmographics : Industry", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" }
+      ],
+      "next_stage": "sql"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000032",
+    "type": "pipeline_stage",
+    "slug": "partnership_sql",
+    "name": "Partnership - SQL",
+    "summary": "Sales Qualified - Partnership interest verified",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "partnership",
+      "stage": "sql",
+      "sequence": 2,
+      "probability": 0.4,
+      "anchor_type": "account",
+      "required_activities": [
+        { "activity_def_slug": "meeting_held", "auto_generate": true, "assignment_rule": "owner" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "accounts : primary : DecisionMaker", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" }
+      ],
+      "next_stage": "ftp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000033",
+    "type": "pipeline_stage",
+    "slug": "partnership_ftp",
+    "name": "Partnership - FTP",
+    "summary": "First Time - Partnership agreement signed",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "partnership",
+      "stage": "ftp",
+      "sequence": 3,
+      "probability": 1.0,
+      "anchor_type": "account",
+      "required_activities": [
+        { "activity_def_slug": "deal_approved", "auto_generate": true, "assignment_rule": "owner" }
+      ],
+      "exit_qualifiers": [],
+      "next_stage": "rtp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000034",
+    "type": "pipeline_stage",
+    "slug": "partnership_rtp",
+    "name": "Partnership - RTP",
+    "summary": "Retention - Ongoing partnership",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "partnership",
+      "stage": "rtp",
+      "sequence": 4,
+      "probability": 0.8,
+      "anchor_type": "account",
+      "required_activities": [],
+      "exit_qualifiers": [],
+      "next_stage": null
+    }
+  },
+
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000041",
+    "type": "pipeline_stage",
+    "slug": "reseller_mql",
+    "name": "Reseller - MQL",
+    "summary": "Marketing Qualified - Initial reseller/channel partner interest",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "reseller",
+      "stage": "mql",
+      "sequence": 1,
+      "probability": 0.1,
+      "anchor_type": "account",
+      "required_activities": [
+        { "activity_def_slug": "record_created", "auto_generate": true, "assignment_rule": "auto" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "accounts : firmographics : Industry", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" }
+      ],
+      "next_stage": "sql"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000042",
+    "type": "pipeline_stage",
+    "slug": "reseller_sql",
+    "name": "Reseller - SQL",
+    "summary": "Sales Qualified - Reseller interest verified",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "reseller",
+      "stage": "sql",
+      "sequence": 2,
+      "probability": 0.4,
+      "anchor_type": "account",
+      "required_activities": [
+        { "activity_def_slug": "call_logged", "auto_generate": true, "assignment_rule": "owner" },
+        { "activity_def_slug": "meeting_held", "auto_generate": true, "assignment_rule": "owner" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "accounts : primary : Billing", "qualifierOperator": "=", "qualifierValue": "TRUE", "qualifierType": "Data" }
+      ],
+      "next_stage": "ftp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000043",
+    "type": "pipeline_stage",
+    "slug": "reseller_ftp",
+    "name": "Reseller - FTP",
+    "summary": "First Time - Reseller agreement signed",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "reseller",
+      "stage": "ftp",
+      "sequence": 3,
+      "probability": 1.0,
+      "anchor_type": "account",
+      "required_activities": [
+        { "activity_def_slug": "deal_approved", "auto_generate": true, "assignment_rule": "owner" }
+      ],
+      "exit_qualifiers": [],
+      "next_stage": "rtp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000044",
+    "type": "pipeline_stage",
+    "slug": "reseller_rtp",
+    "name": "Reseller - RTP",
+    "summary": "Retention - Ongoing reseller relationship",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "reseller",
+      "stage": "rtp",
+      "sequence": 4,
+      "probability": 0.8,
+      "anchor_type": "account",
+      "required_activities": [],
+      "exit_qualifiers": [],
+      "next_stage": null
+    }
+  },
+
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000051",
+    "type": "pipeline_stage",
+    "slug": "investment_mql",
+    "name": "Investment - MQL",
+    "summary": "Marketing Qualified - Initial investor interest",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "investment",
+      "stage": "mql",
+      "sequence": 1,
+      "probability": 0.1,
+      "anchor_type": "account",
+      "required_activities": [
+        { "activity_def_slug": "record_created", "auto_generate": true, "assignment_rule": "auto" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "accounts : firmographics : Industry", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" },
+        { "qualifier": "contacts : primary : DecisionMaker", "qualifierOperator": "Non-Null", "qualifierValue": "Non-Null", "qualifierType": "Data" }
+      ],
+      "next_stage": "sql"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000052",
+    "type": "pipeline_stage",
+    "slug": "investment_sql",
+    "name": "Investment - SQL",
+    "summary": "Sales Qualified - Investment interest verified",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "investment",
+      "stage": "sql",
+      "sequence": 2,
+      "probability": 0.4,
+      "anchor_type": "account",
+      "required_activities": [
+        { "activity_def_slug": "meeting_held", "auto_generate": true, "assignment_rule": "owner" }
+      ],
+      "exit_qualifiers": [
+        { "qualifier": "opportunities : value : sumPrice", "qualifierOperator": ">", "qualifierValue": 0, "qualifierType": "Data" }
+      ],
+      "next_stage": "ftp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000053",
+    "type": "pipeline_stage",
+    "slug": "investment_ftp",
+    "name": "Investment - FTP",
+    "summary": "First Time - Investment closed",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "investment",
+      "stage": "ftp",
+      "sequence": 3,
+      "probability": 1.0,
+      "anchor_type": "account",
+      "required_activities": [
+        { "activity_def_slug": "deal_approved", "auto_generate": true, "assignment_rule": "owner" }
+      ],
+      "exit_qualifiers": [],
+      "next_stage": "rtp"
+    }
+  },
+  {
+    "id": "ps-00000000-0000-0000-0000-000000000054",
+    "type": "pipeline_stage",
+    "slug": "investment_rtp",
+    "name": "Investment - RTP",
+    "summary": "Retention - Ongoing investor relationship",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "pipeline_type": "investment",
+      "stage": "rtp",
+      "sequence": 4,
+      "probability": 0.8,
+      "anchor_type": "account",
+      "required_activities": [],
+      "exit_qualifiers": [],
+      "next_stage": null
+    }
+  }
+]

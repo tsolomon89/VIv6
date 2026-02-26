@@ -3,6 +3,7 @@ import { db } from '../../core/db.js';
 import { getEntitiesTargeting } from '../../core/targeting-sync.js';
 import { randomUUID } from 'crypto';
 import { protectedRoute } from '../../modules/auth/middleware.js';
+import { parsePagination, paginatedResponse, applyPaginationToQuery, createCountQuery } from '../middleware/pagination.js';
 
 const router = Router();
 
@@ -10,7 +11,9 @@ const router = Router();
 router.get('/', (req: Request, res: Response, next: NextFunction) => {
   try {
     const { dimension, parent_id, brand_id } = req.query;
-    let query = 'SELECT * FROM dimension_values';
+    const pagination = parsePagination(req);
+
+    let baseQuery = 'SELECT * FROM dimension_values';
     const conditions: string[] = [];
     const args: string[] = [];
 
@@ -28,15 +31,22 @@ router.get('/', (req: Request, res: Response, next: NextFunction) => {
     }
 
     if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
+      baseQuery += ' WHERE ' + conditions.join(' AND ');
     }
-    query += ' ORDER BY dimension, label';
+    baseQuery += ' ORDER BY dimension, label';
 
-    const rows = db.prepare(query).all(...args).map((row: any) => ({
+    // Get total count
+    const countResult = db.prepare(createCountQuery(baseQuery)).get(...args) as { total: number };
+    const total = countResult?.total || 0;
+
+    // Get paginated results
+    const paginatedQuery = applyPaginationToQuery(baseQuery, pagination);
+    const rows = db.prepare(paginatedQuery).all(...args).map((row: any) => ({
       ...row,
       metadata: row.metadata ? JSON.parse(row.metadata) : null,
     }));
-    res.json(rows);
+
+    res.json(paginatedResponse(rows, total, pagination));
   } catch (err) {
     next(err);
   }
@@ -57,9 +67,19 @@ router.get('/types', (req: Request, res: Response, next: NextFunction) => {
 // POST /api/dimensions - Create a dimension value
 router.post('/', ...protectedRoute, (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { dimension, slug, label, parent_id, metadata, source, source_ref, brand_id } = req.body;
+    const { dimension, slug, label, parent_id, metadata, source, account_id } = req.body;
     if (!dimension || !slug || !label) {
       res.status(400).json({ error: 'dimension, slug, and label are required', status: 400 });
+      return;
+    }
+
+    // Check for existing record (handles NULL account_id correctly)
+    const existing = account_id
+      ? db.prepare('SELECT id FROM dimension_values WHERE dimension = ? AND slug = ? AND account_id = ?').get(dimension, slug, account_id)
+      : db.prepare('SELECT id FROM dimension_values WHERE dimension = ? AND slug = ? AND account_id IS NULL').get(dimension, slug);
+
+    if (existing) {
+      res.status(409).json({ error: `Dimension value already exists: ${dimension}/${slug}`, status: 409 });
       return;
     }
 
@@ -67,11 +87,11 @@ router.post('/', ...protectedRoute, (req: Request, res: Response, next: NextFunc
     const now = new Date().toISOString();
 
     db.prepare(`
-      INSERT INTO dimension_values (id, dimension, slug, label, parent_id, metadata, source, source_ref, brand_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, dimension, slug, label, parent_id || null, metadata ? JSON.stringify(metadata) : null, source || 'manual', source_ref || null, brand_id || null, now, now);
+      INSERT INTO dimension_values (id, dimension, slug, label, parent_id, metadata, source, account_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, dimension, slug, label, parent_id || null, metadata ? JSON.stringify(metadata) : null, source || 'manual', account_id || null, now, now);
 
-    res.status(201).json({ id, dimension, slug, label, parent_id, metadata, source, source_ref, brand_id: brand_id || null, created_at: now, updated_at: now });
+    res.status(201).json({ id, dimension, slug, label, parent_id, metadata, source, account_id: account_id || null, created_at: now, updated_at: now });
   } catch (err: any) {
     if (err.message?.includes('UNIQUE constraint')) {
       res.status(409).json({ error: `Dimension value already exists: ${req.body.dimension}/${req.body.slug}`, status: 409 });
@@ -217,8 +237,9 @@ function slugify(text: string): string {
 router.get('/dependencies', (req: Request, res: Response, next: NextFunction) => {
   try {
     const { source_dimension, target_dimension } = req.query;
+    const pagination = parsePagination(req);
 
-    let query = `
+    let baseQuery = `
       SELECT dd.*,
              sv.slug as source_slug, sv.label as source_label,
              tv.slug as target_slug, tv.label as target_label
@@ -230,18 +251,25 @@ router.get('/dependencies', (req: Request, res: Response, next: NextFunction) =>
     const params: string[] = [];
 
     if (source_dimension && typeof source_dimension === 'string') {
-      query += ' AND dd.source_dimension = ?';
+      baseQuery += ' AND dd.source_dimension = ?';
       params.push(source_dimension);
     }
     if (target_dimension && typeof target_dimension === 'string') {
-      query += ' AND dd.target_dimension = ?';
+      baseQuery += ' AND dd.target_dimension = ?';
       params.push(target_dimension);
     }
 
-    query += ' ORDER BY dd.source_dimension, sv.label, tv.label';
+    baseQuery += ' ORDER BY dd.source_dimension, sv.label, tv.label';
 
-    const rows = db.prepare(query).all(...params);
-    res.json(rows);
+    // Get total count
+    const countResult = db.prepare(createCountQuery(baseQuery)).get(...params) as { total: number };
+    const total = countResult?.total || 0;
+
+    // Get paginated results
+    const paginatedQuery = applyPaginationToQuery(baseQuery, pagination);
+    const rows = db.prepare(paginatedQuery).all(...params);
+
+    res.json(paginatedResponse(rows, total, pagination));
   } catch (err) {
     next(err);
   }

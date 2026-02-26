@@ -2,7 +2,7 @@
 import type { Entity } from '../../../lib/api';
 import { api } from '../../../lib/api';
 import { RECORD_FIELD_MAPPINGS, RECORD_ICON_MAPPING } from '../config/studio-config';
-import { getRecordValue } from '../utils/record-utils';
+import { getRecordValue, toDisplayString } from '../utils/record-utils';
 import { User, Play, RefreshCw, Check, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
@@ -21,7 +21,7 @@ export function RecordDetailHeader({ entity, type }: RecordDetailHeaderProps) {
     const titleKeys = Array.isArray(config.title) ? config.title : [config.title];
     const title = titleKeys.map((k: string) => getValue(k)).filter(Boolean).join(' • ');
     
-    const subtitle = getValue(config.subtitle as string);
+    const subtitle = toDisplayString(getValue(config.subtitle as string));
     const imageUrl = getValue(config.image as string);
     
     const socialLinks = config.social ? Object.entries(config.social) : [];

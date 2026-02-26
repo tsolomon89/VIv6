@@ -1,0 +1,49 @@
+# VI v5 (Oblio) Documentation Manifest
+version: "1.0"
+description: "Canonical index of the VI v5 (Oblio) system architecture, rules, and domain models."
+
+entrypoint: "README.md"
+
+modules:
+  - id: "glossary"
+    file: "glossary.md"
+    description: "Definition of canonical terms, preventing synonym drift."
+  
+  - id: "architecture-models"
+    file: "architecture-models.md"
+    description: "The EAV/Homoiconic record structure that underpins the entire system."
+  
+  - id: "opportunity-physics"
+    file: "opportunity-physics.md"
+    description: "The central economic engine: Products, Opportunities, Activities, and Workflows."
+  
+  - id: "invariants"
+    file: "invariants-and-rules.md"
+    description: "Executable contracts and immutable laws enforced by the system."
+
+  - id: "webbuilder-presentation"
+    file: "webbuilder-presentation.md"
+    description: "Visual Editor mechanics, Static Generation, and Client-Side React Hydration."
+
+  - id: "ai-integration"
+    file: "ai-integration.md"
+    description: "Provider adapter patterns and asynchronous Agent execution scheduler."
+
+  - id: "dimension-dependencies"
+    file: "dimension-dependencies.md"
+    description: "Categorical taxonomies and cascading qualification graphs."
+
+  - id: "inflation-layer"
+    file: "inflation-layer.md"
+    description: "Conventions for transforming generic JSON into strongly-typed UniversalRecordData structs."
+
+  - id: "build-seed-engines"
+    file: "build-seed-engines.md"
+    description: "Execution scripts that orchestrate database staging and static UI hydration."
+
+  - id: "mcp-and-ops"
+    file: "mcp-and-ops.md"
+    description: "Model Context Protocol integration, plus the Ops layer for computed metrics, derivations, and hooks."
+
+open_decisions: []
+unknowns: []

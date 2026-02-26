@@ -58,22 +58,42 @@ export const useTemplateManager = () => {
         updateSection(sectionId, { presentationKey, overrides: {} });
     };
 
-    const addSection = () => {
+    const addSection = (presetKey?: string) => {
         const newId = `section-${Date.now()}`;
+
+        // Determine binding and presentation from preset if provided
+        let binding: Binding = { kind: 'self' };
+        let presentationKey = 'section.generic.v1';
+
+        if (presetKey) {
+            const preset = PRESET_REGISTRY[presetKey];
+            if (preset) {
+                presentationKey = presetKey;
+                // Infer binding from preset signature
+                if (preset.signature.kind === 'related') {
+                    binding = {
+                        kind: 'related',
+                        target: preset.signature.target || 'product',
+                        cardinality: preset.signature.cardinality || 'many'
+                    };
+                }
+            }
+        }
+
         const newSection: SectionInstance = {
             schemaVersion: 1,
             id: newId,
             placement: { slot: 'free', order: 99 },
-            binding: { kind: 'self' },
-            presentationKey: 'section.generic.v1',
+            binding,
+            presentationKey,
             overrides: {}
         };
-        
+
         setTemplate(prev => ({
             ...prev,
             sections: [...prev.sections, newSection]
         }));
-        
+
         return newId;
     };
 

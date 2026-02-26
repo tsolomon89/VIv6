@@ -562,3 +562,32 @@ export function extractDependencies(expression: string): string[] {
 
     return Array.from(dependencies);
 }
+
+/**
+ * Compute a derivation by slug - combines getDerivation + computeDerivation
+ *
+ * @param slug - The derivation slug (e.g., 'opportunity-deal-yield')
+ * @param record - The record to compute the derivation for
+ * @param accountId - Optional account ID (defaults to system account)
+ * @returns DerivationResult with computed value or error
+ */
+export function computeDerivationBySlug(
+    slug: string,
+    record: DataRecord,
+    accountId: string = '00000000-0000-0000-0000-000000000000'
+): DerivationResult {
+    const derivationRecord = getDerivation(accountId, slug);
+
+    if (!derivationRecord) {
+        return {
+            fieldName: slug,
+            value: null,
+            returnType: 'number',
+            success: false,
+            error: `Derivation not found: ${slug}`
+        };
+    }
+
+    const definition = parseDerivationDefinition(derivationRecord);
+    return computeDerivation(definition, record);
+}

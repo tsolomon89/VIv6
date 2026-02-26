@@ -14,19 +14,11 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { db } from '../../../core/db.js';
 import { hashPassword, verifyPassword } from '../password.js';
-import { createSession } from '../session.js';
+import { createSession, revokeSession } from '../session.js';
 import { getUserAccounts, getUserCapabilities, grantAccess, revokeAccess } from '../odac.js';
 import { parseSession, requireSession, loadODAC, requireCapability } from '../middleware.js';
 
-
-console.log('--- AUTH ROUTES LOADING ---');
-
 const router = Router();
-router.use((req, res, next) => {
-    console.log('[AuthMiddleware] Request:', req.method, req.path);
-    next();
-});
-
 
 /**
  * POST /auth/register
@@ -158,11 +150,21 @@ router.get('/me', parseSession, requireSession, loadODAC, (req, res) => {
 
 /**
  * POST /auth/logout
- * Logout (for JWT, this is primarily a client-side operation)
+ * Logout and revoke the session token server-side
  */
-router.post('/logout', (req, res) => {
-    // For JWT, logout is client-side (discard token)
-    // Future: could add token to revocation list in Redis/DB
+router.post('/logout', parseSession, (req, res) => {
+    // Revoke the token if present
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        const revoked = revokeSession(token, 'logout');
+        if (!revoked) {
+            // Token couldn't be revoked (old format without JTI, or invalid)
+            // Still return success - client will discard token anyway
+            console.warn('[Auth] Logout: Token revocation skipped (no JTI or invalid token)');
+        }
+    }
+
     res.json({ success: true });
 });
 

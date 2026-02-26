@@ -1,0 +1,17 @@
+[
+  {
+    "id": "wf-00000000-0000-0000-0000-000000000001",
+    "type": "workflow",
+    "slug": "opportunity-stage-chain-reaction",
+    "name": "Opportunity Stage Chain Reaction",
+    "summary": "Automatically advances opportunity stages when all activities complete",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "trigger_type": "event",
+      "trigger_event": "activity.completed",
+      "first_step_slug": "check-stage-complete",
+      "is_active": true,
+      "description": "When an activity is completed, this workflow checks if all activities for the opportunity's current stage are complete. If so, it advances the opportunity to the next stage and generates new activities."
+    }
+  }
+]

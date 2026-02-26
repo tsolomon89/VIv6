@@ -1,6 +1,6 @@
 
 import { BindingSignature, PresetRegistry } from '../types';
-import { PRESET_REGISTRY } from '../presets/registry';
+import { getPresetRegistry } from '../presets/loader';
 
 // Define the critical signatures that MUST have at least one preset
 export const REQUIRED_SIGNATURES: BindingSignature[] = [
@@ -22,7 +22,7 @@ const signatureToString = (s: BindingSignature) => {
     return `${s.kind}.${s.target}.${s.cardinality}`;
 };
 
-export const checkCoverage = (registry: PresetRegistry = PRESET_REGISTRY): CoverageReport => {
+export const checkCoverage = (registry: PresetRegistry = getPresetRegistry()): CoverageReport => {
     const missing: BindingSignature[] = [];
     const presets = Object.values(registry);
 

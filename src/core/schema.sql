@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS page_templates (
   key TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
+  domain_type TEXT,
   subject_target TEXT,
   subject_cardinality TEXT,
   sections JSON DEFAULT '[]',
@@ -138,6 +139,34 @@ CREATE TABLE IF NOT EXISTS page_templates (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS section_templates (
+  id TEXT PRIMARY KEY,
+  key TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  binding_kind TEXT,
+  config JSON NOT NULL DEFAULT '{}',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Presentation Presets (Webbuilder Visual Templates)
+CREATE TABLE IF NOT EXISTS presentation_presets (
+  id TEXT PRIMARY KEY,
+  key TEXT UNIQUE NOT NULL,           -- e.g., "self.hero.v1"
+  name TEXT NOT NULL,
+  signature JSON NOT NULL,            -- BindingSignature (kind, target, cardinality)
+  config JSON NOT NULL,               -- Partial<ConfigState> visual configuration
+  version INTEGER DEFAULT 1,
+  content_hash TEXT,
+  account_id TEXT,                    -- NULL = global preset, otherwise account-specific
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_presets_key ON presentation_presets(key);
+CREATE INDEX IF NOT EXISTS idx_presets_account ON presentation_presets(account_id);
 
 -- 5. Infrastructure
 CREATE TABLE IF NOT EXISTS domains (
@@ -154,6 +183,15 @@ CREATE TABLE IF NOT EXISTS domains (
   FOREIGN KEY (account_id) REFERENCES records(id) ON DELETE CASCADE
 );
 
+-- Brand/site configuration (JSON key-value store)
+CREATE TABLE IF NOT EXISTS brand_config (
+  id TEXT PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  data JSON DEFAULT '{}',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS build_state (
   record_id TEXT PRIMARY KEY,
   content_hash TEXT NOT NULL,
@@ -168,3 +206,137 @@ CREATE TABLE IF NOT EXISTS _migrations (
   name TEXT NOT NULL UNIQUE,
   applied_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 6. AI Agent Integration
+
+-- AI Credentials - Secure API key storage for AI providers
+CREATE TABLE IF NOT EXISTS ai_credentials (
+  id TEXT PRIMARY KEY,
+  account_id TEXT NOT NULL,
+  provider TEXT NOT NULL,              -- 'openai' | 'anthropic' | 'google'
+  encrypted_key TEXT NOT NULL,         -- AES-256-GCM encrypted API key
+  key_iv TEXT NOT NULL,                -- Initialization vector for decryption
+  key_hint TEXT,                       -- Last 4 chars for identification
+  name TEXT,                           -- User-friendly name like "Production Claude"
+  is_default INTEGER DEFAULT 0,        -- Default for this provider
+  token_budget_daily INTEGER,          -- Optional daily token limit
+  cost_budget_daily REAL,              -- Optional daily cost limit (USD)
+  usage_tokens_today INTEGER DEFAULT 0,
+  last_used_at TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TEXT,
+  FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+  UNIQUE(account_id, provider, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_creds_account ON ai_credentials(account_id);
+CREATE INDEX IF NOT EXISTS idx_ai_creds_provider ON ai_credentials(provider, account_id);
+
+-- AI Usage Log - Track historical usage for dashboard
+CREATE TABLE IF NOT EXISTS ai_usage_log (
+  id TEXT PRIMARY KEY,
+  account_id TEXT NOT NULL,
+  credential_id TEXT NOT NULL,
+  agent_id TEXT,                        -- Contact ID of AI agent (optional)
+  activity_id TEXT,                     -- Activity that generated usage (optional)
+  model TEXT NOT NULL,                  -- Model used (e.g., 'claude-sonnet-4-5-20250929')
+  tokens_prompt INTEGER DEFAULT 0,
+  tokens_completion INTEGER DEFAULT 0,
+  tokens_total INTEGER DEFAULT 0,
+  cost_estimate REAL DEFAULT 0,
+  operation_type TEXT DEFAULT 'activity', -- 'activity', 'chat', 'test'
+  success INTEGER DEFAULT 1,
+  error_message TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (credential_id) REFERENCES ai_credentials(id) ON DELETE CASCADE,
+  FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_usage_account ON ai_usage_log(account_id);
+CREATE INDEX IF NOT EXISTS idx_ai_usage_date ON ai_usage_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_ai_usage_credential ON ai_usage_log(credential_id);
+
+-- 7. Session Revocation (JWT Blacklist)
+-- Tracks revoked JWT tokens for logout/security
+CREATE TABLE IF NOT EXISTS revoked_sessions (
+  id TEXT PRIMARY KEY,
+  jti TEXT NOT NULL UNIQUE,           -- JWT ID claim
+  token_hash TEXT NOT NULL,           -- SHA-256 hash of full token
+  user_id TEXT NOT NULL,
+  revoked_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,           -- For cleanup (token natural expiry)
+  reason TEXT DEFAULT 'logout',       -- 'logout', 'password_change', 'admin_revoke'
+  revoked_by TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_revoked_jti ON revoked_sessions(jti);
+CREATE INDEX IF NOT EXISTS idx_revoked_expires ON revoked_sessions(expires_at);
+
+-- 8. Configuration Workspaces (GTM-style staged changes)
+-- Allows staging config changes before applying them
+
+CREATE TABLE IF NOT EXISTS config_workspaces (
+  id TEXT PRIMARY KEY,
+  account_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'draft',           -- draft | review | approved | applied | rejected | rolled_back
+  created_by TEXT,                        -- User ID who created
+  reviewed_by TEXT,                       -- User ID who reviewed
+  applied_by TEXT,                        -- User ID who applied
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at TEXT,
+  applied_at TEXT,
+  rolled_back_at TEXT,
+  FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+  FOREIGN KEY (created_by) REFERENCES users(id),
+  FOREIGN KEY (reviewed_by) REFERENCES users(id),
+  FOREIGN KEY (applied_by) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_workspace_account ON config_workspaces(account_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_status ON config_workspaces(status);
+
+CREATE TABLE IF NOT EXISTS config_changes (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL,
+  config_type TEXT NOT NULL,              -- 'rule', 'derivation', 'constraint', etc.
+  operation TEXT NOT NULL,                -- 'create' | 'update' | 'delete'
+  target_id TEXT,                         -- NULL for create, record ID for update/delete
+  target_slug TEXT,                       -- Slug for reference (create may not have ID yet)
+  payload JSON NOT NULL,                  -- The new/updated config data
+  previous_state JSON,                    -- For rollback (update/delete only)
+  validation_result JSON,                 -- Result of schema validation
+  safety_result JSON,                     -- Result of safety checks
+  order_index INTEGER DEFAULT 0,          -- For ordered application
+  status TEXT DEFAULT 'pending',          -- pending | applied | rolled_back | failed
+  error_message TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  applied_at TEXT,
+  FOREIGN KEY (workspace_id) REFERENCES config_workspaces(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_change_workspace ON config_changes(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_change_config_type ON config_changes(config_type);
+CREATE INDEX IF NOT EXISTS idx_change_target ON config_changes(target_id);
+
+CREATE TABLE IF NOT EXISTS config_versions (
+  id TEXT PRIMARY KEY,
+  config_type TEXT NOT NULL,
+  config_id TEXT NOT NULL,                -- Record ID of the config
+  version INTEGER NOT NULL,
+  data JSON NOT NULL,                     -- Full config data at this version
+  changed_by TEXT,                        -- User ID
+  workspace_id TEXT,                      -- Which workspace made this change
+  change_summary TEXT,                    -- Human-readable summary
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (changed_by) REFERENCES users(id),
+  FOREIGN KEY (workspace_id) REFERENCES config_workspaces(id) ON DELETE SET NULL,
+  UNIQUE(config_type, config_id, version)
+);
+
+CREATE INDEX IF NOT EXISTS idx_version_config ON config_versions(config_type, config_id);
+CREATE INDEX IF NOT EXISTS idx_version_workspace ON config_versions(workspace_id);

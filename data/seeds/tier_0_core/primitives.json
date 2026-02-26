@@ -5,15 +5,15 @@
     "slug": "object_def",
     "name": "Object Definition",
     "summary": "Defines the structure of a Record (Table).",
-    "data": { "is_system": true }
+    "data": { "category": "system", "icon": "database", "is_system": true }
   },
   {
     "id": "00000000-0000-0000-0000-000000000002",
-    "type": "object_def", 
+    "type": "object_def",
     "slug": "field_def",
     "name": "Field Definition",
     "summary": "Defines a Property on an Object.",
-    "data": { "is_system": true }
+    "data": { "category": "system", "icon": "text-cursor-input", "is_system": true }
   },
   {
     "id": "00000000-0000-0000-0000-000000000003",
@@ -21,7 +21,7 @@
     "slug": "field_group",
     "name": "Field Group",
     "summary": "Visual grouping of fields.",
-    "data": { "is_system": true }
+    "data": { "category": "system", "icon": "folder", "is_system": true }
   },
   {
     "id": "00000000-0000-0000-0000-000000000004",
@@ -29,6 +29,6 @@
     "slug": "activity_def",
     "name": "Activity Definition",
     "summary": "Defines an Event Log type.",
-    "data": { "is_system": true }
+    "data": { "category": "system", "icon": "activity", "is_system": true }
   }
 ]

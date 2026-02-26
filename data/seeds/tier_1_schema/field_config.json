@@ -1,0 +1,80 @@
+[
+  {
+    "id": "fc-00000000-0000-0000-0000-000000000001",
+    "type": "field_config",
+    "slug": "contact-fields",
+    "name": "Contact Field Names",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "contact",
+      "fields": {
+        "email": "Email",
+        "job_title": "Job Title",
+        "persona": "Persona",
+        "health_score": "Health Score",
+        "owner": "Owner",
+        "account": "Account",
+        "last_interaction": "Last Interaction",
+        "phone": "Phone",
+        "first_name": "First Name",
+        "last_name": "Last Name"
+      }
+    }
+  },
+  {
+    "id": "fc-00000000-0000-0000-0000-000000000002",
+    "type": "field_config",
+    "slug": "account-fields",
+    "name": "Account Field Names",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "account",
+      "fields": {
+        "website": "Website",
+        "industry": "Industry",
+        "company_size": "Company Size",
+        "name": "Name",
+        "owner": "Owner"
+      }
+    }
+  },
+  {
+    "id": "fc-00000000-0000-0000-0000-000000000003",
+    "type": "field_config",
+    "slug": "opportunity-fields",
+    "name": "Opportunity Field Names",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "opportunity",
+      "fields": {
+        "amount": "Amount",
+        "probability": "Probability",
+        "opportunity_stage": "Opportunity Stage",
+        "target_close_date": "Target Close Date",
+        "intent_verified": "Intent Verified",
+        "owner": "Owner",
+        "account": "Account",
+        "contact": "Contact",
+        "pipeline_type": "Pipeline Type",
+        "value": "Value"
+      }
+    }
+  },
+  {
+    "id": "fc-00000000-0000-0000-0000-000000000004",
+    "type": "field_config",
+    "slug": "activity-fields",
+    "name": "Activity Field Names",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "activity",
+      "fields": {
+        "contact": "Contact",
+        "owner": "Owner",
+        "status": "Status",
+        "due_date": "Due Date",
+        "completed_at": "Completed At"
+      }
+    }
+  }
+]

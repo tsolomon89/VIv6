@@ -51,6 +51,9 @@ function FieldInput({ field, onChange, readOnly }: { field: Field; onChange: (v:
   // Phase 4: Access field dependency context for cascading pick-lists
   const depContext = useFieldDependencyOptional();
 
+  // Normalize field type: handle both canonical (inputType) and seed (type) formats
+  const fieldType: FieldInputType = field.inputType || (field as any).type || 'text';
+
   const getIcon = (type: FieldInputType) => {
     // Check if this is a dimension field
     if (field.dimension) return <Layers size={14} />;
@@ -74,7 +77,7 @@ function FieldInput({ field, onChange, readOnly }: { field: Field; onChange: (v:
   };
 
   const renderInput = () => {
-    switch (field.inputType) {
+    switch (fieldType) {
       case 'Record':
       case 'ref': // legacy alias
         return (
@@ -101,20 +104,21 @@ function FieldInput({ field, onChange, readOnly }: { field: Field; onChange: (v:
       case 'boolean':
         return (
           <label className="flex items-center cursor-pointer gap-3">
-            <div className={`relative w-11 h-6 rounded-full transition-colors ${field.value ? 'bg-indigo-600' : 'bg-zinc-700'}`}>
-              <div 
+            <div className={`relative w-11 h-6 rounded-full transition-colors ${field.value ? 'bg-indigo-600' : 'bg-zinc-700'}`} aria-hidden="true">
+              <div
                 className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${field.value ? 'translate-x-5' : ''}`}
               />
             </div>
             <span className="text-zinc-300 select-none">
               {field.value ? 'Enabled' : 'Disabled'}
             </span>
-            <input 
-              type="checkbox" 
-              className="hidden" 
-              checked={!!field.value} 
+            <input
+              type="checkbox"
+              className="sr-only"
+              checked={!!field.value}
               onChange={(e) => onChange(e.target.checked)}
               disabled={readOnly}
+              aria-label={field.name}
             />
           </label>
         );
@@ -194,10 +198,11 @@ function FieldInput({ field, onChange, readOnly }: { field: Field; onChange: (v:
                  {selectedValues.map((val: string) => (
                     <span key={val} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-500/20 text-indigo-300 text-xs rounded-md">
                         {val}
-                        <button 
-                           type="button" 
+                        <button
+                           type="button"
                            onClick={() => onChange(selectedValues.filter((v: string) => v !== val))}
                            className="hover:text-white"
+                           aria-label={`Remove ${val}`}
                         >
                            ×
                         </button>
@@ -226,14 +231,14 @@ function FieldInput({ field, onChange, readOnly }: { field: Field; onChange: (v:
         return (
           <div className="space-y-2">
             <input
-              type={field.inputType === 'number' ? 'number' : 'text'}
+              type={fieldType === 'number' ? 'number' : 'text'}
               value={String(field.value || '')}
               onChange={(e) => onChange(e.target.value)}
               disabled={readOnly}
               className={commonClasses}
               placeholder={field.name}
             />
-            {field.inputType === 'image' && field.value && typeof field.value === 'string' && (
+            {fieldType === 'image' && field.value && typeof field.value === 'string' && (
               <div className="relative w-full h-32 bg-zinc-950 rounded-lg border border-zinc-800 overflow-hidden flex items-center justify-center group">
                  <img 
                    src={field.value} 
@@ -246,7 +251,7 @@ function FieldInput({ field, onChange, readOnly }: { field: Field; onChange: (v:
                  </div>
               </div>
             )}
-            {field.inputType === 'url' && field.value && typeof field.value === 'string' && (
+            {fieldType === 'url' && field.value && typeof field.value === 'string' && (
                <a href={field.value} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
                  <Link size={12} /> Open Link
                </a>
@@ -256,7 +261,7 @@ function FieldInput({ field, onChange, readOnly }: { field: Field; onChange: (v:
     }
   };
 
-  const charCount = (field.inputType === 'text' || field.inputType === 'textarea' || field.inputType === 'richtext') && field.maxChars
+  const charCount = (fieldType === 'text' || fieldType === 'textarea' || fieldType === 'richtext') && field.maxChars
     ? String(field.value || '').length
     : null;
 
@@ -265,7 +270,7 @@ function FieldInput({ field, onChange, readOnly }: { field: Field; onChange: (v:
   return (
     <div>
       <label className={labelClasses}>
-        {getIcon(field.inputType)}
+        {getIcon(fieldType)}
         {field.name}
         {field.required && <span className="text-red-400">*</span>}
         {field.maxChars && (

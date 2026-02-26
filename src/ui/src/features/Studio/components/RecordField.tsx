@@ -16,14 +16,32 @@ interface RecordFieldProps {
 
 export function RecordField({ entity, field, definition, className, isEditing, onChange }: RecordFieldProps) {
     const value = getRecordValue(entity, field);
-    const [internalValue, setInternalValue] = useState(value || '');
+    const valueStr = value != null ? String(value) : '';
+    const [internalValue, setInternalValue] = useState<string>(valueStr);
     const [resolvedName, setResolvedName] = useState<string | null>(null);
     const [refTarget, setRefTarget] = useState<string | null>(null);
 
+    // Special handling: field_def columns
+    const [parentObjectName, setParentObjectName] = useState<string | null>(null);
+    const isFieldDefObjectColumn = entity.type === 'field_def' && field === 'object_def';
+    const isFieldDefUsedByColumn = entity.type === 'field_def' && field === 'used_by';
+
+    useEffect(() => {
+        // Legacy: single object_def_id linkage
+        if (isFieldDefObjectColumn) {
+            const objectDefId = (entity.data as any)?.object_def_id;
+            if (objectDefId && typeof objectDefId === 'string' && objectDefId.length > 20) {
+                api.getEntity(objectDefId)
+                    .then((obj) => setParentObjectName(obj.name))
+                    .catch(() => setParentObjectName(null));
+            }
+        }
+    }, [isFieldDefObjectColumn, entity.data]);
+
     // Sync internal value when prop changes
     useEffect(() => {
-        setInternalValue(value || '');
-    }, [value]);
+        setInternalValue(valueStr);
+    }, [valueStr]);
 
     // 1. Resolve Type from Definition (if available)
     let type = 'text';
@@ -40,7 +58,8 @@ export function RecordField({ entity, field, definition, className, isEditing, o
                     f.name.toLowerCase().replace(/\s+/g, '') === targetSlug
                 );
                 if (fieldDef) {
-                    type = fieldDef.type || 'text';
+                    // Handle both seed format (type) and canonical format (inputType)
+                    type = fieldDef.type || fieldDef.inputType || 'text';
                     currentFieldDef = fieldDef;
                     break;
                 }
@@ -52,7 +71,8 @@ export function RecordField({ entity, field, definition, className, isEditing, o
                 f.name.toLowerCase().replace(/\s+/g, '') === targetSlug
             );
             if (fieldDef) {
-                type = fieldDef.type || 'text';
+                // Handle both seed format (type) and canonical format (inputType)
+                type = fieldDef.type || fieldDef.inputType || 'text';
                 currentFieldDef = fieldDef;
             }
         }
@@ -169,6 +189,55 @@ export function RecordField({ entity, field, definition, className, isEditing, o
         );
     }
 
+    // Special render: field_def Object column - show parent object name (legacy)
+    if (isFieldDefObjectColumn) {
+        const objectDefId = (entity.data as any)?.object_def_id;
+        if (parentObjectName) {
+            return (
+                <Link
+                    to={`/records/object_def/${objectDefId}`}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200 transition-colors ${className}`}
+                    onClick={e => e.stopPropagation()}
+                >
+                    {parentObjectName}
+                    <ArrowUpRight size={10} />
+                </Link>
+            );
+        }
+        if (objectDefId) {
+            return <span className={`text-zinc-400 text-xs ${className}`}>Loading...</span>;
+        }
+        return <span className={`text-zinc-500 italic ${className}`}>-</span>;
+    }
+
+    // Special render: field_def Used By column - show array of object slugs
+    if (isFieldDefUsedByColumn) {
+        const usedByObjects = (entity.data as any)?.used_by_objects;
+        if (usedByObjects && Array.isArray(usedByObjects) && usedByObjects.length > 0) {
+            // Show up to 3 objects, then "+N more"
+            const displayObjects = usedByObjects.slice(0, 3);
+            const remaining = usedByObjects.length - 3;
+            return (
+                <span className={`flex flex-wrap gap-1 ${className}`}>
+                    {displayObjects.map((slug: string) => (
+                        <Link
+                            key={slug}
+                            to={`/records/${slug}`}
+                            className="inline-flex items-center px-1.5 py-0.5 rounded bg-zinc-700/50 text-zinc-300 hover:bg-zinc-600/50 hover:text-white text-xs transition-colors"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {slug}
+                        </Link>
+                    ))}
+                    {remaining > 0 && (
+                        <span className="text-zinc-500 text-xs">+{remaining} more</span>
+                    )}
+                </span>
+            );
+        }
+        return <span className={`text-zinc-500 italic ${className}`}>-</span>;
+    }
+
     if (value === undefined || value === null || value === '') {
         return <span className={`text-zinc-500 italic ${className}`}>-</span>;
     }
@@ -179,7 +248,7 @@ export function RecordField({ entity, field, definition, className, isEditing, o
             const num = parseFloat(String(value));
             return (
                 <span className={`font-mono ${className}`}>
-                    {!isNaN(num) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num) : value}
+                    {!isNaN(num) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num) : String(value)}
                 </span>
             );
         case 'date':
@@ -201,14 +270,14 @@ export function RecordField({ entity, field, definition, className, isEditing, o
             return (
                 <a href={`mailto:${value}`} className={`flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 hover:underline ${className}`} onClick={e => e.stopPropagation()}>
                     <Mail size={12} />
-                    {value}
+                    {String(value)}
                 </a>
             );
         case 'phone':
             return (
                  <a href={`tel:${value}`} className={`flex items-center gap-1.5 text-zinc-300 hover:text-white ${className}`} onClick={e => e.stopPropagation()}>
                     <Phone size={12} />
-                    {value}
+                    {String(value)}
                 </a>
             );
         case 'url':

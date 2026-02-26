@@ -54,10 +54,27 @@ export function RefPicker({ value, onChange, targetType, disabled, placeholder }
         opt.slug.toLowerCase().includes(search.toLowerCase())
     );
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (disabled) return;
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+        } else if (e.key === 'Escape') {
+            setIsOpen(false);
+        }
+    };
+
     return (
         <div className="relative" ref={containerRef}>
             <div
+                role="combobox"
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                aria-controls={isOpen ? 'ref-picker-listbox' : undefined}
+                aria-label={placeholder || `Select ${targetType}`}
+                tabIndex={disabled ? -1 : 0}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
+                onKeyDown={handleKeyDown}
                 className={`
                     w-full px-4 py-2 bg-zinc-800 border rounded-lg text-white flex items-center justify-between cursor-pointer transition-colors
                     ${disabled ? 'opacity-50 cursor-not-allowed border-zinc-700' : 'border-zinc-700 hover:border-zinc-600 focus:ring-2 focus:ring-indigo-500/50'}
@@ -76,12 +93,13 @@ export function RefPicker({ value, onChange, targetType, disabled, placeholder }
                 </div>
                 <div className="flex items-center gap-1">
                     {value && !disabled && (
-                        <button 
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onChange(null);
                                 setSearch('');
                             }}
+                            aria-label="Clear selection"
                             className="p-1 text-zinc-500 hover:text-red-400 rounded-full hover:bg-zinc-700"
                         >
                             <X size={14} />
@@ -92,7 +110,12 @@ export function RefPicker({ value, onChange, targetType, disabled, placeholder }
             </div>
 
             {isOpen && (
-                <div className="absolute z-50 w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden max-h-60 flex flex-col">
+                <div
+                    id="ref-picker-listbox"
+                    role="listbox"
+                    aria-label={`${targetType} options`}
+                    className="absolute z-50 w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden max-h-60 flex flex-col"
+                >
                     <div className="p-2 border-b border-zinc-800">
                         <div className="relative">
                             <Search size={14} className="absolute left-2.5 top-2.5 text-zinc-500" />
@@ -116,6 +139,8 @@ export function RefPicker({ value, onChange, targetType, disabled, placeholder }
                             filteredOptions.map(opt => (
                                 <button
                                     key={opt.id}
+                                    role="option"
+                                    aria-selected={value === opt.id}
                                     onClick={() => {
                                         onChange(opt.id);
                                         setSelectedItem(opt);

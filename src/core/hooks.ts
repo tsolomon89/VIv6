@@ -1,15 +1,51 @@
 
-import { DataRecordInput, DataRecord } from './types.js';
+import { DataRecordInput, DataRecord, ConstraintTrigger } from './types.js';
 import { executeMatchingRules, createRuleContext, TriggerEvent } from '../modules/ops/rules.js';
+import { enforceConstraints } from '../modules/ops/constraints.js';
+import { enforceStateMachine } from '../modules/ops/state_machine.js';
+import { getInterpreterStagesForEvent, InterpreterEvent } from '../modules/ops/interpreter_pipeline.js';
+import {
+    executeInterpreterExecutor,
+    hasInterpreterExecutor,
+    registerInterpreterExecutor,
+} from '../modules/ops/interpreter_executor_registry.js';
+import { validateInterpreterStageAgainstDefinition } from '../modules/ops/interpreter_executor_definitions.js';
 import { DEFAULT_ACCOUNT_ID } from './constants.js';
 
 type RecordHook = (record: DataRecordInput | DataRecord, context?: any) => Promise<void> | void;
 
-// Flag to enable/disable Rule execution (useful for testing or migrations)
+// Flags to enable/disable Rule and Constraint execution (useful for testing or migrations)
 let rulesEnabled = true;
+let constraintsEnabled = true;
 
 export function enableRules(enabled: boolean) {
     rulesEnabled = enabled;
+}
+
+export function enableConstraints(enabled: boolean) {
+    constraintsEnabled = enabled;
+}
+
+/**
+ * Execute data-driven Constraints for a trigger event.
+ * Constraints run BEFORE code hooks since they are validation (can block).
+ */
+function executeConstraintsForTrigger(
+    trigger: ConstraintTrigger,
+    record: DataRecordInput | DataRecord
+): void {
+    if (!constraintsEnabled) return;
+
+    try {
+        enforceConstraints({ record, trigger });
+    } catch (error) {
+        // Re-throw InvariantViolation (it should block the operation)
+        if (error instanceof Error && error.name === 'InvariantViolation') {
+            throw error;
+        }
+        // Log other errors but don't block
+        console.error(`[Hooks] Error executing constraints for ${trigger}:`, error);
+    }
 }
 
 /**
@@ -44,6 +80,110 @@ async function executeRulesForEvent(
         // Rule errors shouldn't break the main operation
         console.error(`[Hooks] Error executing rules for ${event}:`, error);
     }
+}
+
+async function executeCodeHooks(
+    hookRegistry: Record<string, RecordHook[]>,
+    type: string,
+    record: DataRecordInput | DataRecord,
+    context?: any
+): Promise<void> {
+    if (!hookRegistry[type]) return;
+    for (const hook of hookRegistry[type]) {
+        await hook(record, context);
+    }
+}
+
+function getConstraintTriggerForEvent(event: InterpreterEvent): ConstraintTrigger | null {
+    switch (event) {
+        case 'pre_create':
+            return 'pre_create';
+        case 'pre_update':
+            return 'pre_update';
+        default:
+            return null;
+    }
+}
+
+async function emitLifecycleEvent(params: {
+    event: InterpreterEvent;
+    type: string;
+    record: DataRecordInput | DataRecord;
+    previousRecord?: DataRecord;
+    context?: any;
+    hookRegistry: Record<string, RecordHook[]>;
+}): Promise<void> {
+    const { event, type, record, previousRecord, context, hookRegistry } = params;
+    ensureBuiltInInterpreterExecutors();
+    const accountId = (record as any).account_id || context?.account_id || DEFAULT_ACCOUNT_ID;
+    const stages = getInterpreterStagesForEvent(event, accountId, type);
+
+    for (const stage of stages) {
+        try {
+            const definitionErrors = validateInterpreterStageAgainstDefinition({
+                accountId,
+                event,
+                entityType: type,
+                stage,
+            });
+            if (definitionErrors.length > 0) {
+                throw new Error(definitionErrors.join('; '));
+            }
+
+            await executeInterpreterExecutor(stage.executor, {
+                event,
+                type,
+                stage,
+                record,
+                previousRecord,
+                context,
+                runCodeHooks: async () => executeCodeHooks(hookRegistry, type, record, context),
+            });
+        } catch (error) {
+            if (stage.blocking === false) {
+                console.error(`[Hooks] Non-blocking stage failed (${event}:${stage.executor}):`, error);
+                continue;
+            }
+            throw error;
+        }
+    }
+}
+
+let builtInExecutorsRegistered = false;
+
+function ensureBuiltInInterpreterExecutors(): void {
+    if (builtInExecutorsRegistered) return;
+
+    if (!hasInterpreterExecutor('constraints')) {
+        registerInterpreterExecutor('constraints', ({ event, record }) => {
+            const trigger = getConstraintTriggerForEvent(event);
+            if (trigger) {
+                executeConstraintsForTrigger(trigger, record);
+            }
+        });
+    }
+
+    if (!hasInterpreterExecutor('state_machine')) {
+        registerInterpreterExecutor('state_machine', ({ event, record, previousRecord }) => {
+            if (event === 'pre_update') {
+                enforceStateMachine(record as DataRecordInput, previousRecord);
+            }
+        });
+    }
+
+    if (!hasInterpreterExecutor('code_hooks')) {
+        registerInterpreterExecutor('code_hooks', async ({ runCodeHooks }) => {
+            await runCodeHooks();
+        });
+    }
+
+    if (!hasInterpreterExecutor('rules')) {
+        registerInterpreterExecutor('rules', async ({ event, record, previousRecord, context }) => {
+            await executeRulesForEvent(event, record, previousRecord, context);
+        });
+    }
+
+    builtInExecutorsRegistered = true;
 }
 
 const preCreateHooks: Record<string, RecordHook[]> = {};
@@ -85,68 +225,64 @@ export const hooks = {
   },
 
   emitPreCreate: async (type: string, record: DataRecordInput, context?: any) => {
-    // Execute code-based hooks first
-    if (preCreateHooks[type]) {
-      for (const hook of preCreateHooks[type]) {
-        await hook(record, context);
-      }
-    }
-    // Execute data-driven Rules
-    await executeRulesForEvent('pre_create', record, undefined, context);
+    await emitLifecycleEvent({
+      event: 'pre_create',
+      type,
+      record,
+      context,
+      hookRegistry: preCreateHooks,
+    });
   },
 
   emitPostCreate: async (type: string, record: DataRecord, context?: any) => {
-    // Execute code-based hooks first
-    if (postCreateHooks[type]) {
-      for (const hook of postCreateHooks[type]) {
-        await hook(record, context);
-      }
-    }
-    // Execute data-driven Rules
-    await executeRulesForEvent('post_create', record, undefined, context);
+    await emitLifecycleEvent({
+      event: 'post_create',
+      type,
+      record,
+      context,
+      hookRegistry: postCreateHooks,
+    });
   },
 
   emitPreUpdate: async (type: string, record: DataRecordInput, context?: any) => {
-    // Execute code-based hooks first
-    if (preUpdateHooks[type]) {
-      for (const hook of preUpdateHooks[type]) {
-        await hook(record, context);
-      }
-    }
-    // Execute data-driven Rules (previousRecord is in context for updates)
-    await executeRulesForEvent('pre_update', record, context?.previousRecord, context);
+    await emitLifecycleEvent({
+      event: 'pre_update',
+      type,
+      record,
+      previousRecord: context?.previousRecord,
+      context,
+      hookRegistry: preUpdateHooks,
+    });
   },
 
   emitPostUpdate: async (type: string, record: DataRecord, context?: any) => {
-    // Execute code-based hooks first
-    if (postUpdateHooks[type]) {
-      for (const hook of postUpdateHooks[type]) {
-        await hook(record, context);
-      }
-    }
-    // Execute data-driven Rules
-    await executeRulesForEvent('post_update', record, context?.previousRecord, context);
+    await emitLifecycleEvent({
+      event: 'post_update',
+      type,
+      record,
+      previousRecord: context?.previousRecord,
+      context,
+      hookRegistry: postUpdateHooks,
+    });
   },
 
   emitPreDelete: async (type: string, record: DataRecordInput | DataRecord, context?: any) => {
-    // Execute code-based hooks first
-    if (preDeleteHooks[type]) {
-      for (const hook of preDeleteHooks[type]) {
-        await hook(record, context);
-      }
-    }
-    // Execute data-driven Rules
-    await executeRulesForEvent('pre_delete', record, undefined, context);
+    await emitLifecycleEvent({
+      event: 'pre_delete',
+      type,
+      record,
+      context,
+      hookRegistry: preDeleteHooks,
+    });
   },
 
   emitPostDelete: async (type: string, record: DataRecordInput | DataRecord, context?: any) => {
-    // Execute code-based hooks first
-    if (postDeleteHooks[type]) {
-      for (const hook of postDeleteHooks[type]) {
-        await hook(record, context);
-      }
-    }
-    // Execute data-driven Rules
-    await executeRulesForEvent('post_delete', record, undefined, context);
+    await emitLifecycleEvent({
+      event: 'post_delete',
+      type,
+      record,
+      context,
+      hookRegistry: postDeleteHooks,
+    });
   }
 };

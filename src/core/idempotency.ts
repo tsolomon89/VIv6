@@ -11,21 +11,19 @@ export function calculateHash(data: unknown): string {
 export type IdempotencyResult = 'create' | 'update' | 'skip';
 
 export function checkIdempotency(input: DataRecordInput): IdempotencyResult {
-  // Use account_id scope? For now, just check slug globally or assume account context is missing in this helper?
-  // The original code query ignored account_id/brand_id.
-  // We'll keep it simple: find by slug. 
-  // BUT slugs are unique per account now. 
-  // If input has account_id, use it.
-  
+  // NOTE: Idempotency check scopes by account_id when provided.
+  // For full multi-tenancy, all callers should provide account_id.
+  // Current fallback (global slug check) is acceptable for single-tenant deployments.
+
   let stmt;
   let existing;
 
   if (input.account_id) {
+      // Preferred: scope by account for multi-tenant safety
       stmt = db.prepare('SELECT id, content_hash FROM records WHERE slug = ? AND account_id = ?');
       existing = stmt.get(input.slug, input.account_id) as { id: string, content_hash: string } | undefined;
   } else {
-      // Fallback: just check slug (might result in collision if multiple accounts use same slug)
-      // This helper might need refactoring for multi-tenancy.
+      // Fallback: global slug check (single-tenant or legacy callers)
       stmt = db.prepare('SELECT id, content_hash FROM records WHERE slug = ? LIMIT 1');
       existing = stmt.get(input.slug) as { id: string, content_hash: string } | undefined;
   }

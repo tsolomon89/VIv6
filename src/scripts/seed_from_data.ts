@@ -3,6 +3,10 @@ import { fileURLToPath } from 'url';
 import { loadSeedState } from '../modules/content/seeding.js';
 import { seedTemplates } from './seed_templates.js';
 import { seedTaxonomy } from './seed_taxonomy.js';
+import { seedAI } from './seed_ai.js';
+import { seedPipelineConfig } from './seed_pipeline_config.js';
+import { seedFieldLibrary } from './seed_field_library.js';
+import { seedPresets } from './seed_presets.js';
 import bcrypt from 'bcrypt';
 
 // --- HELPERS ---
@@ -119,6 +123,18 @@ export function seedFromData() {
 
     // 5. Taxonomy (Dimensions & Dependencies for cascading pick-lists)
     seedTaxonomy();
+
+    // 6. AI Agent Integration (fields, approval rules)
+    seedAI();
+
+    // 7. Pipeline Stages & Qualifiers (Activity Generation system)
+    seedPipelineConfig();
+
+    // 8. Field Library (extract unique fields from object_defs)
+    seedFieldLibrary();
+
+    // 9. Webbuilder Presets (visual templates for page sections)
+    seedPresets();
 
     console.log('✅ System Online.');
 }

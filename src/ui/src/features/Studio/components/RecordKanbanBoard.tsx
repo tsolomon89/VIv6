@@ -16,28 +16,37 @@ interface RecordKanbanBoardProps {
 export function RecordKanbanBoard({ records, definition, groupByField, onRecordClick, onUpdateRecord }: RecordKanbanBoardProps) {
     // 1. Get Group Options from Definition (if dimension)
     // We expect the groupByField to be a dimension with options/values
-    const groupOptions = useMemo(() => {
+    const groupOptions = useMemo((): string[] => {
         if (!definition.data?.fieldGroups) return [];
-        
-        // Find field definition in fieldGroups
+
+        // Find field definition in fieldGroups (handles both canonical and seed formats)
         let fieldDef;
         for (const group of definition.data.fieldGroups) {
-            const found = group.fields.find(f => f.name.toLowerCase() === groupByField.toLowerCase());
+            // Handle both formats: group.fields (seed) or group.fieldStructs (canonical)
+            const fields = group.fields || group.fieldStructs || [];
+            const found = fields.find((f: any) => {
+                // Handle both formats: f.name (seed) or f.nameField (canonical)
+                const fieldName = f.name || f.nameField || '';
+                return fieldName.toLowerCase() === groupByField.toLowerCase();
+            });
             if (found) {
                 fieldDef = found;
                 break;
             }
         }
-        
-        // If it's a dimension, we might need to fetch dimension values. 
+
+        // If it's a dimension, we might need to fetch dimension values.
         // For V1, let's assume standard stages or extract unique values from records if not defined.
         if ((fieldDef as any)?.dimension === 'stage' || groupByField === 'stage' || groupByField === 'opportunity_stage') {
             // Use Source of Truth from types
             return [...OPPORTUNITY_STAGES].map(s => s.toUpperCase());
         }
-        
+
         // Fallback: Extract unique values from records
-        const unique = Array.from(new Set(records.map(r => getRecordValue(r, groupByField) || 'Unassigned')));
+        const unique = Array.from(new Set(records.map(r => {
+            const val = getRecordValue(r, groupByField);
+            return val != null ? String(val) : 'Unassigned';
+        })));
         return unique.sort();
     }, [definition, groupByField, records]);
 
@@ -45,11 +54,12 @@ export function RecordKanbanBoard({ records, definition, groupByField, onRecordC
     const groupedRecords = useMemo(() => {
         const groups: Record<string, Entity[]> = {};
         groupOptions.forEach(opt => groups[opt] = []);
-        
+
         records.forEach(record => {
-            const val = getRecordValue(record, groupByField) || 'Unassigned';
+            const rawVal = getRecordValue(record, groupByField);
+            const val = rawVal != null ? String(rawVal) : 'Unassigned';
             // Simple normalization for matching
-            const key = groupOptions.find(opt => opt.toLowerCase() === String(val).toLowerCase()) || 'Unassigned';
+            const key = groupOptions.find(opt => opt.toLowerCase() === val.toLowerCase()) || 'Unassigned';
             if (!groups[key]) groups[key] = [];
             groups[key].push(record);
         });
@@ -60,9 +70,10 @@ export function RecordKanbanBoard({ records, definition, groupByField, onRecordC
         e.stopPropagation();
         if (!onUpdateRecord) return;
 
-        const currentVal = getRecordValue(record, groupByField) || 'Unassigned';
+        const rawVal = getRecordValue(record, groupByField);
+        const currentVal = rawVal != null ? String(rawVal) : 'Unassigned';
         // Normalize
-        const currentIndex = groupOptions.findIndex(opt => opt.toLowerCase() === String(currentVal).toLowerCase());
+        const currentIndex = groupOptions.findIndex(opt => opt.toLowerCase() === currentVal.toLowerCase());
         if (currentIndex === -1) return;
 
         const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
@@ -73,12 +84,19 @@ export function RecordKanbanBoard({ records, definition, groupByField, onRecordC
         // Construct Update Payload
         let updates: Record<string, any> = {};
         
-        // Find field definition
+        // Find field definition (handles both canonical and seed formats)
         let fieldGroup = '';
         if (definition.data && definition.data.fieldGroups) {
              for (const g of definition.data.fieldGroups) {
-                 if (g.fields.find((f: any) => f.name.toLowerCase() === groupByField.toLowerCase())) {
-                     fieldGroup = g.name;
+                 // Handle both formats: g.fields (seed) or g.fieldStructs (canonical)
+                 const fields = g.fields || g.fieldStructs || [];
+                 const found = fields.find((f: any) => {
+                     const fieldName = f.name || f.nameField || '';
+                     return fieldName.toLowerCase() === groupByField.toLowerCase();
+                 });
+                 if (found) {
+                     // Handle both formats: g.name (seed) or g.nameFieldGroup (canonical)
+                     fieldGroup = g.name || g.nameFieldGroup || '';
                      break;
                  }
              }

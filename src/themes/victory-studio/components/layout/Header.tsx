@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { TEMPLATES } from '../../data';
 import { checkCoverage, getMissingSignaturesLabel } from '../../utils/coverage';
 import { checkPresetIntegrity, generateManifestLog } from '../../utils/integrity';
-import { PRESET_REGISTRY } from '../../presets/registry';
+import { getPresetRegistry } from '../../presets/loader';
 
 interface HeaderProps {
     isNavOpen: boolean;
@@ -30,8 +30,9 @@ export const Header: React.FC<HeaderProps> = ({
     isSidebarOpen, setIsSidebarOpen
 }) => {
     const [showTemplates, setShowTemplates] = useState(false);
-    const coverage = checkCoverage();
-    const integrityIssues = checkPresetIntegrity(PRESET_REGISTRY);
+    const registry = getPresetRegistry();
+    const coverage = checkCoverage(registry);
+    const integrityIssues = checkPresetIntegrity(registry);
     
     // Group issues by type
     const violations = integrityIssues.filter(i => i.status === 'version_violation');
@@ -42,9 +43,9 @@ export const Header: React.FC<HeaderProps> = ({
     useEffect(() => {
         console.log("[Header] Available Templates:", Object.keys(TEMPLATES), Object.values(TEMPLATES).map(t => t.name));
         if (isDebugMode) {
-            generateManifestLog(PRESET_REGISTRY);
+            generateManifestLog(registry);
         }
-    }, [isDebugMode]);
+    }, [isDebugMode, registry]);
 
     return (
       <header 

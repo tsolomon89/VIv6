@@ -1,8 +1,8 @@
 
 import React, { useMemo } from 'react';
-import { Binding, PresetRegistry } from '../../types';
+import { Binding } from '../../types';
 import { matchesSignature } from '../../utils/binding';
-import { PRESET_REGISTRY } from '../../presets/registry';
+import { getAllPresets, getPreset } from '../../presets/loader';
 import { LayoutTemplate, AlertCircle } from 'lucide-react';
 
 interface PresentationControlsProps {
@@ -15,12 +15,12 @@ export const PresentationControls: React.FC<PresentationControlsProps> = ({ bind
     
     // Filter presets compatible with current binding
     const compatiblePresets = useMemo(() => {
-        return Object.values(PRESET_REGISTRY).filter(preset => 
+        return getAllPresets().filter(preset =>
             matchesSignature(binding, preset.signature)
         );
     }, [binding]);
 
-    const currentPreset = PRESET_REGISTRY[currentKey];
+    const currentPreset = getPreset(currentKey);
     const isCompatible = currentPreset ? matchesSignature(binding, currentPreset.signature) : false;
 
     return (

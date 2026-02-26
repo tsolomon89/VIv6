@@ -25,6 +25,8 @@ import { correlationIdMiddleware } from './middleware/correlationId.js';
 import { metricsMiddleware } from './middleware/metricsMiddleware.js';
 import configRouter from './routes/config.js';
 import { initSecurityHooks } from '../core/security.js';
+import { registerCustomInterpreterExecutors } from '../modules/ops/custom_interpreter_executors.js';
+import { loadInterpreterExecutorPlugins } from '../modules/ops/interpreter_executor_plugin_loader.js';
 
 const logger = createLogger('server');
 
@@ -42,6 +44,26 @@ process.on('uncaughtException', (err) => {
 
 // Initialize Security (Tier 0)
 initSecurityHooks();
+registerCustomInterpreterExecutors();
+void loadInterpreterExecutorPlugins().then(result => {
+    if (result.errors.length > 0 || result.missing.length > 0) {
+        logger.warn({ missing: result.missing, errors: result.errors }, '[InterpreterExecutors] Plugin loader encountered issues');
+    }
+    if (result.loaded.length > 0 || result.skipped.length > 0 || result.unloaded.length > 0) {
+        logger.info(
+            {
+                loaded: result.loaded.length,
+                skipped: result.skipped.length,
+                unloaded: result.unloaded.length,
+                missing: result.missing.length,
+                errors: result.errors.length,
+            },
+            '[InterpreterExecutors] Plugin loader completed'
+        );
+    }
+}).catch(err => {
+    logger.error({ err }, '[InterpreterExecutors] Plugin loader failed');
+});
 
 import templatesRouter from '../modules/delivery/api/templates.js';
 
@@ -53,6 +75,9 @@ import domainsRouter from '../modules/delivery/api/domains.js';
 import schemaRouter from './routes/schema.js';
 import pagesRouter from './routes/pages.js';
 import presetsRouter from './routes/presets.js';
+import stateMachinesRouter from './routes/state-machines.js';
+import workflowsRouter from './routes/workflows.js';
+import interpreterExecutorsRouter from './routes/interpreter-executors.js';
 
 import { initDeliveryModule } from '../modules/delivery/index.js';
 import { fileURLToPath } from 'url';
@@ -133,6 +158,9 @@ app.use('/api/domains', domainsRouter);
 app.use('/api/schema', schemaRouter);
 app.use('/api/pages', pagesRouter);
 app.use('/api/presets', presetsRouter);
+app.use('/api/state-machines', stateMachinesRouter);
+app.use('/api/workflows', workflowsRouter);
+app.use('/api/interpreter-executors', interpreterExecutorsRouter);
 // app.use('/api/domains', domainsRouter); // Duplicate removed
 
 import analyticsRouter from '../modules/crm/api/analytics.js';
@@ -155,6 +183,10 @@ app.use('/api/components', componentsRouter);
 
 import usersRouter from './routes/users.js';
 app.use('/api/users', usersRouter);
+
+// Config Workspaces (GTM-style staging system)
+import workspacesRouter from './routes/workspaces.js';
+app.use('/api/workspaces', workspacesRouter);
 
 // Auth Module (ODAC - Opportunity-Driven Access Control)
 import authRouter from '../modules/auth/api/routes.js';

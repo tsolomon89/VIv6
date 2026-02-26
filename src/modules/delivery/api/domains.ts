@@ -50,7 +50,8 @@ router.post('/', ...protectedRoute, (req: Request, res: Response, next: NextFunc
       res.status(400).json({ error: 'brand_id and hostname are required', status: 400 });
       return;
     }
-    const domain = createDomain({ brand_id, hostname, type, is_primary, config, entity_types, status });
+    // Map brand_id to account_id (the domain module uses account_id internally)
+    const domain = createDomain({ account_id: brand_id, hostname, type, is_primary, config, entity_types, status });
     res.status(201).json(domain);
   } catch (err: any) {
     if (err.message?.includes('UNIQUE constraint')) {

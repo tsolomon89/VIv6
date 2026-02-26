@@ -1,6 +1,6 @@
-
 import type { Entity } from '../../../lib/api';
 import { api } from '../../../lib/api';
+import { showToast } from '../../../hooks/useToast';
 import { Trash2, Plus, Minus } from 'lucide-react';
 
 interface LineItem {
@@ -38,7 +38,7 @@ export function RecordLineItems({ record, onUpdate }: RecordLineItemsProps) {
             onUpdate?.();
         } catch (e) {
             console.error('Failed to remove item', e);
-            alert('Failed to remove item');
+            showToast.error('Failed to remove item');
         }
     };
 
@@ -59,7 +59,7 @@ export function RecordLineItems({ record, onUpdate }: RecordLineItemsProps) {
         if (productId) {
             api.addOpportunityItem(record.id, productId, 1)
                .then(() => onUpdate?.())
-               .catch((e: Error) => alert('Failed to add: ' + e.message));
+               .catch((e: Error) => showToast.error('Failed to add: ' + e.message));
         }
     };
 

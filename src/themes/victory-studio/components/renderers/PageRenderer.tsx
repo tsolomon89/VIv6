@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { PageTemplate, SectionInstance } from '../../types';
 import { SectionRenderer } from './SectionRenderer';
 import { validatePageTemplate } from '../../utils/validation';
-import { PRESET_REGISTRY } from '../../presets/registry';
+import { getPresetRegistry } from '../../presets/loader';
 import { ValidationNotice } from '../sections/ValidationNotice';
 import { HydrationProvider } from '../../context/HydrationContext';
 
@@ -15,10 +15,11 @@ interface PageRendererProps {
 export const PageRenderer: React.FC<PageRendererProps> = ({ template, setSectionRef }) => {
     
     // 1. Run Validation to catch duplicates or context mismatches
+    const registry = getPresetRegistry();
     const rootErrors = useMemo(() => {
-        return validatePageTemplate(template, PRESET_REGISTRY)
+        return validatePageTemplate(template, registry)
             .filter(e => e.sectionId === 'PAGE_ROOT');
-    }, [template]);
+    }, [template, registry]);
 
     // 2. Sort Sections based on Placement Slot and Order
     // Enforce C1: At most one start and one end section

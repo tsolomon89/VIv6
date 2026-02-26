@@ -62,7 +62,7 @@ describe('E2E: Multi-Tenancy', () => {
           params: { account_id: TENANT_A },
           headers: { 'x-api-key': API_KEY }
       });
-      const itemsA = resA.data;
+      const itemsA = resA.data.data;  // Paginated response: { data: [...], pagination: {...} }
       expect(itemsA.length).toBe(1);
       expect(itemsA[0].slug).toBe('product-a');
 
@@ -71,7 +71,7 @@ describe('E2E: Multi-Tenancy', () => {
           params: { account_id: TENANT_B },
           headers: { 'x-api-key': API_KEY }
       });
-      const itemsB = resB.data;
+      const itemsB = resB.data.data;  // Paginated response
       expect(itemsB.length).toBe(1);
       expect(itemsB[0].slug).toBe('product-b');
   });

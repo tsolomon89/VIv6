@@ -1,5 +1,5 @@
 // Single Source of Truth for Entity Types
-export const ENTITY_TYPES = ['object_def', 'field_def', 'activity_def', 'view', 'derivation', 'metric', 'rule', 'validation_constraint', 'account', 'contact', 'product', 'feature', 'solution', 'useCase', 'persona', 'asset', 'page', 'brand', 'user', 'role', 'activity', 'opportunity', 'subscription', 'campaign', 'tenant', 'pipeline', 'assetGroup', 'workflow', 'workflow_step', 'workflow_step_type', 'workflow_enrollment', 'content', 'pipeline_stage', 'qualifier_def', 'assignment_pool', 'health_config'] as const;
+export const ENTITY_TYPES = ['object_def', 'field_def', 'activity_def', 'view', 'derivation', 'metric', 'rule', 'validation_constraint', 'account', 'contact', 'product', 'feature', 'solution', 'useCase', 'persona', 'asset', 'page', 'brand', 'user', 'role', 'activity', 'opportunity', 'subscription', 'campaign', 'tenant', 'pipeline', 'assetGroup', 'workflow', 'workflow_step', 'workflow_step_type', 'workflow_enrollment', 'content', 'pipeline_stage', 'qualifier_def', 'assignment_pool', 'health_config', 'state_machine', 'interpreter_pipeline', 'interpreter_executor_def'] as const;
 
 export type EntityType = typeof ENTITY_TYPES[number];
 
@@ -279,7 +279,7 @@ export interface PipelineStageConfig {
 // Workflow Engine Types
 // ============================================================================
 
-export const WORKFLOW_STEP_TYPES = ['wait', 'send', 'update', 'branch', 'complete'] as const;
+export const WORKFLOW_STEP_TYPES = ['wait', 'send', 'update', 'branch', 'complete', 'query', 'advance_stage', 'generate_activities'] as const;
 export type WorkflowStepType = typeof WORKFLOW_STEP_TYPES[number];
 
 export const WORKFLOW_ENROLLMENT_STATUSES = ['active', 'paused', 'completed', 'exited'] as const;

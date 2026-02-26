@@ -117,11 +117,11 @@ describe('E2E: Dimension Schema API', () => {
         it('lists all dependencies', async () => {
             const res = await axios.get(`${baseUrl}/dimensions/dependencies`);
             expect(res.status).toBe(200);
-            expect(res.data).toHaveLength(1);
-            expect(res.data[0].source_slug).toBe('tech');
-            expect(res.data[0].target_slug).toBe('software');
-            expect(res.data[0].source_dimension).toBe('sector');
-            expect(res.data[0].target_dimension).toBe('industry');
+            expect(res.data.data).toHaveLength(1);
+            expect(res.data.data[0].source_slug).toBe('tech');
+            expect(res.data.data[0].target_slug).toBe('software');
+            expect(res.data.data[0].source_dimension).toBe('sector');
+            expect(res.data.data[0].target_dimension).toBe('industry');
         });
 
         it('filters by source_dimension', async () => {
@@ -135,15 +135,15 @@ describe('E2E: Dimension Schema API', () => {
 
             const res = await axios.get(`${baseUrl}/dimensions/dependencies?source_dimension=sector`);
             expect(res.status).toBe(200);
-            expect(res.data).toHaveLength(1);
-            expect(res.data[0].source_dimension).toBe('sector');
+            expect(res.data.data).toHaveLength(1);
+            expect(res.data.data[0].source_dimension).toBe('sector');
         });
 
         it('filters by target_dimension', async () => {
             const res = await axios.get(`${baseUrl}/dimensions/dependencies?target_dimension=industry`);
             expect(res.status).toBe(200);
-            expect(res.data).toHaveLength(1);
-            expect(res.data[0].target_dimension).toBe('industry');
+            expect(res.data.data).toHaveLength(1);
+            expect(res.data.data[0].target_dimension).toBe('industry');
         });
     });
 
@@ -156,7 +156,7 @@ describe('E2E: Dimension Schema API', () => {
 
             const res = await axios.get(`${baseUrl}/dimensions?dimension=sector`);
             expect(res.status).toBe(200);
-            expect(res.data).toHaveLength(2);
+            expect(res.data.data).toHaveLength(2);
         });
     });
 

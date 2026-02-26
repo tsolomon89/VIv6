@@ -61,6 +61,11 @@ export async function teardownTestServer(): Promise<void> {
  */
 export function resetTestDb(): void {
     resetDb();
+    // Seed system account (required for FK constraints)
+    db.prepare(`
+        INSERT OR IGNORE INTO accounts (id, slug, name, account_class, type, data, created_at, updated_at)
+        VALUES ('00000000-0000-0000-0000-000000000000', 'system', 'System Account', 'business', 'admin', '{}', datetime('now'), datetime('now'))
+    `).run();
 }
 
 /**
@@ -166,6 +171,112 @@ export function seedTestUser(data: {
         data.role || 'admin',
         accountId,
         '$2b$10$test-hash' // Fake bcrypt hash for testing
+    );
+
+    return id;
+}
+
+/**
+ * Seed a test page record
+ */
+export function seedTestPage(data: {
+    id?: string;
+    name: string;
+    slug: string;
+    template_key?: string;
+    subject_type?: string;
+    account_id?: string;
+}): string {
+    const id = data.id || crypto.randomUUID();
+    const accountId = data.account_id || '00000000-0000-0000-0000-000000000000';
+
+    const pageData = {
+        fieldGroups: [],
+        attribution: {
+            channel: 'website',
+            medium: 'page',
+            source: 'brand.co',
+            referralType: 'organic',
+            version: 'V.01',
+        },
+        pageConfig: {
+            schemaVersion: 1,
+            pageContext: { kind: 'detail' },
+            pageSubject: {
+                target: data.subject_type || 'brand',
+                cardinality: 'one',
+            },
+            templateKey: data.template_key,
+        },
+        sections: [],
+    };
+
+    const contentHash = calculateHash(pageData);
+
+    db.prepare(`
+        INSERT INTO records (id, type, name, slug, description, account_id, data, content_hash, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    `).run(
+        id,
+        'page',
+        data.name,
+        data.slug,
+        '',
+        accountId,
+        JSON.stringify(pageData),
+        contentHash
+    );
+
+    return id;
+}
+
+/**
+ * Seed a test preset
+ */
+export function seedTestPreset(data: {
+    key: string;
+    name: string;
+    signature?: object;
+    config?: object;
+    account_id?: string;
+}): string {
+    const accountId = data.account_id || null;
+    const signature = data.signature || { kind: 'self', type: 'brand' };
+    const config = data.config || { component: 'HeroSection', props: {} };
+
+    db.prepare(`
+        INSERT INTO presentation_presets (key, name, signature, config, account_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    `).run(
+        data.key,
+        data.name,
+        JSON.stringify(signature),
+        JSON.stringify(config),
+        accountId
+    );
+
+    return data.key;
+}
+
+/**
+ * Seed a test relationship
+ */
+export function seedTestRelationship(data: {
+    id?: string;
+    from_record_id: string;
+    to_record_id: string;
+    relationship_type: string;
+}): string {
+    const id = data.id || crypto.randomUUID();
+
+    db.prepare(`
+        INSERT INTO record_relationships (id, from_record_id, to_record_id, relationship_type, created_at)
+        VALUES (?, ?, ?, ?, datetime('now'))
+    `).run(
+        id,
+        data.from_record_id,
+        data.to_record_id,
+        data.relationship_type
     );
 
     return id;

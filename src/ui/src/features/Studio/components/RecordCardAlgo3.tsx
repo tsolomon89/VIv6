@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import type { RecordCardConfig } from '../config/studio-config';
 import { Algo3Engine, type Algo3Input, type Algo3Output } from '../../../lib/algo3';
 import { api } from '../../../lib/api';
+import { showToast } from '../../../hooks/useToast';
 import { Wand2, Save, ArrowLeft } from 'lucide-react';
 
 interface RecordCardAlgo3Props {
@@ -56,11 +56,11 @@ export const RecordCardAlgo3: React.FC<RecordCardAlgo3Props> = ({ config, parent
                     }]
                 }
             });
-            alert('Asset Saved!');
+            showToast.success('Asset Saved!');
             setStep('select'); // Reset
         } catch (e) {
             console.error(e);
-            alert('Failed to save asset.');
+            showToast.error('Failed to save asset.');
         } finally {
             setIsSaving(false);
         }

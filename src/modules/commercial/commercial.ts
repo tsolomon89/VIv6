@@ -6,6 +6,8 @@ import { hooks } from '../../core/hooks.js';
 import { calculateDealYield, STAGE_PROBABILITY } from './rational.js';
 import { setOpportunityStage } from '../../core/modifier.js';
 import { traverseRecord } from '../../core/traversal.js';
+import { getFieldDisplayName, OpportunityFields } from '../../core/utils/field_lookup.js';
+import { computeDerivationBySlug } from '../ops/derivations.js';
 
 // --- CANONICAL FORMAT HELPERS ---
 
@@ -77,7 +79,7 @@ export class CommercialEngine {
         // 1. Try Recursive Field "Opportunity Stage"
         let foundStage: OpportunityStage | undefined;
         traverseRecord(record, (node, meta) => {
-            if (meta.type === 'field' && node.nameField === 'Opportunity Stage') {
+            if (meta.type === 'field' && node.nameField === getFieldDisplayName('opportunity', OpportunityFields.STAGE)) {
                  const val = node.propertyStructs?.[0]?.valueProperty;
                  if (typeof val === 'string' && OPPORTUNITY_STAGES.includes(val as any)) {
                      foundStage = val as OpportunityStage;
@@ -121,22 +123,15 @@ export class CommercialEngine {
         const currentStage = CommercialEngine.getStage(record) || 'mql';
         console.log(`[CommercialEngine] Transitioning ${record.id} from ${currentStage} to ${newStage}`);
 
-        // Validation Logic for Transitions
-        if (newStage === 'sql') {
-            // Gate: Must have intent_verified
-            const intentField = findField(fieldGroups, 'Intent Verified');
-            const intentVerified = getFieldValue(intentField);
-            if (!intentVerified) {
-                console.warn('[CommercialEngine] Warning: Moving to SQL without Verified Intent');
-            }
-        }
+        // NOTE: Stage gate validation (e.g., SQL requires Intent Verified) is now handled by
+        // blocking rules in data/seeds/tier_1_schema/rules.json (rule: sql-requires-intent-verified)
 
         // Calculate Attributes for New Stage
         const newProbability = STAGE_PROBABILITY[newStage];
 
         // Update fields in canonical format
         setOpportunityStage(record, newStage);
-        setOrCreateField(fieldGroups, 'Probability', 'number', newProbability);
+        setOrCreateField(fieldGroups, getFieldDisplayName('opportunity', OpportunityFields.PROBABILITY), 'number', newProbability);
         setOrCreateField(fieldGroups, 'Stage Last Updated', 'date', new Date().toISOString());
 
         // Ensure fieldGroups is attached to data
@@ -145,7 +140,7 @@ export class CommercialEngine {
 
         // Calculate Yield
         const newYield = calculateDealYield(record);
-        setOrCreateField(fieldGroups, 'Projected Yield', 'number', newYield);
+        setOrCreateField(fieldGroups, getFieldDisplayName('opportunity', 'projected_yield'), 'number', newYield);
 
         // Apply Update
         updateRecord(opportunityId, {
@@ -191,19 +186,19 @@ export class CommercialEngine {
             renewalDate.setFullYear(renewalDate.getFullYear() + 1); // +1 Year
 
             // Get values from canonical format or legacy properties
-            const amountField = findField(fieldGroups, 'Amount');
+            const amountField = findField(fieldGroups, getFieldDisplayName('opportunity', OpportunityFields.AMOUNT));
             const amount = getFieldValue(amountField)
                 || (data as any).amount
                 || (data as any).projected_revenue
                 || 0;
 
-            // Create RTP with canonical format
+            // Create RTP with canonical format (using schema-aware field names)
             const rtpFieldGroups: any[] = [];
-            addFieldToGroup(rtpFieldGroups, 'Opportunity Stage', 'select', 'rtp');
-            addFieldToGroup(rtpFieldGroups, 'Source Opportunity ID', 'Record', record.id);
-            addFieldToGroup(rtpFieldGroups, 'Amount', 'currency', amount);
-            addFieldToGroup(rtpFieldGroups, 'Target Close Date', 'date', renewalDate.toISOString());
-            addFieldToGroup(rtpFieldGroups, 'Probability', 'number', STAGE_PROBABILITY['rtp']);
+            addFieldToGroup(rtpFieldGroups, getFieldDisplayName('opportunity', OpportunityFields.STAGE), 'select', 'rtp');
+            addFieldToGroup(rtpFieldGroups, getFieldDisplayName('opportunity', OpportunityFields.SOURCE_OPPORTUNITY_ID), 'Record', record.id);
+            addFieldToGroup(rtpFieldGroups, getFieldDisplayName('opportunity', OpportunityFields.AMOUNT), 'currency', amount);
+            addFieldToGroup(rtpFieldGroups, getFieldDisplayName('opportunity', OpportunityFields.TARGET_CLOSE_DATE), 'date', renewalDate.toISOString());
+            addFieldToGroup(rtpFieldGroups, getFieldDisplayName('opportunity', OpportunityFields.PROBABILITY), 'number', STAGE_PROBABILITY['rtp']);
 
             const rtpInput: DataRecordInput = {
                 type: 'opportunity',
@@ -216,16 +211,22 @@ export class CommercialEngine {
                     opportunity_stage: 'rtp',
                     source_opportunity_id: record.id,
                     projected_revenue: amount,
-                    probability: STAGE_PROBABILITY['rtp']
+                    probability: STAGE_PROBABILITY['rtp'],
+                    // Product tensor: Copy primary product from source FTP
+                    primary_product_id: (data as any).primary_product_id,
+                    // Pipeline type: Copy from source opportunity for invariant compliance
+                    pipeline_type: (data as any).pipeline_type,
                 }
             };
 
             // System Context for creation (bypass permissions)
             const systemContext = { user: { id: 'system', permission_level: 'admin' } };
 
-            // Pre-calculate yield for the new RTP
-            const rtpYield = calculateDealYield({ ...rtpInput, id: 'temp' } as DataRecord);
-            addFieldToGroup(rtpFieldGroups, 'Projected Yield', 'number', rtpYield);
+            // Pre-calculate yield for the new RTP using derivation (with fallback)
+            const rtpTempRecord = { ...rtpInput, id: 'temp' } as DataRecord;
+            const rtpYieldResult = computeDerivationBySlug('opportunity-deal-yield', rtpTempRecord);
+            const rtpYield = rtpYieldResult.success ? rtpYieldResult.value : calculateDealYield(rtpTempRecord);
+            addFieldToGroup(rtpFieldGroups, getFieldDisplayName('opportunity', OpportunityFields.PROJECTED_YIELD), 'number', rtpYield);
 
             const newRtp = await createRecord(rtpInput, systemContext);
 
@@ -382,20 +383,33 @@ hooks.onPreCreate('opportunity', async (input: DataRecordInput) => {
     }
 
     // Set probability in canonical format
-    const probField = findField(fieldGroups, 'Probability');
+    const probField = findField(fieldGroups, getFieldDisplayName('opportunity', OpportunityFields.PROBABILITY));
     const probability = STAGE_PROBABILITY[stage];
     if (!probField || getFieldValue(probField) === undefined) {
-        setOrCreateField(fieldGroups, 'Probability', 'number', probability);
+        setOrCreateField(fieldGroups, getFieldDisplayName('opportunity', OpportunityFields.PROBABILITY), 'number', probability);
     }
     // Also set legacy property for backward compatibility
     (input.data as any).probability = probability;
 
-    // Calculate Yield
-    const tempRecord = { ...input } as any;
-    const yieldVal = calculateDealYield(tempRecord);
-    setOrCreateField(fieldGroups, 'Projected Yield', 'number', yieldVal);
+    // Calculate Yield using derivation (with fallback to hard-coded formula)
+    const tempRecord = { ...input, id: 'temp' } as DataRecord;
+    const yieldResult = computeDerivationBySlug('opportunity-deal-yield', tempRecord);
+    const yieldVal = yieldResult.success ? yieldResult.value : calculateDealYield(tempRecord);
+    setOrCreateField(fieldGroups, getFieldDisplayName('opportunity', OpportunityFields.PROJECTED_YIELD), 'number', yieldVal);
     // Also set legacy property for backward compatibility
     (input.data as any).projected_yield = yieldVal;
+
+    // Qualifier Inheritance from Product
+    const primaryProductId = (input.data as any)?.primary_product_id;
+    if (primaryProductId) {
+        const product = getRecord(primaryProductId);
+        if (product?.data?.qualifiers) {
+            const existingQualifiers = (input.data as any).qualifiers || {};
+            // Merge: product qualifiers as base, opportunity can override
+            (input.data as any).qualifiers = { ...product.data.qualifiers, ...existingQualifiers };
+            console.log(`[CommercialEngine] Inherited ${Object.keys(product.data.qualifiers).length} qualifier stages from product ${primaryProductId}`);
+        }
+    }
 });
 
 // 2. Enforce Transition Logic on Update
@@ -422,30 +436,25 @@ hooks.onPreUpdate('opportunity', async (input: DataRecordInput) => {
         // Sync Recursive Structure if it was only updated via legacy prop
         setOpportunityStage(input, newStage);
 
-        // Validate
+        // Validate stage taxonomy
         CommercialEngine.validateStage(input);
 
-        // Transition Logic
-        if (newStage === 'sql') {
-            const currentFieldGroups = current.data?.fieldGroups || [];
-            const intentField = findField(fieldGroups, 'Intent Verified') || findField(currentFieldGroups, 'Intent Verified');
-            const intentVerified = getFieldValue(intentField);
-            if (!intentVerified) {
-                console.warn('[CommercialEngine] Warning: Moving to SQL without Verified Intent');
-            }
-        }
+        // NOTE: Stage gate validation (e.g., SQL requires Intent Verified) is now handled by
+        // blocking rules in data/seeds/tier_1_schema/rules.json (rule: sql-requires-intent-verified)
 
         // Update Probability in canonical format
         const newProbability = STAGE_PROBABILITY[newStage];
-        setOrCreateField(fieldGroups, 'Probability', 'number', newProbability);
+        setOrCreateField(fieldGroups, getFieldDisplayName('opportunity', OpportunityFields.PROBABILITY), 'number', newProbability);
         // Also set legacy property
         (input.data as any).probability = newProbability;
     }
 
     // Always Recalculate Yield on Update (in case amount or date changed)
-    const tempRecord = { ...input } as any;
-    const newYield = calculateDealYield(tempRecord);
-    setOrCreateField(fieldGroups, 'Projected Yield', 'number', newYield);
+    // Uses derivation with fallback to hard-coded formula
+    const tempRecord = { ...input, id: input.id || 'temp' } as DataRecord;
+    const yieldResult = computeDerivationBySlug('opportunity-deal-yield', tempRecord);
+    const newYield = yieldResult.success ? yieldResult.value : calculateDealYield(tempRecord);
+    setOrCreateField(fieldGroups, getFieldDisplayName('opportunity', OpportunityFields.PROJECTED_YIELD), 'number', newYield);
     // Also set legacy property
     (input.data as any).projected_yield = newYield;
 });
@@ -458,6 +467,30 @@ hooks.onPostUpdate('opportunity', async (record: DataRecordInput | DataRecord) =
         // We only trigger if it WASN'T already processed (idempotency handled in handleClosedWon)
         await CommercialEngine.handleClosedWon(record as DataRecord);
     }
+
+    // Generate activities for the new stage (if stage changed)
+    // The ActivityGenerator handles idempotency internally
+    if ((record as DataRecord).id && stage) {
+        try {
+            const { ActivityGenerator } = await import('../activities/generation.js');
+            await ActivityGenerator.generateActivitiesForStage(record as DataRecord, stage);
+        } catch (err) {
+            console.warn('[CommercialEngine] Activity generation failed:', err instanceof Error ? err.message : String(err));
+        }
+    }
 });
 
-console.log('[CommercialEngine] Loaded.');
+// 4. Generate Initial Activities on Create
+hooks.onPostCreate('opportunity', async (record: DataRecordInput | DataRecord) => {
+    const stage = CommercialEngine.getStage(record) || 'mql';
+    console.log(`[CommercialEngine] Generating initial activities for new opportunity (stage: ${stage})`);
+
+    try {
+        const { ActivityGenerator } = await import('../activities/generation.js');
+        await ActivityGenerator.generateActivitiesForStage(record as DataRecord, stage);
+    } catch (err) {
+        console.warn('[CommercialEngine] Initial activity generation failed:', err instanceof Error ? err.message : String(err));
+    }
+});
+
+console.log('[CommercialEngine] Loaded with Activity Generation hooks.');

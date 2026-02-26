@@ -8,6 +8,8 @@ import { listAllRelationships, createRelationship } from '../../modules/content/
 import { DataRecord, RecordRelationship } from '../../core/types.js';
 import { listDomains, createDomain, getDomainByHostname } from '../../modules/delivery/domains.js';
 import { SYSTEM_ACCOUNT_ID } from '../../core/constants.js';
+import { seedPipelineConfig } from '../../scripts/seed_pipeline_config.js';
+import { loadInterpreterExecutorPlugins } from '../../modules/ops/interpreter_executor_plugin_loader.js';
 
 const router = Router();
 
@@ -32,16 +34,10 @@ interface ReseedPreview {
 router.post('/preview', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const seedState: SeedState = loadSeedState();
-        const currentRecords = listRecords(SYSTEM_ACCOUNT_ID); // Assuming context or listAll? listRecords requires accountId in services.ts, but let's check definition. 
-        // services.ts listRecords(accountId, type?)
-        // We need ALL records to diff properly, potentially across accounts if we are seeding multi-tenant?
-        // For now, let's fetch all records for the accounts in seedState?
-        // Or just fetch all records from DB if possible? services.ts listRecords restricts by accountId.
-        // We might need a generic "listAllRecords" restricted to admin.
-        
-        // WORKAROUND: Iterate unique accounts in seedState and fetch existing for them.
-        // But simpler: just use DB direct for Diffing logic to be safe, or assume single tenant for this tool?
-        // Let's assume we want to diff against what is in DB.
+        // NOTE: listRecords() requires accountId, but for reseeding we need ALL records.
+        // Current approach: Query DB directly to get all records for diffing.
+        // A generic admin-only listAllRecords() could simplify this, but the direct
+        // DB query works reliably for this admin-only seeding scenario.
         const allRecords = db.prepare('SELECT * FROM records').all().map((row: any) => ({
              ...row,
              data: JSON.parse(row.data)
@@ -277,13 +273,19 @@ router.post('/preview', async (req: Request, res: Response, next: NextFunction) 
 router.post('/apply', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { ops } = req.body as { ops: DiffOperation[] };
-        
+
+        // Validate ops is provided and is an array
+        if (!ops || !Array.isArray(ops)) {
+            res.status(400).json({ error: 'ops array is required', status: 400 });
+            return;
+        }
+
         const activeOps = ops.filter(o => o.action !== 'noop');
-        
+
         let applied = 0;
-        
+
+        // 0. Apply Account Changes (synchronous, in transaction)
         db.transaction(() => {
-            // 0. Apply Account Changes
             const accountOps = activeOps.filter(o => o.type === 'account');
             const insertAccount = db.prepare(`
                 INSERT INTO records (id, slug, name, type, account_id, data, created_at, updated_at)
@@ -301,12 +303,7 @@ router.post('/apply', async (req: Request, res: Response, next: NextFunction) =>
                     id: payload.id,
                     slug: payload.slug,
                     name: payload.name,
-                    account_id: SYSTEM_ACCOUNT_ID, // Accounts are owned by system account
-                    // Merge account_class and type into data if needed, or just type is 'account'
-                    // Payload type might be 'client'/'partner' etc?
-                    // No, record type is 'account'. The 'type' in payload (client/partner) goes to data.account_type?
-                    // Or keep it simple: payload.type from seed is 'client'.
-                    // We store record.type = 'account'. record.data.account_type = payload.type
+                    account_id: SYSTEM_ACCOUNT_ID,
                     data: JSON.stringify({
                         ...(payload.data || {}),
                         account_class: payload.account_class || 'business',
@@ -322,17 +319,26 @@ router.post('/apply', async (req: Request, res: Response, next: NextFunction) =>
                      updateAccount.run(accountData);
                 }
             }
+        })();
 
-            // 1. Apply Record Changes
-            const recordOps = activeOps.filter(o => o.type === 'record');
-            
-            for (const op of recordOps) {
+        // 1. Apply Record Changes (async, with proper error handling)
+        const recordOps = activeOps.filter(o => o.type === 'record');
+        const recordPromises = recordOps.map(async (op) => {
+            try {
                 if (op.action === 'create') {
-                     createRecord(op.payload);
+                    await createRecord(op.payload);
                 } else if (op.action === 'update') {
-                     updateRecord(op.payload.id, op.payload);
+                    await updateRecord(op.payload.id, op.payload);
                 }
+            } catch (err) {
+                // Log but continue - records may already exist from seedPipelineConfig
+                console.warn(`[Reseed] Record operation failed for ${op.key}:`, err instanceof Error ? err.message : String(err));
             }
+        });
+        await Promise.all(recordPromises);
+
+        // Continue with synchronous operations in transaction
+        db.transaction(() => {
 
             // 2. Refresh DB Map for Relationships
             const allRecords = db.prepare('SELECT * FROM records').all() as any[];
@@ -368,16 +374,10 @@ router.post('/apply', async (req: Request, res: Response, next: NextFunction) =>
 
             for (const op of domainOps) {
                 if (op.action === 'create') {
-                     // For domains in tenants/Tier2, the account_id should already be in payload (from loadSeedState)
-                     // But we might need to resolve it if it was a slug reference?
-                     // In loadSeedState, we assigned account_id from the tenant definition.
-                     // IMPORTANT: Ensure the account IDs match the actual DB IDs. 
-                     // Since loadSeedState uses IDs from the JSON (which might be preserved), it should work.
-                    
+                    // NOTE: Domain account_id is assumed to be a valid UUID from loadSeedState.
+                    // The seed files (seed_from_data.ts) assign account_id from tenant definitions.
+                    // If slug-based account references are needed in the future, add resolution here.
                     const domainPayload = op.payload;
-                    // Check if account_id exists
-                    // We might need to look up account ID if the seed used a placeholder? 
-                    // But seed_from_data.ts usually sets account_id to the tenant ID.
                     
                     if (!getDomainByHostname(op.payload.hostname)) {
                         try {
@@ -425,6 +425,29 @@ router.post('/apply', async (req: Request, res: Response, next: NextFunction) =>
             }
             applied = activeOps.length;
         })();
+
+        // Seed pipeline configuration (stages + qualifiers from CSV)
+        // This ensures activity generation system data is always available
+        try {
+            seedPipelineConfig();
+        } catch (err) {
+            console.warn('[Reseed] Failed to seed pipeline config:', err instanceof Error ? err.message : String(err));
+        }
+
+        try {
+            const pluginLoad = await loadInterpreterExecutorPlugins(SYSTEM_ACCOUNT_ID, { force: true });
+            if (pluginLoad.errors.length > 0 || pluginLoad.missing.length > 0) {
+                console.warn('[Reseed] Interpreter executor plugin reconcile completed with issues:', {
+                    loaded: pluginLoad.loaded.length,
+                    skipped: pluginLoad.skipped.length,
+                    unloaded: pluginLoad.unloaded.length,
+                    missing: pluginLoad.missing,
+                    errors: pluginLoad.errors,
+                });
+            }
+        } catch (err) {
+            console.warn('[Reseed] Interpreter executor plugin reload failed:', err instanceof Error ? err.message : String(err));
+        }
 
         res.json({ success: true, applied });
 

@@ -103,7 +103,38 @@ export class Reader {
              // Or we might need to map them? Usually they are stored as JSON matching FE format.
              fieldGroups = (data as any).data.fieldGroups;
          }
- 
+         // Case C: Inline Canonical Format (fieldGroups at root with nameFieldGroup/fieldStructs)
+         // This handles object_def records where schema is stored directly in data.fieldGroups
+         else if (Array.isArray((data as any).fieldGroups)) {
+             const rawGroups = (data as any).fieldGroups;
+             // Check if it uses canonical naming (nameFieldGroup/fieldStructs)
+             const isCanonical = rawGroups.length > 0 &&
+                 (rawGroups[0]?.nameFieldGroup !== undefined || rawGroups[0]?.fieldStructs !== undefined);
+
+             if (isCanonical) {
+                 for (const groupStruct of rawGroups) {
+                     const fields: FrontendField[] = [];
+                     const rawFields = groupStruct.fieldStructs || groupStruct.fields || [];
+                     for (const fieldStruct of rawFields) {
+                         fields.push({
+                             name: fieldStruct.nameField || fieldStruct.name,
+                             inputType: fieldStruct.inputType || fieldStruct.type || 'text',
+                             value: fieldStruct.value ?? null,
+                             required: fieldStruct.required,
+                             options: fieldStruct.options
+                         });
+                     }
+                     fieldGroups.push({
+                         name: groupStruct.nameFieldGroup || groupStruct.name,
+                         fields: fields
+                     });
+                 }
+             } else {
+                 // Already in frontend format (name/fields) - pass through
+                 fieldGroups = rawGroups;
+             }
+         }
+
          // Inject Virtual Relationship Fields (Works for both)
          // For RecordStruct, links would be in a property? No, Invariant says they are PropertyStructs.
          // But for Hybrid, we check data.links if available.

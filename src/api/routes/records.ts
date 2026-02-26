@@ -6,6 +6,7 @@ import {
   updateRecord,
   deleteRecord,
   listRecords,
+  getRelationshipsFrom,
 } from '../../core/records.js';
 import { checkIdempotency } from '../../core/idempotency.js';
 import { validate, validateQuery } from '../middleware/validation.js';
@@ -19,7 +20,9 @@ import { protectedRoute } from '../../modules/auth/middleware.js';
 import { Reader } from '../../contracts/Reader.js';
 import { db } from '../../core/db.js'; // Direct DB access for routing logic
 import { hooks } from '../../core/hooks.js'; // Tier-0 Hooks
+import { validateConstraints } from '../../modules/ops/constraints.js';
 import { DEFAULT_ACCOUNT_ID } from '../../core/constants.js';
+import { parsePagination, paginatedResponse } from '../middleware/pagination.js';
 
 const router = Router();
 
@@ -33,16 +36,21 @@ router.get(
       const validatedQuery = (req as any).validatedQuery || {};
       const type = validatedQuery.type as EntityType | undefined;
       const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
-      
+      const pagination = parsePagination(req);
+
       const records = listRecords(accountId, type);
-      
+
+      // Apply pagination
+      const total = records.length;
+      const paginatedRecords = records.slice(pagination.offset, pagination.offset + pagination.limit);
+
       // return structured EntityData (FieldGroups) for Admin UI
-      const projected = records.map(r => ({
+      const projected = paginatedRecords.map(r => ({
           ...r,
           data: Reader.toEntityData(r.data)
       }));
 
-      res.json(projected);
+      res.json(paginatedResponse(projected, total, pagination));
     } catch (err) {
       next(err);
     }
@@ -88,7 +96,6 @@ router.post(
   validate(RecordInputSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log(`[DEBUG] POST /records handler reached. Body: ${JSON.stringify(req.body).substring(0, 50)}...`);
       const input = req.body;
       
       // Inject account_id from context if not provided in body (critical for User entity creation)
@@ -179,7 +186,7 @@ router.delete('/:id', ...protectedRoute, async (req: Request, res: Response, nex
   try {
     const { id } = req.params;
     const deleted = await deleteRecord(id as string, req);
-    
+
     if (!deleted) {
       res.status(404).json({
         error: 'Record not found',
@@ -187,8 +194,99 @@ router.delete('/:id', ...protectedRoute, async (req: Request, res: Response, nex
       });
       return;
     }
-    
+
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/records/validate/product - Validate product (data-driven via ConstraintEngine)
+// Uses validation_constraint records with trigger='validation_endpoint'
+router.post('/validate/product', ...protectedRoute, (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { product_id } = req.body;
+
+    if (!product_id) {
+      res.status(400).json({ error: 'product_id is required', code: 'MISSING_PRODUCT_ID' });
+      return;
+    }
+
+    const product = getRecord(product_id);
+
+    if (!product || product.type !== 'product') {
+      res.status(404).json({ error: 'Product not found', code: 'PRODUCT_NOT_FOUND' });
+      return;
+    }
+
+    // Run data-driven constraints for validation_endpoint trigger
+    const constraintResults = validateConstraints({
+      record: product,
+      trigger: 'validation_endpoint'
+    });
+
+    // Collect failures
+    const errors = constraintResults.filter(r => !r.passed && r.severity === 'error');
+    const warnings = constraintResults.filter(r => !r.passed && r.severity === 'warning');
+
+    // For B2B products, also gather detailed persona information for the response
+    const productType = product.data?.product_type;
+    let linkedPersonaSlugs: string[] = [];
+    let missingPersonas: Array<{ slug: string; label: string }> = [];
+
+    if (productType === 'B2B') {
+      // Get linked personas for detailed response
+      const relationships = getRelationshipsFrom(product_id, 'targets_persona');
+      for (const rel of relationships) {
+        const persona = getRecord(rel.to_record_id);
+        if (persona) {
+          const personaSlug = persona.slug || persona.data?.persona_type;
+          if (personaSlug) {
+            linkedPersonaSlugs.push(personaSlug);
+          }
+        }
+      }
+
+      // Query required personas for detailed missing report
+      const requiredPersonas = db.prepare(`
+        SELECT slug, label FROM dimension_values
+        WHERE dimension = 'persona'
+        AND json_extract(metadata, '$.power_level') >= 3
+      `).all() as Array<{ slug: string; label: string }>;
+
+      missingPersonas = requiredPersonas.filter(p => !linkedPersonaSlugs.includes(p.slug));
+    }
+
+    if (errors.length > 0) {
+      res.status(400).json({
+        valid: false,
+        errors: errors.map(e => ({
+          code: e.errorCode,
+          message: e.errorMessage,
+          constraint: e.constraintSlug
+        })),
+        warnings: warnings.map(w => ({
+          code: w.errorCode,
+          message: w.errorMessage,
+          constraint: w.constraintSlug
+        })),
+        product_type: productType,
+        linked_personas: linkedPersonaSlugs,
+        missing_personas: missingPersonas.map(p => p.slug)
+      });
+      return;
+    }
+
+    res.json({
+      valid: true,
+      product_type: productType,
+      linked_personas: linkedPersonaSlugs,
+      warnings: warnings.map(w => ({
+        code: w.errorCode,
+        message: w.errorMessage,
+        constraint: w.constraintSlug
+      }))
+    });
   } catch (err) {
     next(err);
   }

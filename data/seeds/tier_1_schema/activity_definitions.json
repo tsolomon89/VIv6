@@ -11,6 +11,7 @@
       "verb": "opened",
       "object_type": "asset",
       "duration_default": 1,
+      "activation_energy": 10,
       "qualifiers": []
     }
   },
@@ -26,6 +27,7 @@
       "verb": "clicked",
       "object_type": "asset",
       "duration_default": 1,
+      "activation_energy": 15,
       "qualifiers": []
     }
   },
@@ -41,6 +43,7 @@
       "verb": "viewed",
       "object_type": "page",
       "duration_default": 5,
+      "activation_energy": 5,
       "qualifiers": []
     }
   },
@@ -56,6 +59,7 @@
       "verb": "submitted",
       "object_type": "form",
       "duration_default": 3,
+      "activation_energy": 20,
       "qualifiers": []
     }
   },
@@ -71,6 +75,7 @@
       "verb": "created",
       "object_type": "any",
       "duration_default": 5,
+      "activation_energy": 5,
       "qualifiers": []
     }
   },
@@ -86,6 +91,7 @@
       "verb": "updated",
       "object_type": "any",
       "duration_default": 3,
+      "activation_energy": 5,
       "qualifiers": []
     }
   },
@@ -101,6 +107,7 @@
       "verb": "approved",
       "object_type": "opportunity",
       "duration_default": 2,
+      "activation_energy": 20,
       "qualifiers": ["budget_confirmed", "decision_maker_identified"]
     }
   },
@@ -116,6 +123,7 @@
       "verb": "published",
       "object_type": "asset",
       "duration_default": 30,
+      "activation_energy": 15,
       "qualifiers": ["review_complete"]
     }
   },
@@ -131,6 +139,7 @@
       "verb": "called",
       "object_type": "contact",
       "duration_default": 15,
+      "activation_energy": 25,
       "qualifiers": []
     }
   },
@@ -146,7 +155,26 @@
       "verb": "met",
       "object_type": "contact",
       "duration_default": 30,
+      "activation_energy": 30,
       "qualifiers": []
+    }
+  },
+  {
+    "id": "actdef-00000000-0000-0000-0000-000000000011",
+    "type": "activity_def",
+    "slug": "data_cleanup",
+    "name": "Data Cleanup",
+    "summary": "Review and correct invalid taxonomy values",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "archetype": "data",
+      "verb": "cleanup",
+      "object_type": "any",
+      "duration_default": 5,
+      "activation_energy": 5,
+      "auto_generate": true,
+      "qualifiers": [],
+      "description": "Auto-generated when taxonomy violations are detected"
     }
   }
 ]

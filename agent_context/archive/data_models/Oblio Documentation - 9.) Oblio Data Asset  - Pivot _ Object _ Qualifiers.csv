@@ -1,0 +1,82 @@
+object,map,field
+accounts,basic,account Logo
+accounts,basic,accountName
+accounts,details,messenger
+accounts,details,messenger2
+accounts,details,messengerType
+accounts,details,messengerType2
+accounts,firmographics,CompanyRevenue
+accounts,firmographics,CompanySize
+accounts,firmographics,estRevenue
+accounts,firmographics,Industry
+accounts,firmographics,sector
+accounts,links,url Facebook
+accounts,links,url G2 Crowd
+accounts,links,url Homepage
+accounts,links,url Linkedin
+accounts,links,url Twitter
+accounts,links,urlBlog
+accounts,links,urlCapterra
+accounts,links,urlContactPage
+accounts,links,urlOther
+accounts,locations,locationId
+accounts,personas,personaID
+accounts,primary,Billing
+accounts,primary,DecisionMaker
+accounts,primary,EndUser
+accounts,primary,Primary Contact
+accounts,primary,Team
+accounts,score,health
+accounts,technographics,techconfirmed
+accounts,technographics,techProfile
+activities,basic,converted
+activities,basic,status
+activities,basic,type
+activities,content,type
+contacts,basic,first name
+contacts,basic,image Avatar
+contacts,basic,last name
+contacts,concent,data Policy
+contacts,concent,marketing OptIn
+contacts,concent,privacy Policy
+contacts,concent,sales Optin
+contacts,concent,terms Conditions
+contacts,demographics,age Range
+contacts,demographics,birthdate
+contacts,demographics,city
+contacts,demographics,country
+contacts,demographics,gender
+contacts,demographics,stateRegion
+contacts,details,email
+contacts,details,emailWork
+contacts,details,emailWork1
+contacts,details,messenger
+contacts,details,messenger2
+contacts,details,messengerType
+contacts,details,messengerType2
+contacts,details,phone
+contacts,details,phoneWork
+contacts,links,url Account
+contacts,links,url Facebook
+contacts,links,url Linkedin
+contacts,links,url Twitter
+contacts,opportunity Type(status),
+contacts,primary,accountID
+contacts,primary,Department
+contacts,primary,End User
+contacts,primary,job Title
+contacts,primary,productID
+contacts,primary,productPersona
+contacts,primary,seniority
+contacts,primary,team
+contacts,score,health
+contacts,score,persona
+opportunities,primary,Billing
+opportunities,primary,DecisionMaker
+opportunities,primary,EndUser
+opportunities,primary,Primary Contact
+opportunities,primary,Team
+opportunities,value,Contract Type
+opportunities,value,Currency
+opportunities,value,opportunity BillingType
+opportunities,value,sumPrice

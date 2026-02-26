@@ -1,0 +1,213 @@
+[
+  {
+    "key": "hero.self.v1",
+    "name": "Hero Self Banner",
+    "signature": { "kind": "self" },
+    "config": {
+      "height": { "value": 600, "endValue": null, "isLinked": false },
+      "tileTag": "h1",
+      "tileAlign": "center",
+      "headingSize": { "value": 64, "endValue": null, "isLinked": false },
+      "headingColor": "#ffffff",
+      "subSize": { "value": 24, "endValue": null, "isLinked": false },
+      "subColor": "rgba(255,255,255,0.8)",
+      "cardBackground": "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)"
+    }
+  },
+  {
+    "key": "hero.self.minimal",
+    "name": "Hero Minimal",
+    "signature": { "kind": "self" },
+    "config": {
+      "height": { "value": 400, "endValue": null, "isLinked": false },
+      "tileTag": "h1",
+      "tileAlign": "left",
+      "headingSize": { "value": 48, "endValue": null, "isLinked": false },
+      "headingColor": "#18181b",
+      "subSize": { "value": 18, "endValue": null, "isLinked": false },
+      "subColor": "#71717a",
+      "cardBackground": "#fafafa"
+    }
+  },
+  {
+    "key": "cta.self.v1",
+    "name": "CTA Banner",
+    "signature": { "kind": "self" },
+    "config": {
+      "height": { "value": 300, "endValue": null, "isLinked": false },
+      "tileTag": "h2",
+      "tileAlign": "center",
+      "headingSize": { "value": 36, "endValue": null, "isLinked": false },
+      "headingColor": "#ffffff",
+      "subSize": { "value": 18, "endValue": null, "isLinked": false },
+      "subColor": "rgba(255,255,255,0.8)",
+      "cardBackground": "#4f46e5"
+    }
+  },
+  {
+    "key": "products.grid.v1",
+    "name": "Products Grid",
+    "signature": { "kind": "related", "target": "product", "cardinality": "many" },
+    "config": {
+      "height": { "value": 500, "endValue": null, "isLinked": false },
+      "listLayout": "grid",
+      "listColumns": { "value": 3, "endValue": null, "isLinked": false },
+      "listGap": { "value": 24, "endValue": null, "isLinked": false },
+      "cardWidth": { "value": 320, "endValue": null, "isLinked": false },
+      "cardHeight": { "value": 400, "endValue": null, "isLinked": false },
+      "cardRadius": "12px",
+      "cardBackground": "#ffffff",
+      "cardBorder": "1px solid #e4e4e7",
+      "cardPadding": { "value": 16, "endValue": null, "isLinked": false },
+      "cardElevation": { "value": 2, "endValue": null, "isLinked": false }
+    }
+  },
+  {
+    "key": "products.marquee.v1",
+    "name": "Products Marquee",
+    "signature": { "kind": "related", "target": "product", "cardinality": "many" },
+    "config": {
+      "height": { "value": 400, "endValue": null, "isLinked": false },
+      "listLayout": "marquee",
+      "listSpeed": { "value": 50, "endValue": null, "isLinked": false },
+      "listDirection": { "value": 1, "endValue": null, "isLinked": false },
+      "marqueeHoverPause": true,
+      "cardWidth": { "value": 280, "endValue": null, "isLinked": false },
+      "cardHeight": { "value": 360, "endValue": null, "isLinked": false },
+      "cardRadius": "16px",
+      "cardBackground": "#f4f4f5"
+    }
+  },
+  {
+    "key": "features.grid.v1",
+    "name": "Features Grid",
+    "signature": { "kind": "related", "target": "feature", "cardinality": "many" },
+    "config": {
+      "height": { "value": 400, "endValue": null, "isLinked": false },
+      "listLayout": "grid",
+      "listColumns": { "value": 4, "endValue": null, "isLinked": false },
+      "listGap": { "value": 16, "endValue": null, "isLinked": false },
+      "cardWidth": { "value": 240, "endValue": null, "isLinked": false },
+      "cardHeight": { "value": 280, "endValue": null, "isLinked": false },
+      "cardRadius": "8px",
+      "cardBackground": "#18181b",
+      "headingColor": "#ffffff",
+      "subColor": "#a1a1aa",
+      "leadingPlacement": "above",
+      "leadingKind": "icon",
+      "leadingSize": { "value": 32, "endValue": null, "isLinked": false },
+      "leadingColor": "#6366f1"
+    }
+  },
+  {
+    "key": "features.list.v1",
+    "name": "Features List",
+    "signature": { "kind": "related", "target": "feature", "cardinality": "many" },
+    "config": {
+      "height": { "value": 500, "endValue": null, "isLinked": false },
+      "listLayout": "stack",
+      "listGap": { "value": 12, "endValue": null, "isLinked": false },
+      "cardWidth": { "value": 600, "endValue": null, "isLinked": false },
+      "cardHeight": { "value": 80, "endValue": null, "isLinked": false },
+      "cardRadius": "8px",
+      "cardBackground": "#fafafa",
+      "cardBorder": "1px solid #e4e4e7",
+      "leadingPlacement": "left",
+      "leadingKind": "icon",
+      "leadingSize": { "value": 24, "endValue": null, "isLinked": false },
+      "tileAlign": "left"
+    }
+  },
+  {
+    "key": "solutions.grid.v1",
+    "name": "Solutions Grid",
+    "signature": { "kind": "related", "target": "solution", "cardinality": "many" },
+    "config": {
+      "height": { "value": 450, "endValue": null, "isLinked": false },
+      "listLayout": "grid",
+      "listColumns": { "value": 3, "endValue": null, "isLinked": false },
+      "listGap": { "value": 24, "endValue": null, "isLinked": false },
+      "cardWidth": { "value": 350, "endValue": null, "isLinked": false },
+      "cardHeight": { "value": 320, "endValue": null, "isLinked": false },
+      "cardRadius": "16px",
+      "cardBackground": "#ffffff",
+      "cardElevation": { "value": 4, "endValue": null, "isLinked": false },
+      "headingSize": { "value": 22, "endValue": null, "isLinked": false },
+      "subSize": { "value": 16, "endValue": null, "isLinked": false }
+    }
+  },
+  {
+    "key": "product.detail.v1",
+    "name": "Product Detail",
+    "signature": { "kind": "related", "target": "product", "cardinality": "one" },
+    "config": {
+      "height": { "value": 600, "endValue": null, "isLinked": false },
+      "cardWidth": { "value": 800, "endValue": null, "isLinked": false },
+      "cardHeight": { "value": 500, "endValue": null, "isLinked": false },
+      "cardRadius": "24px",
+      "cardBackground": "#ffffff",
+      "cardPadding": { "value": 32, "endValue": null, "isLinked": false },
+      "headingSize": { "value": 36, "endValue": null, "isLinked": false },
+      "subSize": { "value": 18, "endValue": null, "isLinked": false },
+      "leadingPlacement": "above",
+      "leadingKind": "image",
+      "leadingFit": "contain"
+    }
+  },
+  {
+    "key": "usecases.marquee.v1",
+    "name": "Use Cases Marquee",
+    "signature": { "kind": "related", "target": "useCase", "cardinality": "many" },
+    "config": {
+      "height": { "value": 350, "endValue": null, "isLinked": false },
+      "listLayout": "marquee",
+      "listSpeed": { "value": 30, "endValue": null, "isLinked": false },
+      "marqueeHoverPause": true,
+      "cardWidth": { "value": 400, "endValue": null, "isLinked": false },
+      "cardHeight": { "value": 280, "endValue": null, "isLinked": false },
+      "cardRadius": "12px",
+      "cardBackground": "linear-gradient(180deg, #3730a3 0%, #4f46e5 100%)",
+      "headingColor": "#ffffff",
+      "subColor": "rgba(255,255,255,0.9)"
+    }
+  },
+  {
+    "key": "brand.hero.v1",
+    "name": "Brand Hero",
+    "signature": { "kind": "related", "target": "brand", "cardinality": "one" },
+    "config": {
+      "height": { "value": 500, "endValue": null, "isLinked": false },
+      "tileAlign": "center",
+      "headingSize": { "value": 56, "endValue": null, "isLinked": false },
+      "headingColor": "#18181b",
+      "subSize": { "value": 20, "endValue": null, "isLinked": false },
+      "subColor": "#52525b",
+      "leadingPlacement": "above",
+      "leadingKind": "image",
+      "leadingSize": { "value": 120, "endValue": null, "isLinked": false },
+      "leadingFit": "contain"
+    }
+  },
+  {
+    "key": "testimonials.stack.v1",
+    "name": "Testimonials Stack",
+    "signature": { "kind": "related", "target": "feature", "cardinality": "many" },
+    "config": {
+      "height": { "value": 400, "endValue": null, "isLinked": false },
+      "listLayout": "stack",
+      "listGap": { "value": 24, "endValue": null, "isLinked": false },
+      "cardWidth": { "value": 700, "endValue": null, "isLinked": false },
+      "cardHeight": { "value": 200, "endValue": null, "isLinked": false },
+      "cardRadius": "16px",
+      "cardBackground": "#fafafa",
+      "cardPadding": { "value": 24, "endValue": null, "isLinked": false },
+      "tileAlign": "left",
+      "headingSize": { "value": 20, "endValue": null, "isLinked": false },
+      "subSize": { "value": 16, "endValue": null, "isLinked": false },
+      "leadingPlacement": "left",
+      "leadingKind": "image",
+      "leadingSize": { "value": 56, "endValue": null, "isLinked": false },
+      "leadingRadius": { "value": 28, "endValue": null, "isLinked": false }
+    }
+  }
+]

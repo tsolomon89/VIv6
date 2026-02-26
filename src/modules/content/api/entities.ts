@@ -15,7 +15,7 @@ import {
   EntityQuerySchema,
 } from '../../../api/schemas.js';
 import { EntityType } from '../../../core/types.js';
-import { requireAuth } from '../../../api/middleware/auth.js';
+import { protectedRoute } from '../../auth/middleware.js';
 
 const router = Router();
 
@@ -67,7 +67,7 @@ router.get('/:id', (req: Request, res: Response, next: NextFunction) => {
 // POST /api/entities - Create new entity
 router.post(
   '/',
-  requireAuth,
+  ...protectedRoute,
   validate(EntityInputSchema),
   (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -111,7 +111,7 @@ router.post(
 // PUT /api/entities/:id - Update entity
 router.put(
   '/:id',
-  requireAuth,
+  ...protectedRoute,
   validate(EntityUpdateSchema),
   (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -135,7 +135,7 @@ router.put(
 );
 
 // DELETE /api/entities/:id - Delete entity
-router.delete('/:id', requireAuth, (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', ...protectedRoute, (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const deleted = deleteEntity(id as string);

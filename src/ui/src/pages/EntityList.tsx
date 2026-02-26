@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Database, Trash2, RefreshCw, FolderTree, List, UserPlus } from 'lucide-react';
 import { api } from '../lib/api';
+import { showToast } from '../hooks/useToast';
 import type { Entity, ApiError } from '../lib/api';
 import { useBrand } from '../lib/BrandContext';
 import { UseCaseTree } from '../components/UseCaseTree';
@@ -46,7 +47,7 @@ export function EntityList() {
       setEntities(prev => prev.filter(e => e.id !== id));
     } catch (err) {
       const apiError = err as ApiError;
-      alert(apiError.error || 'Failed to delete entity');
+      showToast.error(apiError.error || 'Failed to delete entity');
     }
   };
 

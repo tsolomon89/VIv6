@@ -12,10 +12,11 @@ process.env.ADMIN_KEY = TEST_ADMIN_KEY;
 describe('Commercial Engine E2E Lifecycle (Phase 12)', () => {
     let server: any;
     let API_URL: string;
+    let productId: string;  // Product ID for opportunity creation (required by INV-PRODUCT-TENSOR)
 
     const ADMIN_KEY = TEST_ADMIN_KEY;
     const SYSTEM_ACCOUNT_ID = '00000000-0000-0000-0000-000000000000'; // System account UUID
-    
+
     // We need axios config for Auth
     const axiosConfig = {
         headers: {
@@ -50,13 +51,32 @@ describe('Commercial Engine E2E Lifecycle (Phase 12)', () => {
         try {
             const previewRes = await axios.post(`${API_URL}/reseed/preview`, {}, axiosConfig);
             expect(previewRes.status).toBe(200);
-            
+
             const ops = previewRes.data.ops;
             const applyRes = await axios.post(`${API_URL}/reseed/apply`, { ops }, axiosConfig);
             expect(applyRes.status).toBe(200);
         } catch (e) {
             console.error('Reseed failed', e);
             throw e;
+        }
+
+        // Get a product ID for opportunity creation (required by INV-PRODUCT-TENSOR constraint)
+        const productsRes = await axios.get(`${API_URL}/records`, {
+            ...axiosConfig,
+            params: { type: 'product', account_id: SYSTEM_ACCOUNT_ID }
+        });
+        const products = productsRes.data.data || productsRes.data;
+        if (products.length > 0) {
+            productId = products[0].id;
+        } else {
+            // Create a test product if none exist
+            const createProductRes = await axios.post(`${API_URL}/records`, {
+                type: 'product',
+                slug: `test-product-${Date.now()}`,
+                name: 'Test Product',
+                data: { product_type: 'B2B' }
+            }, axiosConfig);
+            productId = createProductRes.data.id;
         }
     });
 
@@ -68,6 +88,8 @@ describe('Commercial Engine E2E Lifecycle (Phase 12)', () => {
             slug: uniqueSlug,
             name: 'Test Commercial Opportunity',
             data: {
+                primary_product_id: productId,
+                pipeline_type: 'b2b',
                 amount: 100000,
                 projected_revenue: 100000,
                 probability: 0.1, // MQL default
@@ -150,8 +172,8 @@ describe('Commercial Engine E2E Lifecycle (Phase 12)', () => {
         // --- Step 4: Verify RTP Generation ---
         // We can query relationships API or list records filtered by 'rtp'
         const listRes = await axios.get(`${API_URL}/records?type=opportunity&account_id=${SYSTEM_ACCOUNT_ID}`, axiosConfig);
-        const allOpps = listRes.data;
-        
+        const allOpps = listRes.data.data; // Paginated response wraps data
+
         const rtp = allOpps.find((o: any) => o.data.opportunity_stage === 'rtp' && o.data.source_opportunity_id === mqlId);
         
         expect(rtp).toBeDefined();

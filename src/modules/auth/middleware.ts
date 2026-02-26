@@ -12,6 +12,8 @@ import { Request, Response, NextFunction } from 'express';
 import { verifySession, SessionPayload } from './session.js';
 import { getUserCapabilities, hasCapability, UserCapabilities } from './odac.js';
 import { executeMatchingRules, createRuleContext, TriggerEvent } from '../ops/rules.js';
+import { db } from '../../core/db.js';
+import { errors } from '../../api/middleware/validation.js';
 
 // Extend Express Request with auth fields
 declare global {
@@ -54,7 +56,7 @@ export function parseSession(req: Request, res: Response, next: NextFunction) {
  */
 export function requireSession(req: Request, res: Response, next: NextFunction) {
     if (!req.user) {
-        return res.status(401).json({ error: 'Authentication required' });
+        return res.status(401).json(errors.unauthorized());
     }
     next();
 }
@@ -83,24 +85,16 @@ export function loadODAC(req: Request, res: Response, next: NextFunction) {
 export function requireCapability(capability: string) {
     return (req: Request, res: Response, next: NextFunction) => {
         if (!req.user) {
-            return res.status(401).json({ error: 'Authentication required' });
+            return res.status(401).json(errors.unauthorized());
         }
 
         const accountId = req.headers['x-account-id'] as string;
         if (!accountId) {
-            return res.status(400).json({
-                error: 'Account context required',
-                hint: 'Set X-Account-Id header'
-            });
+            return res.status(400).json(errors.badRequest('Account context required', 'Set X-Account-Id header'));
         }
 
         if (!hasCapability(req.user.userId, accountId, capability)) {
-            return res.status(403).json({
-                error: 'Insufficient permissions',
-                required: capability,
-                user: req.user.userId,
-                account: accountId
-            });
+            return res.status(403).json(errors.forbidden(`Insufficient permissions for ${capability}`));
         }
 
         next();
@@ -113,15 +107,12 @@ export function requireCapability(capability: string) {
 export function requireAnyCapability(...capabilities: string[]) {
     return (req: Request, res: Response, next: NextFunction) => {
         if (!req.user) {
-            return res.status(401).json({ error: 'Authentication required' });
+            return res.status(401).json(errors.unauthorized());
         }
 
         const accountId = req.headers['x-account-id'] as string;
         if (!accountId) {
-            return res.status(400).json({
-                error: 'Account context required',
-                hint: 'Set X-Account-Id header'
-            });
+            return res.status(400).json(errors.badRequest('Account context required', 'Set X-Account-Id header'));
         }
 
         const hasAny = capabilities.some(cap =>
@@ -129,11 +120,7 @@ export function requireAnyCapability(...capabilities: string[]) {
         );
 
         if (!hasAny) {
-            return res.status(403).json({
-                error: 'Insufficient permissions',
-                required: capabilities,
-                message: 'Need at least one of the specified capabilities'
-            });
+            return res.status(403).json(errors.forbidden('Need at least one of the required capabilities'));
         }
 
         next();
@@ -274,16 +261,55 @@ export async function enforcePolicy(req: Request, res: Response, next: NextFunct
         }
 
         // No access granted
-        return res.status(403).json({
-            error: 'Access denied by policy',
-            event,
-            recordType,
-            userCapabilities: capabilities
-        });
+        return res.status(403).json(errors.forbidden('Access denied by policy'));
     } catch (error) {
         console.error('[Auth] Policy enforcement error:', error);
         // On error, deny by default (fail-secure)
-        return res.status(500).json({ error: 'Policy evaluation failed' });
+        return res.status(500).json(errors.internal('Policy evaluation failed'));
+    }
+}
+
+/**
+ * Validate user has access to the requested account
+ *
+ * Checks user_accounts table to verify membership.
+ * Skips validation for system users (API key bypass).
+ * Returns 403 if user lacks access to the account.
+ */
+export function validateAccountAccess(req: Request, res: Response, next: NextFunction) {
+    // Skip if already allowed by API key bypass (system user)
+    if (req.user?.userId === 'system') {
+        return next();
+    }
+
+    // Skip if no user authenticated
+    if (!req.user) {
+        return next();
+    }
+
+    const accountId = req.headers['x-account-id'] as string
+                   || req.query.account_id as string;
+
+    // Skip if no account context (some routes don't require it)
+    if (!accountId) {
+        return next();
+    }
+
+    try {
+        // Check if user has access to this account
+        const membership = db.prepare(`
+            SELECT id FROM user_accounts
+            WHERE user_id = ? AND account_id = ? AND is_active = 1
+        `).get(req.user.userId, accountId);
+
+        if (!membership) {
+            return res.status(403).json(errors.forbidden('You do not have access to this account'));
+        }
+
+        next();
+    } catch (error) {
+        console.error('[Auth] Account access validation error:', error);
+        return res.status(500).json(errors.internal('Account validation failed'));
     }
 }
 
@@ -300,6 +326,19 @@ export const protectedRoute = [
 ];
 
 /**
+ * Combined middleware stack with tenancy enforcement
+ *
+ * Usage: app.use('/api/records', tenantProtectedRoute, recordRoutes)
+ */
+export const tenantProtectedRoute = [
+    allowApiKeyBypass,
+    parseSession,
+    requireSession,
+    loadODAC,
+    validateAccountAccess
+];
+
+/**
  * Combined middleware stack with policy enforcement
  *
  * Usage: app.use('/api/records', policyProtectedRoute, recordRoutes)
@@ -311,5 +350,3 @@ export const policyProtectedRoute = [
     loadODAC,
     enforcePolicy
 ];
-
-console.log('[Auth Middleware] Loaded.');

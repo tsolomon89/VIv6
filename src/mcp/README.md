@@ -37,6 +37,12 @@ Add this to your Claude Desktop config file (`%APPDATA%\Claude\claude_desktop_co
 | `delete_entity` | Delete an entity by ID |
 | `link_entities` | Create a relationship between two entities |
 | `get_relationships` | Get relationships for an entity |
+| `list_interpreter_executors` | List interpreter executors with builtin/runtime/definition status |
+| `validate_interpreter_stage` | Validate a pipeline stage against executor contracts and runtime registration |
+
+## Studio Consumption
+
+The Studio config workflow now calls interpreter stage validation before saving `interpreter_pipeline` changes to a workspace. This uses the same executor contract/runtime checks surfaced by `validate_interpreter_stage`.
 
 ## Available Resources
 

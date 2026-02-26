@@ -10,7 +10,10 @@ describe('Core Data Layer', () => {
         // Ensure account exists for tests
         try {
             db.prepare('INSERT OR IGNORE INTO accounts (id, slug, name, account_class, type) VALUES (?, ?, ?, ?, ?)').run(DEFAULT_ACCOUNT_ID, 'core-test', 'Core Test', 'business', 'client');
-        } catch (e) {}
+        } catch (e) {
+            // INSERT OR IGNORE should not throw, but log if it does
+            console.warn('[Test Setup] Account insert error:', e instanceof Error ? e.message : String(e));
+        }
     });
 
     it('should create an entity and retrieve it', async () => {

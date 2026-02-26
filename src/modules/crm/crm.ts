@@ -3,6 +3,84 @@ import { db } from '../../core/db.js';
 import { listRecords, createRelationship, getRecord, getRecordBySlug } from '../../core/records.js';
 import { EntityType, FieldGroupStruct, FieldStruct, PropertyStruct } from '../../core/types.js';
 
+// ============================================================================
+// PERSONA DATA LOADING FROM DB
+// ============================================================================
+
+interface KineticRoutingConfig {
+    routing_target: string;
+    decay_rate: number;
+}
+
+interface PersonaData {
+    slug: string;
+    label: string;
+    power_level: number;
+    initial_health: number;
+    kinetic_routing?: KineticRoutingConfig;
+}
+
+// Cache for persona data (loaded once from DB)
+let personaDataCache: Map<string, PersonaData> | null = null;
+
+/**
+ * Load persona data from dimension_values table.
+ * Results are cached after first load.
+ */
+function loadPersonaData(): Map<string, PersonaData> {
+    if (personaDataCache) return personaDataCache;
+
+    const rows = db.prepare(`
+        SELECT slug, label, metadata
+        FROM dimension_values
+        WHERE dimension = 'persona' AND account_id IS NULL
+    `).all() as Array<{ slug: string; label: string; metadata: string | null }>;
+
+    personaDataCache = new Map();
+
+    for (const row of rows) {
+        const metadata = row.metadata ? JSON.parse(row.metadata) : {};
+
+        // Extract slug without 'persona_' prefix if present
+        const normalizedSlug = row.slug.replace(/^persona_/, '');
+
+        personaDataCache.set(normalizedSlug, {
+            slug: normalizedSlug,
+            label: row.label,
+            power_level: metadata.power_level ?? 1,
+            initial_health: metadata.initial_health ?? 30,
+            kinetic_routing: metadata.kinetic_routing,
+        });
+    }
+
+    console.log(`[CRM] Loaded ${personaDataCache.size} persona definitions from DB`);
+    return personaDataCache;
+}
+
+/**
+ * Get persona data by slug. Returns undefined if not found.
+ */
+function getPersonaData(slug: string): PersonaData | undefined {
+    const data = loadPersonaData();
+    return data.get(slug);
+}
+
+/**
+ * Get initial health score for a persona. Returns default (30) if not found.
+ */
+function getPersonaInitialHealth(slug: string | undefined): number {
+    if (!slug) return 30;
+    const persona = getPersonaData(slug);
+    return persona?.initial_health ?? 30;
+}
+
+/**
+ * Clear the persona cache (useful for testing or after seed updates)
+ */
+export function clearPersonaCache(): void {
+    personaDataCache = null;
+}
+
 // --- CANONICAL FORMAT HELPERS ---
 // These helpers abstract field access using canonical property names (nameField, fieldStructs, propertyStructs)
 
@@ -78,6 +156,84 @@ function getDomainFromEmail(email: string): string | null {
   const match = email.match(/@([^>]+)/);
   return match ? match[1].toLowerCase().trim() : null;
 }
+
+// Email validation regex (RFC 5322 simplified)
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// --- ALGO 0: EMAIL VALIDATION & NORMALIZATION ---
+// First hook in the chain - validates and normalizes email before any other processing
+hooks.onPreCreate('contact', async (input: any) => {
+    const groups = (input.data?.fieldGroups || []) as any[];
+    const emailField = findField(groups, 'Email');
+
+    if (emailField) {
+        const email = String(getFieldValue(emailField) || '');
+
+        // Validate format
+        if (email && !EMAIL_REGEX.test(email)) {
+            throw new Error(`Invalid email format: ${email}`);
+        }
+
+        // Normalize to lowercase
+        if (email) {
+            setFieldValue(emailField, email.toLowerCase().trim());
+        }
+    }
+
+    // Also check legacy data.email field (non-canonical format)
+    if (input.data?.email) {
+        if (!EMAIL_REGEX.test(input.data.email)) {
+            throw new Error(`Invalid email format: ${input.data.email}`);
+        }
+        input.data.email = input.data.email.toLowerCase().trim();
+    }
+});
+
+// --- ALGO 0.5: TAXONOMY VALIDATION (No Free Text Rule) ---
+// Validates that constrained fields match dimension_values
+hooks.onPreCreate('contact', async (input: any) => {
+    const groups = (input.data?.fieldGroups || []) as any[];
+
+    // Check job_title field (canonical format)
+    const jobTitleField = findField(groups, 'Job Title') || findField(groups, 'job_title');
+    const jobTitle = jobTitleField ? String(getFieldValue(jobTitleField) || '') : '';
+
+    // Also check legacy data.job_title field
+    const legacyJobTitle = input.data?.job_title;
+
+    const titleToValidate = jobTitle || legacyJobTitle;
+
+    if (titleToValidate) {
+        // Normalize to slug format for lookup
+        const slug = titleToValidate.toLowerCase().replace(/\s+/g, '-');
+
+        // Check if value exists in dimension_values
+        const exists = db.prepare(`
+            SELECT id FROM dimension_values
+            WHERE dimension = 'job_title' AND (slug = ? OR label = ?)
+        `).get(slug, titleToValidate);
+
+        if (!exists) {
+            // Flag as invalid - add validation warning to metadata
+            if (!input.metadata) input.metadata = {};
+            input.metadata.validation_warnings = input.metadata.validation_warnings || [];
+            input.metadata.validation_warnings.push({
+                field: 'job_title',
+                value: titleToValidate,
+                reason: 'Value not found in taxonomy',
+                requires_cleanup: true
+            });
+
+            // Store flag in data for later Data Activity creation
+            if (!input.data) input.data = {};
+            input.data.requires_data_cleanup = true;
+            input.data.invalid_fields = input.data.invalid_fields || [];
+            input.data.invalid_fields.push('job_title');
+
+            console.log(`[CRM] Taxonomy Warning: job_title "${titleToValidate}" not in dimension_values`);
+        }
+    }
+});
 
 // --- ALGO 2.1: ACCOUNT RESOLUTION (Resolution Logic) ---
 // (Formerly Algo 2, renamed to free "Algo 2" for Entropy)
@@ -280,24 +436,12 @@ export function runEntropyDaemon(
 }
 
 // --- ALGO 4: KINETIC ROUTING (GENERIC INTERPRETER) ---
-import { PersonaType, PersonaDefinition } from './types.js';
+import { PersonaType } from './types.js';
 
-// NOTE: In a real implementation, this would be loaded from the Seed/DB at runtime.
-// For Phase 10.2, we simulate the "Memory" of the interpreter with the data we just defined in seeds.
-const PERSONA_MEMORY: Record<string, PersonaDefinition> = {
-    [PersonaType.DecisionMaker]: { 
-        slug: PersonaType.DecisionMaker, 
-        metadata: { power_level: 3, kinetic_routing: { routing_target: 'role_admin', decay_rate: 0.8 } } 
-    },
-    [PersonaType.EndUser]: { 
-        slug: PersonaType.EndUser, 
-        metadata: { power_level: 1, kinetic_routing: { routing_target: 'role_member', decay_rate: 0.2 } } 
-    },
-    [PersonaType.Influencer]: { 
-        slug: PersonaType.Influencer, 
-        metadata: { power_level: 2, kinetic_routing: { routing_target: 'role_editor', decay_rate: 0.5 } } 
-    }
-};
+// NOTE: Persona data is now loaded from the dimension_values table at runtime.
+// See loadPersonaData() at the top of this file for the implementation.
+// The previous PERSONA_MEMORY and PERSONA_HEALTH_SCORES constants have been removed
+// and replaced with database-driven configuration.
 
 hooks.onPreCreate('contact', async (input: any) => {
     try {
@@ -316,30 +460,47 @@ hooks.onPreCreate('contact', async (input: any) => {
             else personaSlug = val.toLowerCase().replace(/ /g, '_'); // Fallback
         }
 
-        if (personaSlug && PERSONA_MEMORY[personaSlug]) {
-            const rule = PERSONA_MEMORY[personaSlug].metadata.kinetic_routing;
+        // Calculate initial health score based on persona (loaded from DB)
+        const initialHealth = getPersonaInitialHealth(personaSlug);
 
-            if (rule) {
-                // 2. Execute Routing Rule (Soft-Coded)
-                const requiredRole = rule.routing_target.replace('role_', '');
+        let healthField = findField(groups, 'Health Score');
+        if (!healthField) healthField = findField(groups, 'health_score');
 
-                const agent = db.prepare(`
-                    SELECT user_id FROM user_accounts
-                    WHERE account_id = ? AND permission_level = ?
-                    LIMIT 1
-                `).get(input.account_id, requiredRole) as any;
+        if (healthField) {
+            setFieldValue(healthField, initialHealth);
+        } else {
+            addFieldToGroup(groups, 'Health Score', 'number', initialHealth);
+        }
 
-                if (agent) {
-                    const ownerField = findField(groups, 'Owner');
-                    if (ownerField) {
-                        setFieldValue(ownerField, agent.user_id);
-                    } else {
-                        addFieldToGroup(groups, 'Owner', 'Record', agent.user_id);
-                    }
-                    console.log(`[CRM] Kinetic Routing: ${personaSlug} (${PERSONA_MEMORY[personaSlug].metadata.power_level}) -> Assigned to ${requiredRole} (${agent.user_id})`);
+        // Also set in legacy data format for test compatibility
+        if (!input.data) input.data = {};
+        input.data.health_score = initialHealth;
+
+        console.log(`[CRM] Initial Health Score: ${initialHealth} (persona: ${personaSlug || 'unknown'})`);
+
+        const personaData = personaSlug ? getPersonaData(personaSlug) : undefined;
+        if (personaData?.kinetic_routing) {
+            const rule = personaData.kinetic_routing;
+
+            // 2. Execute Routing Rule (Soft-Coded)
+            const requiredRole = rule.routing_target.replace('role_', '');
+
+            const agent = db.prepare(`
+                SELECT user_id FROM user_accounts
+                WHERE account_id = ? AND permission_level = ?
+                LIMIT 1
+            `).get(input.account_id, requiredRole) as any;
+
+            if (agent) {
+                const ownerField = findField(groups, 'Owner');
+                if (ownerField) {
+                    setFieldValue(ownerField, agent.user_id);
                 } else {
-                    console.log(`[CRM] Kinetic Routing: No agent found for role ${requiredRole}`);
+                    addFieldToGroup(groups, 'Owner', 'Record', agent.user_id);
                 }
+                console.log(`[CRM] Kinetic Routing: ${personaSlug} (${personaData.power_level}) -> Assigned to ${requiredRole} (${agent.user_id})`);
+            } else {
+                console.log(`[CRM] Kinetic Routing: No agent found for role ${requiredRole}`);
             }
         }
     } catch (e) {
@@ -375,8 +536,9 @@ hooks.onPreCreate('activity', async (input: any) => {
                     else personaSlug = val.toLowerCase().replace(/ /g, '_');
                 }
 
-                if (personaSlug && PERSONA_MEMORY[personaSlug]) {
-                    const powerLevel = PERSONA_MEMORY[personaSlug].metadata.power_level;
+                const activityPersonaData = personaSlug ? getPersonaData(personaSlug) : undefined;
+                if (activityPersonaData) {
+                    const powerLevel = activityPersonaData.power_level;
 
                     // 4. Kinetic Surge Rule
                     if (powerLevel >= 3) { // Decision Maker
@@ -409,30 +571,76 @@ hooks.onPreCreate('activity', async (input: any) => {
     }
 });
 
-// --- LINKAGE: CREATE RELATIONSHIP ---
+// --- LINKAGE: CREATE RELATIONSHIP (Domain-based Auto-linking) ---
 hooks.onPostCreate('contact', async (record: any) => {
     const groups = (record.data?.fieldGroups || []) as any[];
+
+    // Try field-based account link first
     const accountField = findField(groups, 'Account');
     const accountName = getFieldValue(accountField);
 
-    if (accountName) {
-        const allAccounts = listRecords(record.account_id, 'account' as EntityType);
-        const match = allAccounts.find(acc => acc.name === String(accountName));
-        if (match) {
-            try {
-                createRelationship({
-                    from_record_id: record.id,
-                    to_record_id: match.id,
-                    relationship_type: 'work_history',
-                    data: {
-                        role: 'Employee (Auto-linked)',
-                        start_date: new Date().toISOString().split('T')[0]
-                    }
-                });
-                console.log(`[CRM Linkage] Linked ${record.name} to ${match.name}`);
-            } catch (e) {
-                console.error('[CRM Linkage] Failed:', e);
-            }
+    // Get email domain for domain-based matching
+    const emailField = findField(groups, 'Email');
+    const email = getFieldValue(emailField) || record.data?.email;
+    const domain = email ? getDomainFromEmail(String(email)) : null;
+
+    // Check for resolved account from PreCreate hook (ALGO 2.1)
+    const resolvedAccountId = record.metadata?.resolvedAccountId;
+
+    const allAccounts = listRecords(record.account_id, 'account' as EntityType);
+    let matchedAccount: any = null;
+
+    // Priority 1: Pre-resolved account from ALGO 2.1
+    if (resolvedAccountId) {
+        matchedAccount = allAccounts.find(acc => acc.id === resolvedAccountId);
+    }
+    // Priority 2: Name match from Account field
+    if (!matchedAccount && accountName) {
+        matchedAccount = allAccounts.find(acc => acc.name === String(accountName));
+    }
+    // Priority 3: Domain match from email
+    if (!matchedAccount && domain) {
+        matchedAccount = allAccounts.find(acc => {
+            const accDomain = acc.data?.domain || acc.data?.website;
+            if (!accDomain) return false;
+            const accDomainLower = String(accDomain).toLowerCase();
+            return accDomainLower === domain || accDomainLower.includes(domain);
+        });
+    }
+
+    if (matchedAccount) {
+        try {
+            createRelationship({
+                from_record_id: record.id,
+                to_record_id: matchedAccount.id,
+                relationship_type: 'works_at',
+                data: {
+                    linked_by: 'auto',
+                    linked_at: new Date().toISOString()
+                }
+            });
+            console.log(`[CRM] Auto-linked ${record.name} to ${matchedAccount.name} (domain: ${domain})`);
+        } catch (e) {
+            console.warn('[CRM] Auto-link failed:', e);
+        }
+    }
+});
+
+// --- DATA CLEANUP: Create Activity when taxonomy violations detected ---
+hooks.onPostCreate('contact', async (record: any) => {
+    // Check if record was flagged for data cleanup during pre-create validation
+    if (record.data?.requires_data_cleanup && record.data?.invalid_fields?.length > 0) {
+        try {
+            const { createDataCleanupActivity } = await import('../activities/generation.js');
+            await createDataCleanupActivity(
+                record.id,
+                'contact',
+                record.data.invalid_fields,
+                record.account_id
+            );
+            console.log(`[CRM] Created data cleanup activity for contact ${record.id}`);
+        } catch (err) {
+            console.warn('[CRM] Failed to create data cleanup activity:', err instanceof Error ? err.message : String(err));
         }
     }
 });
@@ -483,8 +691,9 @@ export function getKineticForecast(accountId: string) {
                     else if (val === 'End User') pSlug = PersonaType.EndUser;
                     else if (val === 'Influencer') pSlug = PersonaType.Influencer;
 
-                    if (pSlug && PERSONA_MEMORY[pSlug]) {
-                        powerLevel = PERSONA_MEMORY[pSlug].metadata.power_level;
+                    const forecastPersonaData = pSlug ? getPersonaData(pSlug) : undefined;
+                    if (forecastPersonaData) {
+                        powerLevel = forecastPersonaData.power_level;
                     }
                 }
             }

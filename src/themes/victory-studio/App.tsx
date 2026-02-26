@@ -20,7 +20,7 @@ import { loadPageConfig } from './utils/configLoader';
 import { DEFAULT_CONFIG } from './data';
 import { ConfigState } from './types';
 import { resolveSectionDimensions } from './utils/resolution';
-import { PRESET_REGISTRY } from './presets/registry';
+import { loadPresets, getPresetRegistry } from './presets/loader';
 import { PreviewContext } from './contexts/PreviewContext';
 
 export default function App() {
@@ -35,10 +35,10 @@ export default function App() {
   // Hybrid State: Load from window.VI_CONFIG or use Template Manager
   const templateManager = useTemplateManager();
   const {
-      template, 
+      template,
       updateSectionHeight,
       updateSectionPinHeight,
-      updateSectionBinding, 
+      updateSectionBinding,
       updateSectionPlacement,
       updateSectionPresentation,
       updateSectionClassName,
@@ -52,8 +52,18 @@ export default function App() {
       updateSceneObjectInSection,
       removeSceneObjectFromSection,
       duplicateSceneObjectInSection,
-      toggleSceneObjectInSection
+      toggleSceneObjectInSection,
+      // Backend Persistence
+      saveToBackend,
+      loadFromBackend
   } = templateManager;
+
+  // Initialize preset loader on mount
+  useEffect(() => {
+    loadPresets().catch(err => {
+      console.warn('[App] Failed to load presets from backend:', err);
+    });
+  }, []);
   
   // Track loaded entity ID for saving
   const [currentEntityId, setCurrentEntityId] = useState<string | null>(null);
@@ -61,14 +71,27 @@ export default function App() {
   // Editor Mode State
   const [editorMode, setEditorMode] = useState<'sidebar' | 'overlay'>('sidebar');
   
-  // Hydration: If window.VI_CONFIG exists, apply it on mount
+  // Hydration: Load page from various sources
   useEffect(() => {
-    // 1. Check for ?id= query param (Dynamic Mode)
     const params = new URLSearchParams(window.location.search);
+
+    // 1. Check for ?pageId= query param (New Pages API - Direct Mode)
+    const pageId = params.get('pageId');
+    if (pageId) {
+        console.log(`[App] Loading page from backend: ${pageId}`);
+        loadFromBackend(pageId)
+            .then(() => setCurrentEntityId(pageId))
+            .catch(err => {
+                console.error('[App] Failed to load page:', err);
+                alert('Could not load page. Check console.');
+            });
+        return;
+    }
+
+    // 2. Check for ?id= query param (Legacy Entity Mode)
     const id = params.get('id');
-    
     if (id) {
-        console.log(`Loading Entity via API: ${id}`);
+        console.log(`[App] Loading entity via API: ${id}`);
         apiClient.getEntity(id).then(entity => {
             if (entity && entity.data) {
                 // Ensure pageContext exists
@@ -77,13 +100,13 @@ export default function App() {
                 setCurrentEntityId(entity.id); // Track ID
             }
         }).catch(err => {
-            console.error("Failed to load entity:", err);
-            alert("Could not load page. Check console.");
+            console.error('[App] Failed to load entity:', err);
+            alert('Could not load page. Check console.');
         });
         return;
     }
 
-    // 2. Build Injection (Static Mode)
+    // 3. Build Injection (Static Mode)
     const injectedConfig = loadPageConfig();
     if (injectedConfig && injectedConfig.id !== 'dev-preview') {
       importTemplate(JSON.stringify(injectedConfig));
@@ -147,7 +170,7 @@ export default function App() {
 
       template.sections.forEach(section => {
           const key = section.id;
-          const { height, pinHeight } = resolveSectionDimensions(section, PRESET_REGISTRY);
+          const { height, pinHeight } = resolveSectionDimensions(section, getPresetRegistry());
 
           const el = sectionRefs.current[key];
           if (el) {
@@ -192,21 +215,15 @@ export default function App() {
   const handleSave = async () => {
       if (!currentEntityId) return;
       try {
-          // Prepare data, separating top-level fields from data blob if needed
-          // For now, we store the whole template in 'data', but preserve top-level fields like 'name'
-          const { id, name, ...data } = template as any;
-          
-          await apiClient.updateEntity(currentEntityId, {
-              name: name || 'Untitled Page',
-              data: { ...data, pageContext: template.pageContext, pageSubject: template.pageSubject, sections: template.sections }
-          } as any);
-          
+          // Use the new saveToBackend method for pages API
+          await saveToBackend(currentEntityId);
+
           setCopySuccess(true); // Reuse success visual
           setTimeout(() => setCopySuccess(false), 2000);
-          alert("Saved successfully!");
+          console.log('[App] Saved successfully!');
       } catch (e) {
-          console.error(e);
-          alert("Failed to save.");
+          console.error('[App] Failed to save:', e);
+          alert('Failed to save. Check console.');
       }
   };
 

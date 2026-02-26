@@ -12,9 +12,9 @@ export const auditMiddleware = (req: Request, res: Response, next: NextFunction)
 
   // Hook into response finish to capture status
   res.on('finish', () => {
-    // Only log successful operations? Or all attempts?
-    // "Ledger of Truth" usually implies successful changes.
-    // If request failed (4xx/5xx), no data changed.
+    // DECISION: Only log successful operations (2xx) for "Ledger of Truth".
+    // Rationale: Failed requests (4xx/5xx) don't change state and are logged
+    // via error handling middleware. Audit trail focuses on actual data changes.
     if (res.statusCode >= 200 && res.statusCode < 300) {
       logActivity(req, res.statusCode);
     }

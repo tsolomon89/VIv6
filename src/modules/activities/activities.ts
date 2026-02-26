@@ -145,7 +145,8 @@ export class ActivityEngine {
                 ...data,
                 status: 'completed',
                 completed_at: now.toISOString(),
-                actual_duration: actualDuration, 
+                actual_duration: actualDuration,
+                duration_seconds: Math.ceil(actualDuration), // For constraint validation (INV-ACTIVITY-DURATION)
                 // Clear state
                 paused_at: null
             }
@@ -169,3 +170,20 @@ hooks.onPreCreate('activity', async (input: DataRecordInput) => {
         input.data.status = 'pending';
     }
 });
+
+// --- Chain Reaction Hook ---
+// When an activity is completed, trigger the chain reaction to check for stage advancement
+hooks.onPostUpdate('activity', async (record: DataRecordInput | DataRecord) => {
+    // Only trigger on completion
+    if ((record.data as any)?.status !== 'completed') return;
+
+    try {
+        // Dynamic import to avoid circular dependencies
+        const { ChainReactionHandler } = await import('./chain_reaction.js');
+        await ChainReactionHandler.onActivityCompleted(record as DataRecord);
+    } catch (err) {
+        console.warn('[ActivityEngine] Chain reaction failed:', err instanceof Error ? err.message : String(err));
+    }
+});
+
+console.log('[ActivityEngine] Chain Reaction hooks registered.');

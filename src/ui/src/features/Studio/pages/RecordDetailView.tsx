@@ -6,7 +6,9 @@ import { getConfigFromSchema } from '../config/studio-config';
 import { RecordDetailHeader } from '../components/RecordDetailHeader';
 import { RecordCardGrid } from '../components/RecordCardGrid';
 import { ContextSidebar } from '../components/ContextSidebar';
-import { ArrowLeft, Edit2, Sidebar as SidebarIcon } from 'lucide-react';
+import { SchemaDisplay } from '../components/schema/SchemaDisplay';
+import { ArrowLeft, Edit2, Sidebar as SidebarIcon, Database, Bot } from 'lucide-react';
+import { ChatPanel } from '../../../components/AI/ChatPanel';
 
 export function RecordDetailView() {
     const { type, id } = useParams<{ type: string; id: string }>();
@@ -21,6 +23,15 @@ export function RecordDetailView() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [showChat, setShowChat] = useState(false);
+
+    // Check if this activity has AI execution data (indicating AI agent assignment)
+    // AI fields are stored in activity data but not in the base EntityData type
+    const activityData = entity?.data as unknown as Record<string, unknown> | undefined;
+    const isAIActivity: boolean = entity?.type === 'activity' && Boolean(
+        activityData?.ai_execution ||
+        activityData?.ai_chat_messages
+    );
 
     // Initial Fetch
     useEffect(() => {
@@ -164,12 +175,22 @@ export function RecordDetailView() {
                             <span className="capitalize">Back to {type}</span>
                         </Link>
                         <div className="flex items-center gap-2">
-                             <button 
+                             <button
                                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                                 className={`p-2 rounded-lg transition-colors ${isSidebarOpen ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'}`}
                             >
                                 <SidebarIcon size={18} />
                             </button>
+                            {/* Schema Editor Button - only for object_def */}
+                            {type === 'object_def' && !isNew && entity && (
+                                <Link
+                                    to={`/records/object_def/${id}/schema`}
+                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 rounded-lg transition-colors"
+                                >
+                                    <Database size={14} />
+                                    Edit Schema
+                                </Link>
+                            )}
                             {isEditing ? (
                                 <div className="flex gap-2">
                                     <button onClick={() => isNew ? navigate(-1) : setIsEditing(false)} className="px-3 py-1.5 text-sm text-zinc-400 hover:text-white">Cancel</button>
@@ -191,10 +212,10 @@ export function RecordDetailView() {
 
                     {/* Grid */}
                     {cards.length > 0 ? (
-                        <RecordCardGrid 
-                            cards={cards} 
-                            entity={activeRecord} 
-                            definition={definition} 
+                        <RecordCardGrid
+                            cards={cards}
+                            entity={activeRecord}
+                            definition={definition}
                             isEditing={isEditing}
                             onChange={handleFieldChange}
                         />
@@ -203,11 +224,43 @@ export function RecordDetailView() {
                             No cards configured.
                         </div>
                     )}
+
+                    {/* Schema Structure - for object_def records */}
+                    {type === 'object_def' && activeRecord?.data?.fieldGroups && (
+                        <div className="mt-6">
+                            <h2 className="text-sm font-medium text-zinc-400 mb-3 uppercase tracking-wide">
+                                Schema Structure
+                            </h2>
+                            <SchemaDisplay fieldGroups={activeRecord.data.fieldGroups} />
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Context Sidebar */}
             <ContextSidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} contextRecord={activeRecord} />
+
+            {/* AI Chat Panel for AI-assigned activities */}
+            {isAIActivity && id && !isNew && (
+                <div className="fixed bottom-4 right-4 z-50">
+                    {showChat ? (
+                        <ChatPanel
+                            activityId={id}
+                            activityName={entity?.name}
+                            onClose={() => setShowChat(false)}
+                            className="w-96 h-[500px]"
+                        />
+                    ) : (
+                        <button
+                            onClick={() => setShowChat(true)}
+                            className="flex items-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-lg transition-colors"
+                        >
+                            <Bot size={20} />
+                            <span>AI Chat</span>
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

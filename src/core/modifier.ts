@@ -1,6 +1,7 @@
 import { DataRecordInput, FieldStruct, FieldGroupStruct } from './types.js';
 import { findField } from './traversal.js';
 import { randomUUID } from 'crypto';
+import { getFieldDisplayName, OpportunityFields } from './utils/field_lookup.js';
 
 /**
  * Updates or creates a field value in the record's recursive structure.
@@ -73,9 +74,9 @@ export function setFieldValue(
  * Helper to specifically update Opportunity Stage (which is known to be in 'Commercial Details')
  */
 export function setOpportunityStage(record: DataRecordInput, stage: string) {
-    // We look for the field named "Opportunity Stage"
+    // Get field name from schema-aware lookup
     const groupName = 'Commercial Details';
-    const fieldName = 'Opportunity Stage';
+    const fieldName = getFieldDisplayName('opportunity', OpportunityFields.STAGE);
 
     if (!record.data) record.data = { fieldGroups: [] };
     if (!record.data.fieldGroups) record.data.fieldGroups = [];

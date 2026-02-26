@@ -1,0 +1,89 @@
+[
+  {
+    "id": "wfs-00000000-0000-0000-0000-000000000001",
+    "type": "workflow_step",
+    "slug": "check-stage-complete",
+    "name": "Check Stage Complete",
+    "summary": "Query if all activities for the current stage are complete",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "workflow_slug": "opportunity-stage-chain-reaction",
+      "sequence": 1,
+      "step_type": "query",
+      "query_type": "all_activities_complete",
+      "next_step_slug": "branch-on-complete"
+    }
+  },
+  {
+    "id": "wfs-00000000-0000-0000-0000-000000000002",
+    "type": "workflow_step",
+    "slug": "branch-on-complete",
+    "name": "Branch on Completion",
+    "summary": "Route to advance stage if all activities complete, otherwise exit",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "workflow_slug": "opportunity-stage-chain-reaction",
+      "sequence": 2,
+      "step_type": "branch",
+      "conditions": [{"field": "query_result", "op": "eq", "value": true}],
+      "branch_step_slug": "advance-stage",
+      "next_step_slug": "exit-incomplete"
+    }
+  },
+  {
+    "id": "wfs-00000000-0000-0000-0000-000000000003",
+    "type": "workflow_step",
+    "slug": "advance-stage",
+    "name": "Advance Stage",
+    "summary": "Advance opportunity to next pipeline stage",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "workflow_slug": "opportunity-stage-chain-reaction",
+      "sequence": 3,
+      "step_type": "advance_stage",
+      "next_step_slug": "generate-new-activities"
+    }
+  },
+  {
+    "id": "wfs-00000000-0000-0000-0000-000000000004",
+    "type": "workflow_step",
+    "slug": "generate-new-activities",
+    "name": "Generate New Activities",
+    "summary": "Generate required activities for the new stage",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "workflow_slug": "opportunity-stage-chain-reaction",
+      "sequence": 4,
+      "step_type": "generate_activities",
+      "next_step_slug": "complete-chain"
+    }
+  },
+  {
+    "id": "wfs-00000000-0000-0000-0000-000000000005",
+    "type": "workflow_step",
+    "slug": "complete-chain",
+    "name": "Complete Chain",
+    "summary": "Mark chain reaction as complete",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "workflow_slug": "opportunity-stage-chain-reaction",
+      "sequence": 5,
+      "step_type": "complete",
+      "exit_reason": "win"
+    }
+  },
+  {
+    "id": "wfs-00000000-0000-0000-0000-000000000006",
+    "type": "workflow_step",
+    "slug": "exit-incomplete",
+    "name": "Exit Incomplete",
+    "summary": "Exit workflow - waiting for more activities to complete",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "workflow_slug": "opportunity-stage-chain-reaction",
+      "sequence": 6,
+      "step_type": "complete",
+      "exit_reason": "manual"
+    }
+  }
+]

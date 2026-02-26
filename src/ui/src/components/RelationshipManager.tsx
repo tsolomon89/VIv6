@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, X, Link2 } from 'lucide-react';
 import { api, type Entity, type Relationship } from '../lib/api';
 import { useBrand } from '../lib/BrandContext';
+import { showToast } from '../hooks/useToast';
 
 interface RelationshipManagerProps {
     entityId: string;
@@ -78,7 +79,7 @@ export function RelationshipManager({ entityId, entityType, relationships, onUpd
             setSelectedTargetId('');
             onUpdate();
         } catch (err) {
-            alert('Failed to add relationship');
+            showToast.error('Failed to add relationship');
         }
     };
 
@@ -108,7 +109,7 @@ export function RelationshipManager({ entityId, entityType, relationships, onUpd
             onUpdate();
         } catch (err) {
             console.error(err);
-            alert('Failed to quick create entity');
+            showToast.error('Failed to quick create entity');
         }
     };
 
@@ -118,7 +119,7 @@ export function RelationshipManager({ entityId, entityType, relationships, onUpd
             await api.deleteRelationship(relId);
             onUpdate();
         } catch (err) {
-            alert('Failed to remove relationship');
+            showToast.error('Failed to remove relationship');
         }
     };
 

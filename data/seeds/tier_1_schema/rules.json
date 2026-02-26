@@ -36,7 +36,7 @@
     "type": "rule",
     "slug": "opportunity-auto-probability",
     "name": "Auto-Set Probability by Stage",
-    "summary": "Sets probability based on stage during creation",
+    "summary": "DEPRECATED: Probability is now set by CommercialEngine using stage-based values from pipeline_stages config",
     "account_id": "00000000-0000-0000-0000-000000000000",
     "data": {
       "Trigger Event": "pre_create",
@@ -44,7 +44,7 @@
       "Conditions": "[{\"field\": \"probability\", \"op\": \"not_exists\"}]",
       "Actions": "[{\"type\": \"set_field\", \"target\": \"probability\", \"data\": {\"value\": 10}}]",
       "Priority": 5,
-      "Is Active": true
+      "Is Active": false
     }
   },
   {
@@ -124,6 +124,24 @@
       "Conditions": "[]",
       "Actions": "[{\"type\": \"log\", \"target\": \"Feature Added\", \"data\": {\"message\": \"New feature created: {{name}}\"}}]",
       "Priority": 100,
+      "Is Active": true
+    }
+  },
+  {
+    "id": "rule-00000000-0000-0000-0000-000000000009",
+    "type": "rule",
+    "slug": "sql-requires-intent-verified",
+    "name": "SQL Stage Requires Intent Verified",
+    "summary": "Blocks transition to SQL stage without Intent Verified field set to true",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "Trigger Event": "pre_update",
+      "Trigger Entity Type": "opportunity",
+      "Conditions": "[{\"field\": \"opportunity_stage\", \"op\": \"changed_to\", \"value\": \"sql\"}, {\"field\": \"Intent Verified\", \"op\": \"neq\", \"value\": true}]",
+      "Actions": "[]",
+      "Blocking": true,
+      "Block Message": "Intent must be verified before transitioning to SQL stage. Set 'Intent Verified' to true first.",
+      "Priority": 1,
       "Is Active": true
     }
   }

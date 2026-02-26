@@ -19,14 +19,14 @@
     "type": "derivation",
     "slug": "opportunity-days-to-close",
     "name": "Days to Close",
-    "summary": "Calculates days remaining until close date",
+    "summary": "Calculates days remaining until target close date",
     "account_id": "00000000-0000-0000-0000-000000000000",
     "data": {
       "Target Entity Type": "opportunity",
       "Field Name": "days_to_close",
-      "Expression": "daysdiff(now(), close_date)",
+      "Expression": "daysdiff(now(), target_close_date)",
       "Return Type": "number",
-      "Dependencies": "[\"close_date\"]"
+      "Dependencies": "[\"target_close_date\"]"
     }
   },
   {
@@ -49,14 +49,14 @@
     "type": "derivation",
     "slug": "opportunity-deal-yield",
     "name": "Deal Yield",
-    "summary": "Calculates (amount × probability) / days_to_close for velocity scoring",
+    "summary": "Calculates (amount × probability) / days_to_close for velocity scoring. Uses target_close_date field.",
     "account_id": "00000000-0000-0000-0000-000000000000",
     "data": {
       "Target Entity Type": "opportunity",
-      "Field Name": "deal_yield",
-      "Expression": "daysdiff(now(), close_date) > 0 ? (amount * (probability / 100)) / daysdiff(now(), close_date) : 0",
+      "Field Name": "projected_yield",
+      "Expression": "daysdiff(now(), target_close_date) > 0 ? (amount * (probability / 100)) / daysdiff(now(), target_close_date) : (amount * (probability / 100))",
       "Return Type": "currency",
-      "Dependencies": "[\"amount\", \"probability\", \"close_date\"]"
+      "Dependencies": "[\"amount\", \"probability\", \"target_close_date\"]"
     }
   },
   {

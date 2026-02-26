@@ -1,0 +1,44 @@
+[
+  {
+    "id": "hc-00000000-0000-0000-0000-000000000001",
+    "type": "health_config",
+    "slug": "contact-health-config",
+    "name": "Contact Health Configuration",
+    "summary": "Health decay settings for Contact records",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "contact",
+      "base_health": 100,
+      "decay_formula": "linear",
+      "base_decay_rate": 0.1,
+      "min_health": 0,
+      "max_health": 100,
+      "health_thresholds": [
+        { "name": "healthy", "min_value": 70, "max_value": 100 },
+        { "name": "warning", "min_value": 30, "max_value": 69, "action_on_enter": "contact-health-warning" },
+        { "name": "critical", "min_value": 0, "max_value": 29, "action_on_enter": "contact-health-critical" }
+      ]
+    }
+  },
+  {
+    "id": "hc-00000000-0000-0000-0000-000000000002",
+    "type": "health_config",
+    "slug": "opportunity-health-config",
+    "name": "Opportunity Health Configuration",
+    "summary": "Health decay settings for Opportunity records",
+    "account_id": "00000000-0000-0000-0000-000000000000",
+    "data": {
+      "entity_type": "opportunity",
+      "base_health": 100,
+      "decay_formula": "linear",
+      "base_decay_rate": 0.05,
+      "min_health": 0,
+      "max_health": 100,
+      "health_thresholds": [
+        { "name": "healthy", "min_value": 60, "max_value": 100 },
+        { "name": "warning", "min_value": 25, "max_value": 59 },
+        { "name": "critical", "min_value": 0, "max_value": 24 }
+      ]
+    }
+  }
+]

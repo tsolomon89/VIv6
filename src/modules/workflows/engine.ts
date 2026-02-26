@@ -390,4 +390,140 @@ export class WorkflowEngine {
             }
         }
     }
+
+    /**
+     * Trigger a workflow synchronously with provided context
+     * Used by chain reaction and other event-driven automations
+     *
+     * @param workflowSlug - The workflow slug to trigger
+     * @param event - The triggering event name
+     * @param context - Context data (opportunity_id, activity_id, etc.)
+     */
+    static async triggerWorkflow(
+        workflowSlug: string,
+        event: string,
+        context: Record<string, any>
+    ): Promise<void> {
+        const workflow = this.getWorkflow(workflowSlug);
+        if (!workflow) {
+            throw new Error(`Workflow not found: ${workflowSlug}`);
+        }
+
+        if (!workflow.data?.is_active) {
+            logger.info({ workflowSlug }, 'Workflow is not active, skipping');
+            return;
+        }
+
+        // Check if the trigger event matches
+        const expectedEvent = workflow.data?.trigger_event;
+        if (expectedEvent && expectedEvent !== event) {
+            logger.debug({ workflowSlug, event, expectedEvent }, 'Event does not match workflow trigger');
+            return;
+        }
+
+        // Create a temporary enrollment record for this execution
+        const enrollmentId = uuidv4();
+        const accountId = (workflow as any).account_id;
+        const now = new Date().toISOString();
+
+        const enrollmentData = {
+            workflow_id: workflow.id,
+            contact_id: context.opportunity_id || context.contact_id || 'system',
+            current_step_id: null,
+            status: 'active' as WorkflowEnrollmentStatus,
+            enrolled_at: now,
+            ...context  // Include all context data
+        };
+
+        // Insert enrollment record
+        db.prepare(`
+            INSERT INTO records (id, account_id, type, slug, name, data, created_at, updated_at)
+            VALUES (?, ?, 'workflow_enrollment', ?, ?, ?, datetime('now'), datetime('now'))
+        `).run(
+            enrollmentId,
+            accountId,
+            `enrollment-${workflowSlug}-${Date.now()}`,
+            `${workflowSlug} - Triggered`,
+            JSON.stringify(enrollmentData)
+        );
+
+        // Get the enrollment record
+        const enrollment = db.prepare('SELECT * FROM records WHERE id = ?').get(enrollmentId) as DataRecord;
+        if (typeof enrollment.data === 'string') {
+            enrollment.data = JSON.parse(enrollment.data);
+        }
+
+        // Execute workflow synchronously
+        await this.executeWorkflowSync(enrollment, workflow);
+    }
+
+    /**
+     * Execute a workflow synchronously (no scheduling)
+     * Used for immediate execution triggered by events
+     */
+    private static async executeWorkflowSync(
+        enrollment: DataRecord,
+        workflow: DataRecord
+    ): Promise<void> {
+        const firstStepSlug = workflow.data?.first_step_slug;
+        if (!firstStepSlug) {
+            logger.warn({ workflowId: workflow.id }, 'Workflow has no first_step_slug');
+            return;
+        }
+
+        let currentStepSlug: string | undefined = firstStepSlug;
+        let iterations = 0;
+        const maxIterations = 100;  // Prevent infinite loops
+
+        while (currentStepSlug && iterations < maxIterations) {
+            const step = this.getStepBySlug(currentStepSlug);
+            if (!step) {
+                logger.warn({ stepSlug: currentStepSlug }, 'Step not found');
+                break;
+            }
+
+            // Execute the step
+            const result = await this.executeStep(enrollment, step);
+
+            if (!result.success) {
+                logger.warn({ stepSlug: currentStepSlug, error: result.error }, 'Step execution failed');
+                break;
+            }
+
+            // Handle completion
+            if (result.exitReason) {
+                await this.completeEnrollment(enrollment.id, result.exitReason);
+                break;
+            }
+
+            // Determine next step
+            const stepType = step.data?.step_type;
+            if (stepType === 'branch') {
+                // Branch step - check enrollment context for branch result
+                const enrollmentData = db.prepare('SELECT data FROM records WHERE id = ?').get(enrollment.id) as { data: string } | undefined;
+                if (enrollmentData) {
+                    const data = typeof enrollmentData.data === 'string' ? JSON.parse(enrollmentData.data) : enrollmentData.data;
+                    const queryResult = data.query_result;
+                    currentStepSlug = queryResult
+                        ? step.data?.branch_step_slug
+                        : step.data?.next_step_slug;
+                } else {
+                    currentStepSlug = step.data?.next_step_slug;
+                }
+            } else if (stepType === 'complete') {
+                // Complete step - exit
+                await this.completeEnrollment(enrollment.id, result.exitReason || 'win');
+                break;
+            } else {
+                // Normal step - use nextStepSlug from result or step data
+                currentStepSlug = result.nextStepSlug || step.data?.next_step_slug;
+            }
+
+            iterations++;
+        }
+
+        if (iterations >= maxIterations) {
+            logger.warn({ enrollmentId: enrollment.id }, 'Workflow exceeded max iterations');
+        }
+    }
 }
