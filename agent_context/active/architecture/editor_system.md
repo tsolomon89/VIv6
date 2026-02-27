@@ -1,65 +1,55 @@
 # Editor Architecture: The 3-View System
 
-> **Invariant**: One Editor. One State. Three Views.
-> **Goal**: Seamless transition from "Data Entry" to "Visual Tuning".
+> Invariant: one editor state, multiple views.
+> Goal: move between structural editing and visual tuning without changing data model.
 
 ## 1. The Three Views
-These are not separate apps. They are different *Lenses* on the same Registry.
 
-### A. Forms-Only View (The Data Lens)
-- **Location**: `/dashboard`
-- **Focus**: Structural integrity, relationships, high-volume entry.
-- **UI**: Tables, Forms, JSON Editors.
-- **Use Case**: "I need to fix the SEO tags on 50 products."
+### A. Forms-Only View (Data Lens)
+- Location: `/dashboard`
+- Focus: high-volume record and relationship editing.
 
-### B. Sidebar Workbench (The Hybrid Lens)
-- **Location**: `/` (with `editorMode="sidebar"`)
-- **Focus**: Visual context with precise control.
-- **Layout**:
-    - **Left**: Responsive IFrame (The "Page").
-    - **Right**: Attribute Sidebar (The "Form").
-- **Use Case**: "I want to see how this headline looks on Mobile while editing the text."
+### B. Sidebar Workbench (Hybrid Lens)
+- Location: `/editor?mode=sidebar`
+- Focus: visual preview plus precise controls.
+- Layout: canvas on the left, controls on the right.
 
-### C. Overlay HUD (The Visual Lens)
-- **Location**: `/` (with `editorMode="overlay"`)
-- **Focus**: Immersion and fast tweaks.
-- **Layout**: UI controls float *over* the live page.
-- **Use Case**: "I want to tweak the spacing of this hero section."
+### C. Overlay HUD (Visual Lens)
+- Location: `/editor?mode=overlay`
+- Focus: fast visual iteration in-context.
+- Layout: controls float over the live preview.
 
-## 2. Shared State (The Kernel)
-All three views share a single Global Selection State:
+## 2. Shared State (Kernel)
 
-```typescript
+```ts
 interface EditorState {
   mode: 'forms' | 'sidebar' | 'overlay';
   selection: {
-    recordId: string | null;      // The Active Record
-    componentId: string | null;   // The UI Component
-    fieldPath: string | null;     // The specific field being edited
-  };
-  context: {
-    route: string;                // Current Page URL
-    environment: 'sandbox' | 'live';
+    recordId: string | null;
+    componentId: string | null;
+    fieldPath: string | null;
   };
 }
 ```
 
-## 3. Environment Behavior
+Overlay access is gated by a separate system store flag:
+- Store: `useSystemStore` (`zustand/persist`)
+- Key: `system-storage`
+- Flag: `state.isSandboxUnlocked`
 
-### Hosted / Public (Sandbox)
--### 3.1 Unlocking the Environment
-Use the Konami Code: `↑ ↓ ← → → ← ↓ ↑`.
-This toggles `localStorage.setItem('viv5_sandbox_unlocked', 'true')` and reveals the "Editor Overlay" button in the standard shell.
-- **Persistence**: **None**.
-- **Storage**: Browser LocalStorage / Session Memory.
-- **Action**: "Export JSON" (to manually copy to codebase).
+## 3. Unlock and Persistence Behavior
 
-### Local / Staging (Live)
-- **Unlock**: Auto-detects `localhost` or Auth Token.
-- **Persistence**: **Real-Time**.
-- **Storage**: Writes directly to `Process.db` via API.
-- **Action**: "Save" / "Publish".
+### Unlocking
+- Trigger: Konami sequence `ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ArrowRight, ArrowLeft, ArrowDown, ArrowUp`
+- Effect: sets `isSandboxUnlocked = true` in persisted client storage.
+- Gate: `mode=overlay` remains blocked until unlocked.
+
+### Persistence
+- Unlock state persistence is client-only (browser storage).
+- Content persistence is explicit: changes persist when Save flows call API routes.
+- API writes remain the source of truth for records/pages/templates.
 
 ## 4. Deep Linking Contract
-- **Page -> Forms**: Clicking "Edit in Dashboard" on a visual element deep-links to the exact Record ID in the Dashboard.
-- **Forms -> Page**: Clicking "Locate" on a Record deep-links to the Page URL where that record is rendered, scrolling it into view.
+
+- Page to Forms: visual element actions deep-link to the owning record in dashboard context.
+- Forms to Page: record actions deep-link to render context for visual verification.

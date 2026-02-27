@@ -15,5 +15,5 @@ The system separates its backend API from its presentation layer using Static Si
 1.  **Data Assembly**: For every active `Record` attached to a Brand, it retrieves the `assemblePageContext`.
 2.  **Template Resolution**: Determines the layout structure by matching `subject_target` in `page_templates`.
 3.  **Hydration Payload**: Generates a massive JSON object representing the page state.
-4.  **Injection**: It reads the compiled React app (`themes/victory-studio/dist/index.html`) and injects the JSON payload into an inline script tag (`<script id="vi-config">...`).
+4.  **Injection**: It reads the compiled React app `index.html` from the configured theme output directory and injects the JSON payload into an inline script tag (`<script id="vi-config">...`).
 5.  **Output**: It writes the HTML to `dist/{brand}/...`. When a browser loads this static HTML, it instantly boots React with the injected state, resulting in a perfectly statically generated site that operates as a Single Page Application (SPA).

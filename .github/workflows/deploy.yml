@@ -40,6 +40,12 @@ jobs:
     - name: Run UI Tests
       run: npm run test:ui
 
+    - name: Verify API Docs Coverage
+      run: npm run docs:verify
+
+    - name: Verify Drift Gates (G1-G8)
+      run: npm run drift:verify
+
     - name: Build Web App (UI)
       run: |
         cd src/ui

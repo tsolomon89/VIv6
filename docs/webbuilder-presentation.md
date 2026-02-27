@@ -31,7 +31,7 @@ When building a page for a Record, the engine resolves which Template to use:
 
 ### Hydration via Injection
 Instead of Server-Side Rendering (SSR) the React components in Node, the Generator uses a **Static Hydration** approach:
-1.  It reads the pre-built `index.html` from the React Theme (`themes/victory-studio/dist`).
+1.  It reads the pre-built `index.html` from the React Theme output directory (`THEME_DIST_DIR` in `src/api/server.ts`).
 2.  It maps the Record's fields and the chosen Page Template into a `Payload` object.
 3.  It injects this object as a global script tag: `<script id="vi-config">window.VI_CONFIG = {...}</script>`.
 4.  When the browser loads the static HTML, the React Theme boots up, reads `window.VI_CONFIG`, and hydrates the layout dynamically on the client.

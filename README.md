@@ -45,7 +45,7 @@ Target a specific brand (e.g., `oblio`) to generate a clean, brand-specific outp
 ```bash
 npm run build:brand -- --brand=oblio
 ```
-Output: `dist/oblio/oblio/index.html`
+Output: `dist/oblio/index.html`
 
 ### 6. Previewing
 Preview the built site locally:

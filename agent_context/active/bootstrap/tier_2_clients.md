@@ -14,7 +14,7 @@ Crucially, these are created as **Account Records** within the Tier 1 (Oblio) pa
 
 ## 2. Seeded Tenants
 
-The bootstrapping script (`npm run db:seed`) reads from `data/seeds/tenants/*.json` to generate these accounts.
+The bootstrapping script (`npm run seed`) reads from `data/seeds/tenants/*.json` to generate these accounts.
 
 | Tenant Name | Account Slug | Domain | ID (Static) |
 | :--- | :--- | :--- | :--- |
@@ -24,7 +24,7 @@ The bootstrapping script (`npm run db:seed`) reads from `data/seeds/tenants/*.js
 
 ## 3. Seed Data Structure
 
-The system expects a strict JSON format for these seeds to ensure they can be hydrated into `RecordStructs`.
+The system expects a strict JSON format for these seeds to ensure they can be hydrated into records.
 
 ### Path: `data/seeds/tenants/victory_initiative.json`
 

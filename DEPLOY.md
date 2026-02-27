@@ -12,15 +12,15 @@ npm run build:brand -- --brand=oblio
 ```
 
 This will create:
-`dist/oblio/oblio/index.html` (and associated assets)
+`dist/oblio/index.html` (and associated assets)
 
 ## 2. Deploying
 
 ### Option A: standard Static Host (Netlify, Vercel, Surge)
-1.  Navigate to `dist/oblio/oblio`.
+1.  Navigate to `dist/oblio`.
 2.  Deploy this folder as your site root.
     *   **Netlify**: Drag and drop the folder into the "Deploys" tab.
-    *   **Surge**: Run `surge dist/oblio/oblio`.
+    *   **Surge**: Run `surge dist/oblio`.
 
 ### Option B: ZIP Handover
 If you need to send the site to a client:
@@ -31,7 +31,7 @@ If you need to send the site to a client:
     ```
     *Note: You may need to adjust the `zip` script in `package.json` to target the specific brand folder if you want a cleaner zip.*
 
-2.  Alternatively, manually zip `dist/oblio/oblio`.
+2.  Alternatively, manually zip `dist/oblio`.
 
 ## 3. SEO & Analytics
 

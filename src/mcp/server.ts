@@ -19,13 +19,13 @@ const execAsync = util.promisify(exec);
 import { initDb, db } from '../core/db.js';
 import { SYSTEM_ACCOUNT_ID } from '../core/constants.js';
 import {
-  createEntity,
-  getEntity,
-  getEntityBySlug,
-  updateEntity,
-  deleteEntity,
-  listEntities,
-} from '../core/entities.js';
+  createRecord,
+  getRecord,
+  getRecordBySlug,
+  updateRecord,
+  deleteRecord,
+  listRecords,
+} from '../core/records.js';
 import {
   createRelationship,
   getRelationshipsFrom,
@@ -33,7 +33,7 @@ import {
   deleteRelationship,
 } from '../core/relationships.js';
 import { normalizeEntityData, FieldGroup, FieldGroupSchema } from '../core/schema/validation.js';
-import { EntityType, EntityData, Field, ENTITY_TYPES } from '../core/types.js';
+import { EntityType, EntityData, Field, DataRecord, ENTITY_TYPES } from '../core/types.js';
 import {
   listDimensionTypes,
   listDimensionValues,
@@ -73,6 +73,52 @@ import {
 } from './handlers/interpreter_executors.js';
 import { registerCustomInterpreterExecutors } from '../modules/ops/custom_interpreter_executors.js';
 import { loadInterpreterExecutorPlugins } from '../modules/ops/interpreter_executor_plugin_loader.js';
+
+function getEntity(id: string): DataRecord | undefined {
+  return getRecord(id);
+}
+
+async function createEntity(input: Parameters<typeof createRecord>[0]) {
+  return createRecord(input);
+}
+
+async function updateEntity(id: string, updates: Parameters<typeof updateRecord>[1]) {
+  return updateRecord(id, updates);
+}
+
+async function deleteEntity(id: string) {
+  return deleteRecord(id);
+}
+
+function getEntityBySlug(slug: string, accountId?: string): DataRecord | undefined {
+  const scopedAccountId = accountId ?? SYSTEM_ACCOUNT_ID;
+  const scoped = getRecordBySlug(scopedAccountId, slug);
+  if (scoped || accountId) {
+    return scoped;
+  }
+
+  const row = db.prepare(
+    'SELECT id FROM records WHERE slug = ? ORDER BY created_at DESC LIMIT 1'
+  ).get(slug) as { id: string } | undefined;
+  return row ? getRecord(row.id) : undefined;
+}
+
+function listEntities(type?: EntityType, accountId?: string): DataRecord[] {
+  if (accountId) {
+    return listRecords(accountId, type);
+  }
+
+  const query = type
+    ? 'SELECT id FROM records WHERE type = ? ORDER BY created_at DESC'
+    : 'SELECT id FROM records ORDER BY created_at DESC';
+  const rows = type
+    ? db.prepare(query).all(type)
+    : db.prepare(query).all();
+
+  return (rows as Array<{ id: string }>)
+    .map((row) => getRecord(row.id))
+    .filter((record): record is DataRecord => Boolean(record));
+}
 
 // (Schemas imported from validation.ts)
 
@@ -132,7 +178,7 @@ server.registerTool(
     try {
       const entityData = normalizeEntityData(args.data, args.fieldGroups as FieldGroup[]);
       
-      const entity = createEntity({
+      const entity = await createEntity({
         type: args.type as EntityType,
         name: args.name,
         slug: args.slug,
@@ -250,7 +296,7 @@ server.registerTool(
         updates.data = normalizeEntityData(args.data, args.fieldGroups as FieldGroup[]);
       }
 
-      const entity = updateEntity(args.id, updates);
+      const entity = await updateEntity(args.id, updates);
       if (!entity) {
         return {
           content: [{ type: 'text', text: `Entity not found: ${args.id}` }],
@@ -280,7 +326,7 @@ server.registerTool(
   },
   async (args) => {
     try {
-      const deleted = deleteEntity(args.id);
+      const deleted = await deleteEntity(args.id);
       return {
         content: [{ type: 'text', text: deleted ? `Deleted entity: ${args.id}` : `Entity not found: ${args.id}` }],
         isError: !deleted,
@@ -308,9 +354,9 @@ server.registerTool(
   },
   async (args) => {
     try {
-      const relationship = createRelationship({
-        from_entity_id: args.from_id,
-        to_entity_id: args.to_id,
+      const relationship = await createRelationship({
+        from_record_id: args.from_id,
+        to_record_id: args.to_id,
         relationship_type: args.relationship_type,
         data: args.properties,
       });

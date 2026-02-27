@@ -19,6 +19,8 @@
     "build:brand": "tsx src/build/generate.ts --brand",
     "zip": "bestzip site.zip dist/*",
     "seed": "tsx src/scripts/seed_from_data.ts",
+    "docs:verify": "tsx src/scripts/verify_openapi_coverage.ts",
+    "drift:verify": "tsx src/scripts/verify_drift_gates.ts",
     "migrate": "tsx src/scripts/migrate.ts",
     "migrate:status": "tsx src/scripts/migrate.ts status"
   },

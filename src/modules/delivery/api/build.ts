@@ -8,7 +8,7 @@ import { protectedRoute } from '../../auth/middleware.js';
 const router = Router();
 
 interface BuildStateRow {
-  entity_id: string;
+  record_id: string;
   content_hash: string;
   status: string;
   last_built_at: string | null;
@@ -22,7 +22,7 @@ router.get('/', (req: Request, res: Response, next: NextFunction) => {
     let query = `
       SELECT bs.*, e.slug as entity_slug, e.name as entity_name, e.type as entity_type
       FROM build_state bs
-      JOIN entities e ON e.id = bs.entity_id
+      JOIN records e ON e.id = bs.record_id
     `;
     const args: string[] = [];
 
@@ -70,9 +70,9 @@ router.post('/:entityId', ...protectedRoute, (req: Request, res: Response, next:
 
     // Mark as pending
     db.prepare(`
-      INSERT INTO build_state (entity_id, content_hash, status, last_built_at)
+      INSERT INTO build_state (record_id, content_hash, status, last_built_at)
       VALUES (?, '', 'pending', ?)
-      ON CONFLICT(entity_id) DO UPDATE SET status = 'pending', last_built_at = excluded.last_built_at
+      ON CONFLICT(record_id) DO UPDATE SET status = 'pending', last_built_at = excluded.last_built_at
     `).run(entityId, new Date().toISOString());
 
     // Derive page
@@ -80,7 +80,7 @@ router.post('/:entityId', ...protectedRoute, (req: Request, res: Response, next:
 
     if (!derived) {
       db.prepare(`
-        UPDATE build_state SET status = 'error', error = 'No derivation output' WHERE entity_id = ?
+        UPDATE build_state SET status = 'error', error = 'No derivation output' WHERE record_id = ?
       `).run(entityId);
 
       res.json({ status: 'error', error: 'No derivation output' });
@@ -91,7 +91,7 @@ router.post('/:entityId', ...protectedRoute, (req: Request, res: Response, next:
 
     // Mark as success
     db.prepare(`
-      UPDATE build_state SET status = 'success', content_hash = ?, error = NULL, last_built_at = ? WHERE entity_id = ?
+      UPDATE build_state SET status = 'success', content_hash = ?, error = NULL, last_built_at = ? WHERE record_id = ?
     `).run(contentHash, new Date().toISOString(), entityId);
 
     res.json({
@@ -104,7 +104,7 @@ router.post('/:entityId', ...protectedRoute, (req: Request, res: Response, next:
     // Mark as error
     const { entityId } = req.params;
     db.prepare(`
-      UPDATE build_state SET status = 'error', error = ? WHERE entity_id = ?
+      UPDATE build_state SET status = 'error', error = ? WHERE record_id = ?
     `).run(String(err), entityId);
     next(err);
   }

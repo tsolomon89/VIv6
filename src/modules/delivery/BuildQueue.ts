@@ -101,17 +101,17 @@ export class BuildQueue {
       const now = new Date().toISOString();
       if (status === 'pending') {
           db.prepare(`
-            INSERT INTO build_state (entity_id, content_hash, status, last_built_at)
+            INSERT INTO build_state (record_id, content_hash, status, last_built_at)
             VALUES (?, '', 'pending', ?)
-            ON CONFLICT(entity_id) DO UPDATE SET status = 'pending', last_built_at = excluded.last_built_at
+            ON CONFLICT(record_id) DO UPDATE SET status = 'pending', last_built_at = excluded.last_built_at
           `).run(entityId, now);
       } else if (status === 'success') {
           db.prepare(`
-            UPDATE build_state SET status = 'success', content_hash = ?, error = NULL, last_built_at = ? WHERE entity_id = ?
+            UPDATE build_state SET status = 'success', content_hash = ?, error = NULL, last_built_at = ? WHERE record_id = ?
           `).run(hash, now, entityId);
       } else {
           db.prepare(`
-            UPDATE build_state SET status = 'error', error = ? WHERE entity_id = ?
+            UPDATE build_state SET status = 'error', error = ? WHERE record_id = ?
           `).run(error, entityId);
       }
   }
