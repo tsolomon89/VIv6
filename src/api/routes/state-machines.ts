@@ -14,7 +14,7 @@ import {
 } from '../../modules/ops/state_machine.js';
 import { listRecords } from '../../modules/content/services.js';
 import { DEFAULT_ACCOUNT_ID } from '../../core/constants.js';
-import { EntityType } from '../../core/types.js';
+import { ObjectType } from '../../core/types.js';
 
 const router = Router();
 
@@ -49,19 +49,19 @@ router.get('/', (req: Request, res: Response, next: NextFunction) => {
 });
 
 /**
- * GET /api/state-machines/:entityType
+ * GET /api/state-machines/:ObjectType
  * Get state machine definition for a specific entity type
  */
-router.get('/:entityType', (req: Request, res: Response, next: NextFunction) => {
+router.get('/:ObjectType', (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { entityType } = req.params;
+        const { ObjectType } = req.params;
         const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
 
-        const machine = getStateMachine(entityType as EntityType, accountId);
+        const machine = getStateMachine(ObjectType as ObjectType, accountId);
 
         if (!machine) {
             res.status(404).json({
-                error: `No state machine defined for entity type: ${entityType}`,
+                error: `No state machine defined for entity type: ${ObjectType}`,
                 status: 404
             });
             return;
@@ -74,20 +74,20 @@ router.get('/:entityType', (req: Request, res: Response, next: NextFunction) => 
 });
 
 /**
- * GET /api/state-machines/:entityType/states
+ * GET /api/state-machines/:ObjectType/states
  * Get all valid states for an entity type
  */
-router.get('/:entityType/states', (req: Request, res: Response, next: NextFunction) => {
+router.get('/:ObjectType/states', (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { entityType } = req.params;
+        const { ObjectType } = req.params;
         const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
 
-        const states = getValidStates(entityType as EntityType, accountId);
-        const machine = getStateMachine(entityType as EntityType, accountId);
+        const states = getValidStates(ObjectType as ObjectType, accountId);
+        const machine = getStateMachine(ObjectType as ObjectType, accountId);
 
         res.json({
             data: {
-                entityType,
+                ObjectType,
                 states,
                 initialState: machine?.initialState
             }
@@ -98,12 +98,12 @@ router.get('/:entityType/states', (req: Request, res: Response, next: NextFuncti
 });
 
 /**
- * GET /api/state-machines/:entityType/transitions
+ * GET /api/state-machines/:ObjectType/transitions
  * Get allowed transitions from a given state
  */
-router.get('/:entityType/transitions', (req: Request, res: Response, next: NextFunction) => {
+router.get('/:ObjectType/transitions', (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { entityType } = req.params;
+        const { ObjectType } = req.params;
         const { state } = req.query;
         const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
 
@@ -115,11 +115,11 @@ router.get('/:entityType/transitions', (req: Request, res: Response, next: NextF
             return;
         }
 
-        const transitions = getAllowedTransitions(entityType as EntityType, state, accountId);
+        const transitions = getAllowedTransitions(ObjectType as ObjectType, state, accountId);
 
         res.json({
             data: {
-                entityType,
+                ObjectType,
                 currentState: state,
                 transitions: transitions.map(t => ({
                     to: t.to,
@@ -139,19 +139,19 @@ router.get('/:entityType/transitions', (req: Request, res: Response, next: NextF
  */
 router.post('/validate', (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { entityType, currentState, newState, account_id } = req.body;
+        const { ObjectType, currentState, newState, account_id } = req.body;
         const accountId = account_id || DEFAULT_ACCOUNT_ID;
 
-        if (!entityType || !currentState || !newState) {
+        if (!ObjectType || !currentState || !newState) {
             res.status(400).json({
-                error: 'entityType, currentState, and newState are required',
+                error: 'ObjectType, currentState, and newState are required',
                 status: 400
             });
             return;
         }
 
         const result = validateTransition(
-            entityType as EntityType,
+            ObjectType as ObjectType,
             currentState,
             newState,
             undefined,
@@ -159,11 +159,11 @@ router.post('/validate', (req: Request, res: Response, next: NextFunction) => {
         );
 
         // Include allowed transitions for context
-        const allowed = getAllowedTransitions(entityType as EntityType, currentState, accountId);
+        const allowed = getAllowedTransitions(ObjectType as ObjectType, currentState, accountId);
 
         res.json({
             data: {
-                entityType,
+                ObjectType,
                 currentState,
                 newState,
                 valid: result.valid,
@@ -177,3 +177,4 @@ router.post('/validate', (req: Request, res: Response, next: NextFunction) => {
 });
 
 export default router;
+

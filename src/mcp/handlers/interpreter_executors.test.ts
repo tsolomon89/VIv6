@@ -76,7 +76,7 @@ describe('MCP Interpreter Executor Tool Handlers', () => {
 
     const result = validateInterpreterStageHandler({
       event: 'pre_update',
-      entityType: 'contact',
+      ObjectType: 'contact',
       stage: {
         executor: 'custom.compute_derivations',
         options: {},
@@ -95,7 +95,7 @@ describe('MCP Interpreter Executor Tool Handlers', () => {
 
     const result = validateInterpreterStageHandler({
       event: 'pre_update',
-      entityType: 'contact',
+      ObjectType: 'contact',
       stage: {
         executor: 'custom.not_registered',
       },
@@ -110,7 +110,7 @@ describe('MCP Interpreter Executor Tool Handlers', () => {
   it('allows builtin executor validation without definition records', () => {
     const result = validateInterpreterStageHandler({
       event: 'pre_create',
-      entityType: 'contact',
+      ObjectType: 'contact',
       stage: {
         executor: 'constraints',
       },
@@ -121,4 +121,5 @@ describe('MCP Interpreter Executor Tool Handlers', () => {
     expect(result.executor.isBuiltin).toBe(true);
   });
 });
+
 

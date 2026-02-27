@@ -1,7 +1,7 @@
-// Single Source of Truth for Entity Types
-export const ENTITY_TYPES = ['object_def', 'field_def', 'activity_def', 'view', 'derivation', 'metric', 'rule', 'validation_constraint', 'account', 'contact', 'product', 'feature', 'solution', 'useCase', 'persona', 'asset', 'page', 'brand', 'user', 'role', 'activity', 'opportunity', 'subscription', 'campaign', 'tenant', 'pipeline', 'assetGroup', 'workflow', 'workflow_step', 'workflow_step_type', 'workflow_enrollment', 'content', 'pipeline_stage', 'qualifier_def', 'assignment_pool', 'health_config', 'state_machine', 'interpreter_pipeline', 'interpreter_executor_def'] as const;
+// Single Source of Truth for Object Types (Record.type)
+export const OBJECT_TYPES = ['object_def', 'field_def', 'activity_def', 'view', 'derivation', 'metric', 'rule', 'validation_constraint', 'account', 'contact', 'product', 'feature', 'solution', 'useCase', 'persona', 'asset', 'page', 'brand', 'user', 'role', 'activity', 'opportunity', 'subscription', 'campaign', 'tenant', 'pipeline', 'assetGroup', 'workflow', 'workflow_step', 'workflow_step_type', 'workflow_enrollment', 'content', 'pipeline_stage', 'qualifier_def', 'assignment_pool', 'health_config', 'state_machine', 'interpreter_pipeline', 'interpreter_executor_def'] as const;
 
-export type EntityType = typeof ENTITY_TYPES[number];
+export type ObjectType = typeof OBJECT_TYPES[number];
 
 export const ACTIVITY_TYPES = ['data', 'asset', 'engagement', 'admin'] as const;
 export type ActivityType = typeof ACTIVITY_TYPES[number];
@@ -39,21 +39,29 @@ export type FieldInputType =
   | 'ref' // Legacy
   | 'Record'; // Canonical Invariant
 
+export type RecordValue = string | number | boolean | null;
+
 export interface Property {
-  value: string | number | boolean | null;
+  value: RecordValue;
   metadata?: Record<string, unknown>;
 }
 
 export interface Field {
   name: string;
   inputType: FieldInputType;
-  value?: string | number | boolean | null; // Simplified from Property for now, easier for UI
+  values: RecordValue[];
+  cardinality?: 'single' | 'multi';
   options?: string[]; // For select/multiselect
   required?: boolean;
 }
 
-export interface EntityData {
-  fieldGroups: FieldGroupStruct[];
+export interface FieldGroup {
+  name: string;
+  fields: Field[];
+}
+
+export interface RecordData {
+  fieldGroups: FieldGroup[];
   // Loose props allowed for legacy/migration support, but prefer structured access via fieldGroups
   [key: string]: any; 
 }
@@ -71,12 +79,12 @@ export interface DimensionStruct {
 
 export interface DataRecord {
   id: string; // UUID
-  type: EntityType; // Keep EntityType for now or rename to RecordType? User didn't request Type Enum rename.
+  type: ObjectType;
   slug: string; // Globally unique within Account
   name: string;
   summary?: string;
   description?: string;
-  data: EntityData; // Flexible schema-driven data
+  data: RecordData; // Flexible schema-driven data
   created_at: string; // ISO timestamp
   updated_at: string; // ISO timestamp
   content_hash?: string; // For idempotency
@@ -87,12 +95,12 @@ export interface DataRecord {
 
 export interface DataRecordInput {
   id?: string; // Optional for reseeding/staging
-  type: EntityType;
+  type: ObjectType;
   slug: string;
   name: string;
   summary?: string;
   description?: string;
-  data?: EntityData;
+  data?: RecordData;
   account_id: string;
   activity_type?: ActivityType; // Phase 11
   opportunity_stage?: OpportunityStage; // Phase 12
@@ -135,7 +143,7 @@ export interface RecordSnapshotStruct {
 
 export interface PropertyStruct {
   // Scalar value (string/number/boolean) OR Reference ID (string) if inputType='Record'
-  valueProperty: string | number | boolean | null;
+  valueProperty: RecordValue;
   // Optional embedded snapshot of the target record
   recordSnapshotStruct?: RecordSnapshotStruct; 
 }
@@ -150,10 +158,10 @@ export interface FieldStruct {
   propertyStructs: PropertyStruct[];
   // Additional properties from seed format (used by UI and seeding)
   required?: boolean;       // Field validation
+  cardinality?: 'single' | 'multi';
   ref_target?: string;      // Target object type for Record/ref fields
   dimension?: string;       // Dimension slug for dimension-based fields
   options?: string[];       // Predefined options for select/multiselect
-  value?: string | number | boolean | null | string[]; // Direct value storage (alternative to propertyStructs)
 }
 
 export interface FieldGroupStruct {
@@ -235,8 +243,8 @@ export type ConstraintType =
 export type ConstraintTrigger = 'pre_create' | 'pre_update' | 'validation_endpoint';
 export type ConstraintSeverity = 'error' | 'warning';
 
-export interface ValidationConstraintData extends EntityData {
-    entity_type: EntityType | '*';  // '*' matches all entity types
+export interface ValidationConstraintData extends RecordData {
+    entity_type: ObjectType | '*';  // '*' matches all entity types
     trigger: ConstraintTrigger;
     constraint_type: ConstraintType;
     severity?: ConstraintSeverity;
@@ -256,7 +264,7 @@ export interface ValidationConstraintData extends EntityData {
     error_message: string;
 }
 
-export interface AssignmentPoolData extends EntityData {
+export interface AssignmentPoolData extends RecordData {
     scope: 'account' | 'pipeline_type';
     pipeline_type?: PipelineType | string;
     member_ids: string[];           // Contact IDs in the pool
@@ -297,7 +305,7 @@ export interface WorkflowStepConfig {
     activation_energy?: number;
 }
 
-export interface WorkflowData extends EntityData {
+export interface WorkflowData extends RecordData {
     trigger_type: 'manual' | 'event' | 'segment';
     trigger_event?: string;
     trigger_segment?: string;
@@ -306,7 +314,7 @@ export interface WorkflowData extends EntityData {
     is_active: boolean;
 }
 
-export interface WorkflowEnrollmentData extends EntityData {
+export interface WorkflowEnrollmentData extends RecordData {
     workflow_id: string;
     contact_id: string;
     current_step_id: string;
@@ -320,8 +328,8 @@ export interface WorkflowEnrollmentData extends EntityData {
 // Health/Decay Types
 // ============================================================================
 
-export interface HealthConfigData extends EntityData {
-    entity_type: EntityType;
+export interface HealthConfigData extends RecordData {
+    entity_type: ObjectType;
     base_health: number;
     decay_formula: 'linear' | 'exponential';
     base_decay_rate: number;
@@ -371,10 +379,10 @@ export interface PageConfig {
 }
 
 /**
- * PageAssetData extends EntityData for page records.
+ * PageAssetData extends RecordData for page records.
  * Used when record.type === 'page'.
  */
-export interface PageAssetData extends EntityData {
+export interface PageAssetData extends RecordData {
   attribution: AssetAttribution;
   pageConfig: PageConfig;
   sections?: unknown[];     // SectionInstance[] serialized

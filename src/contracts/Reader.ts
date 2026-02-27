@@ -5,7 +5,8 @@ import { computeAllDerivations } from '../modules/ops/derivations.js';
 interface FrontendField {
     name: string;
     inputType: string;
-    value?: any;
+    values?: any[];
+    cardinality?: 'single' | 'multi';
     options?: string[];
     required?: boolean;
 }
@@ -74,19 +75,16 @@ export class Reader {
                      if (groupStruct.fieldStructs) {
                          for (const fieldStruct of groupStruct.fieldStructs) {
                              // Extract Value
-                             let value: any = null;
+                             let values: any[] = [];
                              if (fieldStruct.propertyStructs && fieldStruct.propertyStructs.length > 0) {
-                                  if (fieldStruct.isSelectMany) {
-                                       value = fieldStruct.propertyStructs.map(p => this.extractValue(p)).filter(v => v !== null);
-                                  } else {
-                                       value = this.extractValue(fieldStruct.propertyStructs[0]);
-                                  }
+                                  values = fieldStruct.propertyStructs.map(p => this.extractValue(p)).filter(v => v !== null);
                              }
      
                              fields.push({
                                  name: fieldStruct.nameField,
                                  inputType: fieldStruct.inputType,
-                                 value: value
+                                 values,
+                                 cardinality: fieldStruct.isSelectMany ? 'multi' : 'single'
                              });
                          }
                      }
@@ -119,7 +117,16 @@ export class Reader {
                          fields.push({
                              name: fieldStruct.nameField || fieldStruct.name,
                              inputType: fieldStruct.inputType || fieldStruct.type || 'text',
-                             value: fieldStruct.value ?? null,
+                             values: Array.isArray(fieldStruct.values)
+                                 ? fieldStruct.values
+                                 : fieldStruct.value === undefined
+                                     ? []
+                                     : Array.isArray(fieldStruct.value)
+                                         ? fieldStruct.value
+                                         : [fieldStruct.value],
+                             cardinality:
+                                 fieldStruct.cardinality ||
+                                 (fieldStruct.isSelectMany ? 'multi' : 'single'),
                              required: fieldStruct.required,
                              options: fieldStruct.options
                          });
@@ -215,7 +222,8 @@ export class Reader {
                  relationFields.push({
                      name: this.formatRelType(relType),
                      inputType: 'Record', // Canonical Type
-                     value: targetIds, // Array of IDs
+                     values: targetIds, // Array of IDs
+                     cardinality: 'multi',
                      // In a real implementation, we'd fetch the snapshots here or let the UI fetch by ID
                  });
              }

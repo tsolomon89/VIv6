@@ -3,9 +3,9 @@
  *
  * Tests for /api/state-machines endpoints:
  * - GET /api/state-machines - List state machines
- * - GET /api/state-machines/:entityType - Get state machine for entity type
- * - GET /api/state-machines/:entityType/states - Get valid states
- * - GET /api/state-machines/:entityType/transitions - Get allowed transitions
+ * - GET /api/state-machines/:ObjectType - Get state machine for entity type
+ * - GET /api/state-machines/:ObjectType/states - Get valid states
+ * - GET /api/state-machines/:ObjectType/transitions - Get allowed transitions
  * - POST /api/state-machines/validate - Validate a state transition
  */
 
@@ -107,7 +107,7 @@ describe('State Machines API', () => {
         });
     });
 
-    describe('GET /api/state-machines/:entityType', () => {
+    describe('GET /api/state-machines/:ObjectType', () => {
         it('returns state machine for valid entity type', async () => {
             seedStateMachine({
                 slug: 'activity-lifecycle',
@@ -144,7 +144,7 @@ describe('State Machines API', () => {
         });
     });
 
-    describe('GET /api/state-machines/:entityType/states', () => {
+    describe('GET /api/state-machines/:ObjectType/states', () => {
         it('returns valid states for entity type', async () => {
             seedStateMachine({
                 slug: 'activity-lifecycle',
@@ -163,7 +163,7 @@ describe('State Machines API', () => {
             const response = await client.get('/state-machines/activity/states');
 
             expect(response.status).toBe(200);
-            expect(response.data.data.entityType).toBe('activity');
+            expect(response.data.data.ObjectType).toBe('activity');
             expect(response.data.data.states).toContain('pending');
             expect(response.data.data.states).toContain('in_progress');
             expect(response.data.data.states).toContain('completed');
@@ -179,7 +179,7 @@ describe('State Machines API', () => {
         });
     });
 
-    describe('GET /api/state-machines/:entityType/transitions', () => {
+    describe('GET /api/state-machines/:ObjectType/transitions', () => {
         it('returns allowed transitions from a state', async () => {
             seedStateMachine({
                 slug: 'activity-lifecycle',
@@ -201,7 +201,7 @@ describe('State Machines API', () => {
             });
 
             expect(response.status).toBe(200);
-            expect(response.data.data.entityType).toBe('activity');
+            expect(response.data.data.ObjectType).toBe('activity');
             expect(response.data.data.currentState).toBe('pending');
             expect(response.data.data.transitions).toHaveLength(2);
             expect(response.data.data.transitions.map((t: any) => t.to)).toContain('in_progress');
@@ -256,14 +256,14 @@ describe('State Machines API', () => {
 
             const client = getClient();
             const response = await client.post('/state-machines/validate', {
-                entityType: 'activity',
+                ObjectType: 'activity',
                 currentState: 'pending',
                 newState: 'in_progress',
             });
 
             expect(response.status).toBe(200);
             expect(response.data.data.valid).toBe(true);
-            expect(response.data.data.entityType).toBe('activity');
+            expect(response.data.data.ObjectType).toBe('activity');
             expect(response.data.data.currentState).toBe('pending');
             expect(response.data.data.newState).toBe('in_progress');
         });
@@ -284,7 +284,7 @@ describe('State Machines API', () => {
 
             const client = getClient();
             const response = await client.post('/state-machines/validate', {
-                entityType: 'activity',
+                ObjectType: 'activity',
                 currentState: 'pending',
                 newState: 'completed',  // Invalid: should go through in_progress
             });
@@ -298,7 +298,7 @@ describe('State Machines API', () => {
         it('returns 400 for missing required fields', async () => {
             const client = getClient();
             const response = await client.post('/state-machines/validate', {
-                entityType: 'activity',
+                ObjectType: 'activity',
                 // Missing currentState and newState
             });
 
@@ -308,7 +308,7 @@ describe('State Machines API', () => {
         it('allows transition when no state machine is defined', async () => {
             const client = getClient();
             const response = await client.post('/state-machines/validate', {
-                entityType: 'contact',  // No state machine defined
+                ObjectType: 'contact',  // No state machine defined
                 currentState: 'active',
                 newState: 'inactive',
             });
@@ -319,3 +319,4 @@ describe('State Machines API', () => {
         });
     });
 });
+

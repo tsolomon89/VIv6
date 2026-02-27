@@ -81,7 +81,7 @@ describe('Core: Compiler (derivePage)', () => {
     const page = derivePage('my-product');
     expect(page).not.toBeNull();
     expect(page!.entitySlug).toBe('my-product');
-    expect(page!.entityType).toBe('product');
+    expect(page!.ObjectType).toBe('product');
     expect(page!.entityName).toBe('My Product');
     expect(page!.route).toBe('/products/my-product');
 
@@ -332,3 +332,4 @@ describe('Core: Compiler (derivePage)', () => {
     expect(page.sections[0].entities[0].data).toEqual({});
   });
 });
+

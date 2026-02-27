@@ -41,7 +41,7 @@ export interface ListInterpreterExecutorsResult {
 export interface ValidateInterpreterStageArgs {
   accountId?: string;
   event: InterpreterEvent;
-  entityType: string;
+  ObjectType: string;
   stage: {
     executor: string;
     order?: number;
@@ -100,15 +100,15 @@ export function listInterpreterExecutorsHandler(accountId: string = DEFAULT_ACCO
 export function validateInterpreterStageHandler(args: ValidateInterpreterStageArgs): ValidateInterpreterStageResult {
   const accountId = args.accountId || DEFAULT_ACCOUNT_ID;
   const event = args.event;
-  const entityType = args.entityType;
+  const ObjectType = args.ObjectType;
   const stage = args.stage;
 
   if (!VALID_EVENTS.has(event)) {
     throw new Error(`Invalid event: ${event}`);
   }
 
-  if (!entityType || typeof entityType !== 'string') {
-    throw new Error('entityType is required');
+  if (!ObjectType || typeof ObjectType !== 'string') {
+    throw new Error('ObjectType is required');
   }
 
   if (!stage || typeof stage.executor !== 'string' || !stage.executor.trim()) {
@@ -123,7 +123,7 @@ export function validateInterpreterStageHandler(args: ValidateInterpreterStageAr
   const errors = validateInterpreterStageAgainstDefinition({
     accountId,
     event,
-    entityType,
+    ObjectType,
     stage: {
       executor: executorKey,
       order: typeof stage.order === 'number' ? stage.order : 0,
@@ -148,4 +148,5 @@ export function validateInterpreterStageHandler(args: ValidateInterpreterStageAr
     },
   };
 }
+
 

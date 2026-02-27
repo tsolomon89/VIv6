@@ -1,5 +1,6 @@
 
 import { z } from 'zod';
+import type { ObjectType } from '../types.js';
 
 // --- Base Entity Schema (Universal) ---
 export const BaseEntitySchema = z.object({
@@ -167,4 +168,5 @@ export const EntitySchemas = {
     page: PageEntitySchema,
 };
 
-export type EntityType = keyof typeof EntitySchemas;
+export type { ObjectType };
+

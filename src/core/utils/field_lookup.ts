@@ -111,37 +111,37 @@ function loadFieldConfigs(): Map<string, FieldMapping> {
 /**
  * Get the display name for a field given its canonical name and entity type.
  *
- * @param entityType - The entity type (e.g., 'contact', 'opportunity')
+ * @param ObjectType - The entity type (e.g., 'contact', 'opportunity')
  * @param canonicalName - The canonical field name (e.g., 'email', 'health_score')
  * @returns The display name (e.g., 'Email', 'Health Score') or the canonical name if not found
  */
-export function getFieldDisplayName(entityType: string, canonicalName: string): string {
+export function getFieldDisplayName(ObjectType: string, canonicalName: string): string {
     const configs = loadFieldConfigs();
-    const entityFields = configs.get(entityType);
+    const entityFields = configs.get(ObjectType);
     return entityFields?.[canonicalName] ?? canonicalName;
 }
 
 /**
  * Get all field mappings for an entity type.
  *
- * @param entityType - The entity type
+ * @param ObjectType - The entity type
  * @returns Object mapping canonical names to display names
  */
-export function getFieldMappings(entityType: string): FieldMapping {
+export function getFieldMappings(ObjectType: string): FieldMapping {
     const configs = loadFieldConfigs();
-    return configs.get(entityType) ?? {};
+    return configs.get(ObjectType) ?? {};
 }
 
 /**
  * Check if a display name matches a canonical field name for an entity type.
  *
- * @param entityType - The entity type
+ * @param ObjectType - The entity type
  * @param displayName - The display name to check
  * @param canonicalName - The canonical name to match against
  * @returns True if the display name matches the canonical field
  */
-export function isFieldMatch(entityType: string, displayName: string, canonicalName: string): boolean {
-    const expectedDisplayName = getFieldDisplayName(entityType, canonicalName);
+export function isFieldMatch(ObjectType: string, displayName: string, canonicalName: string): boolean {
+    const expectedDisplayName = getFieldDisplayName(ObjectType, canonicalName);
     return displayName === expectedDisplayName || displayName === canonicalName;
 }
 
@@ -194,3 +194,4 @@ export const ActivityFields = {
     DUE_DATE: 'due_date',
     COMPLETED_AT: 'completed_at',
 } as const;
+

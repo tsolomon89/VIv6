@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { createRecord } from './records.js';
 import { createRelationship } from './relationships.js';
-import { DataRecord, EntityData } from './types.js';
+import { DataRecord, RecordData } from './types.js';
 import { SYSTEM_ACCOUNT_ID } from './constants.js';
 
 export interface ProvisioningResult {
@@ -23,7 +23,7 @@ export function provisionAccount(
   const accountId = `acc-${domain.replace(/\./g, '-')}-${randomUUID().slice(0, 8)}`;
   const accountSlug = domain.replace(/\./g, '-');
   
-  const accountData: EntityData = {
+  const accountData: RecordData = {
     domain,
     plan,
     status: 'active',
@@ -46,7 +46,7 @@ export function provisionAccount(
   // We use the email as the slug for uniqueness within Oblio Root.
   const contactSlug = `contact-${ownerEmail.replace(/[@.]/g, '-')}`;
   
-  const contactData: EntityData = {
+  const contactData: RecordData = {
     email: ownerEmail,
     is_verified: false
   };
@@ -67,7 +67,7 @@ export function provisionAccount(
   // So we create a Membership Entity.
   
   const membershipId = `mem-${randomUUID()}`;
-  const membershipData: EntityData = {
+  const membershipData: RecordData = {
     roles: ['admin'],
     contact_ref: ownerContact.id,
     account_ref: account.id
@@ -100,3 +100,4 @@ export function provisionAccount(
 
   return { account, ownerContact, membership };
 }
+

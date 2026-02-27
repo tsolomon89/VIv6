@@ -1,4 +1,4 @@
-import { DataRecordInput, FieldStruct, RecordStruct, EntityData } from './types.js';
+import { DataRecordInput, FieldStruct, RecordStruct, RecordData } from './types.js';
 
 // --- Types ---
 type Visitor = (node: any, metadata: { type: 'record' | 'group' | 'field' | 'value', path: string[] }) => void;
@@ -74,3 +74,4 @@ export function getFieldValues(record: RecordStruct | DataRecordInput, fieldRefI
         return p.valueProperty;
     });
 }
+

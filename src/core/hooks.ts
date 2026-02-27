@@ -123,7 +123,7 @@ async function emitLifecycleEvent(params: {
             const definitionErrors = validateInterpreterStageAgainstDefinition({
                 accountId,
                 event,
-                entityType: type,
+                ObjectType: type,
                 stage,
             });
             if (definitionErrors.length > 0) {
@@ -286,3 +286,4 @@ export const hooks = {
     });
   }
 };
+

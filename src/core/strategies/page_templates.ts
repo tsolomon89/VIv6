@@ -9,7 +9,7 @@ import { db } from '../db.js';
  * 2. Match on subject_target with NULL domain_type (generic template)
  * 3. No match - return null
  */
-export function findPageTemplateStrategy(entityType: string, domainType?: string): any | null {
+export function findPageTemplateStrategy(ObjectType: string, domainType?: string): any | null {
   // Try domain-specific template first
   if (domainType) {
     const domainSpecific = db.prepare(`
@@ -17,7 +17,7 @@ export function findPageTemplateStrategy(entityType: string, domainType?: string
       FROM page_templates
       WHERE subject_target = ? AND domain_type = ?
       LIMIT 1
-    `).get(entityType, domainType) as any;
+    `).get(ObjectType, domainType) as any;
 
     if (domainSpecific) {
       return {
@@ -33,7 +33,7 @@ export function findPageTemplateStrategy(entityType: string, domainType?: string
     FROM page_templates
     WHERE subject_target = ? AND domain_type IS NULL
     LIMIT 1
-  `).get(entityType) as any;
+  `).get(ObjectType) as any;
 
   if (generic) {
     return {
@@ -48,7 +48,7 @@ export function findPageTemplateStrategy(entityType: string, domainType?: string
     FROM page_templates
     WHERE subject_target = ?
     LIMIT 1
-  `).get(entityType) as any;
+  `).get(ObjectType) as any;
 
   if (!anyMatch) return null;
 
@@ -57,3 +57,4 @@ export function findPageTemplateStrategy(entityType: string, domainType?: string
     sections: JSON.parse(anyMatch.sections || '[]'),
   };
 }
+

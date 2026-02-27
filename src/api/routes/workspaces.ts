@@ -25,6 +25,7 @@ import {
   restoreToVersion,
 } from '../../modules/config_workspace/index.js';
 import { CONFIG_TYPES, validateConfigData, getConfigType, ConfigTypeSlug } from '../../core/config_registry.js';
+import { firstQueryValue, parseQueryInt } from '../../core/http/query.js';
 
 const router = Router();
 
@@ -38,12 +39,14 @@ const router = Router();
  */
 router.get('/', ...protectedRoute, (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { account_id, status, limit } = req.query;
+    const accountId = firstQueryValue(req.query.account_id);
+    const status = firstQueryValue(req.query.status);
+    const limit = parseQueryInt(req.query.limit);
 
     const workspaces = listWorkspaces({
-      account_id: account_id as string,
+      account_id: accountId,
       status: status as any,
-      limit: limit ? parseInt(limit as string, 10) : undefined,
+      limit,
     });
 
     res.json({ data: workspaces });
@@ -377,7 +380,7 @@ router.get('/config-types', (req: Request, res: Response, next: NextFunction) =>
         slug,
         displayName: def.displayName,
         description: def.description,
-        entityType: def.entityType,
+        ObjectType: def.ObjectType,
       };
     });
 
@@ -432,7 +435,7 @@ router.post('/validate', (req: Request, res: Response, next: NextFunction) => {
 router.get('/versions/:configType/:configId', ...protectedRoute, (req: Request, res: Response, next: NextFunction) => {
   try {
     const { configType, configId } = req.params;
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+    const limit = parseQueryInt(req.query.limit, 10) || 10;
 
     const versions = getVersionHistory(configType, configId, limit);
 
@@ -471,3 +474,4 @@ router.post('/versions/:configType/:configId/restore', ...protectedRoute, async 
 });
 
 export default router;
+

@@ -16,6 +16,7 @@
 
 ## D
 - **DataRecord**: The Data Transfer Object (DTO) representing the flat DB projection of a Record, used in API transit and business logic.
+- **RecordData**: Canonical API/runtime payload shape: `fieldGroups -> fields -> values[]`.
 
 ## F
 - **Feature**: A functional capability (`obj_feature`) sold as part of a Product.
@@ -31,6 +32,7 @@
 
 ## O
 - **ObjectDef**: A Meta-Record (`obj_object_def`) defining a Type of Record (Schema).
+- **ObjectType**: Canonical discriminant for `DataRecord.type`.
 - **Oblio**: Tenant #0. The root tenant that owns the Canonical Schema.
 - **Opportunity**: A record tracking a potential sale or conversion process.
 
@@ -41,6 +43,7 @@
 
 ## R
 - **RecordStruct**: The strict, denormalized, hydrated UI format (TypeScript interface). Distinct from the flat `DataRecord`.
+- **Record Value Shape**: Field values are always arrays (`values[]`). Cardinality (`single|multi`) is controlled by mapping/FieldDef.
 - **Resource Economy**: The set of rules governing Action Capacity and Entity Health.
 
 ## S

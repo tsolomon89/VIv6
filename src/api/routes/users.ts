@@ -52,16 +52,16 @@ router.post('/invite', ...protectedRoute, async (req: Request, res: Response, ne
             {
                 name: 'Identity',
                 fields: [
-                    { name: 'Email', inputType: 'text', value: email, required: true },
-                    { name: 'First Name', inputType: 'text', value: '' },
-                    { name: 'Last Name', inputType: 'text', value: '' }
+                    { name: 'Email', inputType: 'text', values: [email], required: true },
+                    { name: 'First Name', inputType: 'text', values: [''] },
+                    { name: 'Last Name', inputType: 'text', values: [''] }
                 ]
             },
             {
                 name: 'Activity',
                 fields: [
-                    { name: 'Status', inputType: 'select', value: 'Pending', options: ['Active', 'Suspended', 'Pending'] },
-                    { name: 'Last Login', inputType: 'date', value: null }
+                    { name: 'Status', inputType: 'select', values: ['Pending'], options: ['Active', 'Suspended', 'Pending'] },
+                    { name: 'Last Login', inputType: 'date', values: [null] }
                 ]
             }
         ]

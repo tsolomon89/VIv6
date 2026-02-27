@@ -3,7 +3,7 @@
  * Victory Initiative MCP Server
  * 
  * Exposes entity and relationship management tools for AI agents.
- * uses strict typing for EntityData (FieldGroups) while shielding the complexity from simple requests.
+ * uses strict typing for RecordData (FieldGroups) while shielding the complexity from simple requests.
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -32,8 +32,9 @@ import {
   getRelationshipsTo,
   deleteRelationship,
 } from '../core/relationships.js';
-import { normalizeEntityData, FieldGroup, FieldGroupSchema } from '../core/schema/validation.js';
-import { EntityType, EntityData, Field, DataRecord, ENTITY_TYPES } from '../core/types.js';
+import { normalizeRecordData, FieldGroupSchema } from '../core/schema/validation.js';
+import type { FieldGroupInput } from '../core/record_data.js';
+import { ObjectType, DataRecord, OBJECT_TYPES } from '../core/types.js';
 import {
   listDimensionTypes,
   listDimensionValues,
@@ -103,7 +104,7 @@ function getEntityBySlug(slug: string, accountId?: string): DataRecord | undefin
   return row ? getRecord(row.id) : undefined;
 }
 
-function listEntities(type?: EntityType, accountId?: string): DataRecord[] {
+function listEntities(type?: ObjectType, accountId?: string): DataRecord[] {
   if (accountId) {
     return listRecords(accountId, type);
   }
@@ -165,7 +166,7 @@ server.registerTool(
   {
     description: 'Create a new entity. Supports both simple key-value `data` (converted to Default group) and structured `fieldGroups`.',
     inputSchema: {
-      type: z.enum(ENTITY_TYPES).describe('The entity type'),
+      type: z.enum(OBJECT_TYPES).describe('The entity type'),
       name: z.string().min(1).describe('Display name for the entity'),
       slug: z.string().min(1).regex(/^[a-z0-9-]+$/).describe('URL-friendly identifier (lowercase, hyphens only)'),
       description: z.string().optional().describe('Optional description'),
@@ -176,14 +177,14 @@ server.registerTool(
   },
   async (args) => {
     try {
-      const entityData = normalizeEntityData(args.data, args.fieldGroups as FieldGroup[]);
+      const recordData = normalizeRecordData(args.data, args.fieldGroups as FieldGroupInput[]);
       
       const entity = await createEntity({
-        type: args.type as EntityType,
+        type: args.type as ObjectType,
         name: args.name,
         slug: args.slug,
         description: args.description,
-        data: entityData,
+        data: recordData,
         // Default to System Account (Oblio) if not specified
         account_id: args.account_id || SYSTEM_ACCOUNT_ID,
       });
@@ -238,7 +239,7 @@ server.registerTool(
   {
     description: 'List all entities, optionally filtered by type',
     inputSchema: {
-      type: z.enum(ENTITY_TYPES).optional().describe('Optional: filter by entity type'),
+      type: z.enum(OBJECT_TYPES).optional().describe('Optional: filter by entity type'),
       account_id: z.string().uuid().optional().describe('Optional: filter by account ID'),
     },
   },
@@ -291,9 +292,9 @@ server.registerTool(
       
       // For updates, we need to handle data merging carefully.
       // Current implementation of updateEntity in core does a simple merge.
-      // We will normalize the input updates to EntityData structure.
+      // We will normalize the input updates to RecordData structure.
       if (args.data || args.fieldGroups) {
-        updates.data = normalizeEntityData(args.data, args.fieldGroups as FieldGroup[]);
+        updates.data = normalizeRecordData(args.data, args.fieldGroups as FieldGroupInput[]);
       }
 
       const entity = await updateEntity(args.id, updates);
@@ -417,7 +418,7 @@ server.registerResource(
         uri: 'vi://schemas/entity-types',
         mimeType: 'application/json',
         text: JSON.stringify({
-          types: ENTITY_TYPES,
+          types: OBJECT_TYPES,
           description: 'Valid entity types in the Victory Initiative knowledge graph',
         }),
       },
@@ -451,11 +452,11 @@ server.registerResource(
   { description: 'List entities of a specific type. Template: vi://entities/{type}' },
   async (uri) => {
     const type = uri.href.split('/').pop();
-    if (!type || !ENTITY_TYPES.includes(type as any)) {
+    if (!type || !OBJECT_TYPES.includes(type as any)) {
       throw new Error(`Invalid entity type: ${type}`);
     }
     
-    const entities = listEntities(type as EntityType);
+    const entities = listEntities(type as ObjectType);
     return {
       contents: [
         {
@@ -780,7 +781,7 @@ server.registerTool(
             type: 'text',
             text: JSON.stringify({
               recordId: args.record_id,
-              entityType: targetRecord.type,
+              ObjectType: targetRecord.type,
               computedFields: results,
             }, null, 2),
           },
@@ -975,7 +976,7 @@ server.registerTool(
             type: 'text',
             text: JSON.stringify({
               targetRecordId: args.target_record_id,
-              entityType: targetRecord.type,
+              ObjectType: targetRecord.type,
               metrics: results,
             }, null, 2),
           },
@@ -1874,7 +1875,7 @@ server.registerTool(
   async (args) => {
     try {
       const result = getStateMachineForEntity({
-        entityType: args.entity_type,
+        ObjectType: args.entity_type,
         accountId: args.account_id,
       });
       return {
@@ -1904,7 +1905,7 @@ server.registerTool(
   async (args) => {
     try {
       const result = validateStateTransition({
-        entityType: args.entity_type,
+        ObjectType: args.entity_type,
         currentState: args.current_state,
         newState: args.new_state,
         accountId: args.account_id,
@@ -1935,7 +1936,7 @@ server.registerTool(
   async (args) => {
     try {
       const result = getAllowedTransitionsHandler({
-        entityType: args.entity_type,
+        ObjectType: args.entity_type,
         currentState: args.current_state,
         accountId: args.account_id,
       });
@@ -2147,7 +2148,7 @@ server.registerTool(
       const result = validateInterpreterStageHandler({
         accountId: args.account_id,
         event: args.event,
-        entityType: args.entity_type,
+        ObjectType: args.entity_type,
         stage: {
           executor: args.stage.executor,
           order: args.stage.order,
@@ -2180,3 +2181,4 @@ main().catch((error) => {
   console.error('Failed to start MCP server:', error);
   process.exit(1);
 });
+

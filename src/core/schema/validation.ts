@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { EntityData } from '../types.js';
+import { RecordData } from '../types.js';
+import {
+  normalizeRecordData as normalizeRecordDataHelper,
+  FieldGroupInput,
+} from '../record_data.js';
 
 // ============================================================================
 // SCHEMAS
@@ -8,17 +12,35 @@ import { EntityData } from '../types.js';
 export const FieldSchema = z.object({
   name: z.string(),
   inputType: z.enum(['text', 'textarea', 'number', 'currency', 'date', 'select', 'multiselect', 'image', 'url', 'richtext', 'boolean']),
-  value: z.union([z.string(), z.number(), z.boolean(), z.null()]).optional(),
+  cardinality: z.enum(['single', 'multi', 'one', 'many']).optional(),
+  isSelectMany: z.boolean().optional(),
+  values: z.array(z.union([z.string(), z.number(), z.boolean(), z.null()])).default([]),
+  value: z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.union([z.string(), z.number(), z.boolean(), z.null()]))]).optional(),
   options: z.array(z.string()).optional(),
   required: z.boolean().optional(),
-});
+}).transform((field) => ({
+  ...field,
+  cardinality:
+    field.cardinality === 'one'
+      ? 'single'
+      : field.cardinality === 'many'
+        ? 'multi'
+        : field.cardinality ?? (field.isSelectMany ? 'multi' : field.inputType === 'multiselect' ? 'multi' : 'single'),
+  values: Array.isArray(field.values) && field.values.length > 0
+    ? field.values
+    : field.value === undefined
+      ? []
+      : Array.isArray(field.value)
+        ? field.value
+        : [field.value],
+}));
 
 export const FieldGroupSchema = z.object({
   name: z.string(),
   fields: z.array(FieldSchema),
 });
 
-export const EntityDataSchema = z.object({
+export const RecordDataSchema = z.object({
   fieldGroups: z.array(FieldGroupSchema).default([]),
 });
 
@@ -26,52 +48,21 @@ export const EntityDataSchema = z.object({
 // HELPERS
 // ============================================================================
 
-export interface FieldGroup {
-  name: string;
-  fields: z.infer<typeof FieldSchema>[];
-}
-
 /**
- * Normalizes input data into strict EntityData structure.
+ * Normalizes input data into strict RecordData structure.
  * Converts simple key-value pairs into a "Default" field group if structured data is missing.
  */
-export function normalizeEntityData(
+export function normalizeRecordData(
   simpleData?: Record<string, unknown>, 
-  explicitFieldGroups?: FieldGroup[]
-): EntityData {
-  const result: EntityData = {
-    fieldGroups: explicitFieldGroups || []
-  };
-
-  // Convert simple key-value data to a "Default" field group
-  if (simpleData && Object.keys(simpleData).length > 0) {
-    const defaultFields = Object.entries(simpleData).map(([key, value]) => ({
-      name: key,
-      inputType: 'text' as const, // Default to text, AI can recognize this limitation
-      value: value as string | number | boolean | null,
-    }));
-
-    // Check if Default group already exists
-    const groups = result.fieldGroups as FieldGroup[];
-    const existingDefault = groups.find((g) => g.name === 'Default');
-    if (existingDefault) {
-      existingDefault.fields.push(...defaultFields);
-    } else {
-      result.fieldGroups.push({
-        name: 'Default',
-        fields: defaultFields
-      });
-    }
-  }
-
-  // Final validation pass (strips unknown keys if we used parse, but here we construct)
-  return result;
+  explicitFieldGroups?: FieldGroupInput[]
+): RecordData {
+  return normalizeRecordDataHelper(simpleData, explicitFieldGroups);
 }
 
 /**
- * Validates any object against the strict EntityData schema.
+ * Validates any object against the strict RecordData schema.
  * Throws if invalid.
  */
-export function validateEntityData(data: unknown): EntityData {
-  return EntityDataSchema.parse(data);
+export function validateRecordData(data: unknown): RecordData {
+  return RecordDataSchema.parse(data);
 }

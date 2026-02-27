@@ -16,7 +16,7 @@ import {
     StateMachineDefinition,
     TransitionResult
 } from '../../modules/ops/state_machine.js';
-import { EntityType } from '../../core/types.js';
+import { ObjectType } from '../../core/types.js';
 
 // ============================================================================
 // TYPES
@@ -35,26 +35,26 @@ export interface ListStateMachinesResult {
 }
 
 export interface GetStateMachineArgs {
-    entityType: string;
+    ObjectType: string;
     accountId?: string;
 }
 
 export interface GetStateMachineResult {
     found: boolean;
-    entityType: string;
+    ObjectType: string;
     definition?: StateMachineDefinition;
     error?: string;
 }
 
 export interface ValidateTransitionArgs {
-    entityType: string;
+    ObjectType: string;
     currentState: string;
     newState: string;
     accountId?: string;
 }
 
 export interface ValidateTransitionResult {
-    entityType: string;
+    ObjectType: string;
     currentState: string;
     newState: string;
     valid: boolean;
@@ -63,13 +63,13 @@ export interface ValidateTransitionResult {
 }
 
 export interface GetAllowedTransitionsArgs {
-    entityType: string;
+    ObjectType: string;
     currentState: string;
     accountId?: string;
 }
 
 export interface GetAllowedTransitionsResult {
-    entityType: string;
+    ObjectType: string;
     currentState: string;
     transitions: Array<{
         to: string;
@@ -131,21 +131,21 @@ export function listStateMachines(accountId: string = DEFAULT_ACCOUNT_ID): ListS
  * Get state machine definition for a specific entity type
  */
 export function getStateMachineForEntity(args: GetStateMachineArgs): GetStateMachineResult {
-    const { entityType, accountId = DEFAULT_ACCOUNT_ID } = args;
+    const { ObjectType, accountId = DEFAULT_ACCOUNT_ID } = args;
 
-    const definition = getStateMachine(entityType as EntityType, accountId);
+    const definition = getStateMachine(ObjectType as ObjectType, accountId);
 
     if (!definition) {
         return {
             found: false,
-            entityType,
-            error: `No state machine defined for entity type: ${entityType}`
+            ObjectType,
+            error: `No state machine defined for entity type: ${ObjectType}`
         };
     }
 
     return {
         found: true,
-        entityType,
+        ObjectType,
         definition
     };
 }
@@ -154,10 +154,10 @@ export function getStateMachineForEntity(args: GetStateMachineArgs): GetStateMac
  * Validate whether a state transition is allowed
  */
 export function validateStateTransition(args: ValidateTransitionArgs): ValidateTransitionResult {
-    const { entityType, currentState, newState, accountId = DEFAULT_ACCOUNT_ID } = args;
+    const { ObjectType, currentState, newState, accountId = DEFAULT_ACCOUNT_ID } = args;
 
     const result = validateTransition(
-        entityType as EntityType,
+        ObjectType as ObjectType,
         currentState,
         newState,
         undefined,
@@ -165,10 +165,10 @@ export function validateStateTransition(args: ValidateTransitionArgs): ValidateT
     );
 
     // Get allowed transitions for context
-    const allowed = getAllowedTransitions(entityType as EntityType, currentState, accountId);
+    const allowed = getAllowedTransitions(ObjectType as ObjectType, currentState, accountId);
 
     return {
-        entityType,
+        ObjectType,
         currentState,
         newState,
         valid: result.valid,
@@ -181,12 +181,12 @@ export function validateStateTransition(args: ValidateTransitionArgs): ValidateT
  * Get all allowed transitions from a given state
  */
 export function getAllowedTransitionsHandler(args: GetAllowedTransitionsArgs): GetAllowedTransitionsResult {
-    const { entityType, currentState, accountId = DEFAULT_ACCOUNT_ID } = args;
+    const { ObjectType, currentState, accountId = DEFAULT_ACCOUNT_ID } = args;
 
-    const transitions = getAllowedTransitions(entityType as EntityType, currentState, accountId);
+    const transitions = getAllowedTransitions(ObjectType as ObjectType, currentState, accountId);
 
     return {
-        entityType,
+        ObjectType,
         currentState,
         transitions: transitions.map(t => ({
             to: t.to,
@@ -198,17 +198,18 @@ export function getAllowedTransitionsHandler(args: GetAllowedTransitionsArgs): G
 /**
  * Get all valid states for an entity type
  */
-export function getValidStatesHandler(entityType: string, accountId: string = DEFAULT_ACCOUNT_ID): {
-    entityType: string;
+export function getValidStatesHandler(ObjectType: string, accountId: string = DEFAULT_ACCOUNT_ID): {
+    ObjectType: string;
     states: string[];
     initialState?: string;
 } {
-    const states = getValidStates(entityType as EntityType, accountId);
-    const definition = getStateMachine(entityType as EntityType, accountId);
+    const states = getValidStates(ObjectType as ObjectType, accountId);
+    const definition = getStateMachine(ObjectType as ObjectType, accountId);
 
     return {
-        entityType,
+        ObjectType,
         states,
         initialState: definition?.initialState
     };
 }
+

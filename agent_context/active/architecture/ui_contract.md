@@ -1,67 +1,34 @@
-# UI Contract: Records vs Structs
+# UI Contract: Record Data Flow
 
-> **Principle**: The Database speaks "Fact". The UI speaks "Struct".
-> **Flow**: Data hydrates Down. Actions flow Up.
+> **Principle**: Storage uses `RecordStruct`; API/runtime uses `RecordData`; UI renders projected views.
 
-## 1. The Type Hierarchy
+## 1. Canonical Data Shapes
 
-### A. The Storage Primitive (`*Record`)
-*   **Format**: JSON-serializable `RecordStruct` (ID, refID, FieldGroups).
-*   **Use Case**: API Responses, Database Rows, Caching.
-*   **Nature**: Normalized, Reference-heavy.
+### Storage Primitive
+- `RecordStruct` is the canonical persisted/hydrated structure.
+- Relationships are fields with `inputType = "Record"` and reference values.
 
-### B. The Application Struct (`*Struct`)
-*   **Format**: TypeScript Interface with resolved types.
-*   **Use Case**: React Props, Computation.
-*   **Nature**: Denormalized, Read-Only, Hydrated.
+### API/Runtime Payload
+- `DataRecord.type` is `ObjectType`.
+- `DataRecord.data` is `RecordData`.
+- `RecordData` shape is always:
+  - `fieldGroups[]`
+  - `fields[]`
+  - `values[]` (always array)
 
-**Example Transformation**:
-```typescript
-// Storage (Record)
-{
-  "id": "rec-123",
-  "fields": [ { "name": "owner", "ref": "user-456" } ]
-}
+### Cardinality
+- Cardinality is mapping/schema data (`FieldDef.cardinality: single | multi`).
+- Payload shape does not switch between `value` and `values`.
 
-// UI (Struct)
-{
-  id: "rec-123",
-  owner: { id: "user-456", name: "Jane Doe", avatar: "..." } // Hydrated!
-}
-```
+## 2. Boundary Rules
 
-## 2. Binding Rules
+1. Writers may receive legacy single `value` input, but must normalize to `values[]` before persistence.
+2. Readers must emit canonical `values[]` payloads.
+3. UI components must treat field values as arrays and apply cardinality behavior from mapping metadata.
 
-1.  **Immutable Props**: Components NEVER mutate their props.
-    - ❌ `props.user.name = "Bob"`
-    - ✅ `updateAction(props.user.id, { name: "Bob" })`
+## 3. Runtime Modules
 
-2.  **Nullable by Default**: The UI must handle "Loading" or "Missing" states gracefully.
-    - `Reference` fields might trigger a fetch. The Struct should handle the `loading` state or providing a skeleton.
-
-3.  **No SQL in UI**: Components should define their data requirements via **Fragments** or **Selectors**, never raw queries.
-
-## 3. Optimistic UI Contract
-Since the backend is an Event Log (Async), the UI MUST be Optimistic.
-1.  **User Action**: "Archive Contact".
-2.  **Local State**: Mark Contact as `archived` in Store.
-3.  **Network**: Send `ActivityType=Archive`.
-4.  **Reconciliation**: If Event fails, revert Local State and toast Error.
-
-## 4. Canonical Implementation: The Dual-Head Architecture
-
-> **Reality**: The system uses an **Assembler Pattern**, not a runtime Hydration Layer.
-
-### A. The Writer: Strict Schema (MCP)
-- **Location**: `src/mcp/server.ts` & `src/core/schema/validation.ts`
-- **Role**: Enforces the `FieldGroup` structure when data is *written* to the database.
-- **Principle**: "Garbage Out, Quality In".
-
-### B. The Reader: Flattened Structs (Assembler)
-- **Location**: `src/build/assembler.ts`
-- **Role**: Flattens the complex `Entity` structure into simple Key-Value pairs for the UI.
-- **Function**: `Reader.project(data: EntityData): Record<string, any>`
-
-### C. The Visual Bridge
-- **Location**: `src/ui/src/features/VisualEditor/Bridge.ts`
-- **Role**: Connects the iframe (Canvas) to the Editor shell, passing these flattened structs.
+- Normalization and cardinality enforcement: `src/core/record_data.ts`
+- API schema boundary: `src/api/schemas.ts`
+- Core schema validation boundary: `src/core/schema/validation.ts`
+- Record CRUD service boundary: `src/modules/content/services.ts`

@@ -1,9 +1,9 @@
 
-import { EntityType } from './definitions';
+import type { ObjectType } from '../types.js';
 
 export interface RelationshipRule {
-    source: EntityType;
-    target: EntityType;
+    source: ObjectType;
+    target: ObjectType;
     type: string;     // The verb (e.g., 'offers', 'uses')
     inverse: string;  // The inverse verb (e.g., 'supported_by', 'used_by')
     cardinality: 'one-to-one' | 'one-to-many' | 'many-to-many';
@@ -28,6 +28,7 @@ export const RELATIONSHIP_RULES: RelationshipRule[] = [
     { source: 'solution', target: 'persona', type: 'targets', inverse: 'targeted_by', cardinality: 'many-to-many' },
 ];
 
-export function getValidRelationships(sourceType: EntityType) {
+export function getValidRelationships(sourceType: ObjectType) {
     return RELATIONSHIP_RULES.filter(r => r.source === sourceType);
 }
+

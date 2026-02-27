@@ -9,7 +9,7 @@ import {
     deleteRecord,
 } from '../core/records.js';
 import { SYSTEM_ACCOUNT_ID } from '../core/constants.js';
-import { EntityType } from '../core/types.js';
+import { ObjectType } from '../core/types.js';
 
 const app = express();
 const PORT = 3001; // API Port (Changed from 3000 to avoid Vite conflict)
@@ -25,7 +25,7 @@ app.get('/api/entities', (req, res) => {
             (typeof account_id === 'string' && account_id) ||
             (typeof brandId === 'string' && brandId) ||
             SYSTEM_ACCOUNT_ID;
-        const entities = listRecords(accountId, type as EntityType | undefined);
+        const entities = listRecords(accountId, type as ObjectType | undefined);
         res.json(entities);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -102,3 +102,4 @@ app.post('/api/agent/rewrite', (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 API Server running at http://localhost:${PORT}`);
 });
+

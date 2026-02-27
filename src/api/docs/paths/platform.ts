@@ -178,12 +178,12 @@
  *       200:
  *         description: State machine list
  *
- * /api/state-machines/{entityType}:
+ * /api/state-machines/{ObjectType}:
  *   get:
  *     tags: [Schema]
  *     summary: Get state machine for entity type
  *     parameters:
- *       - name: entityType
+ *       - name: ObjectType
  *         in: path
  *         required: true
  *         schema:
@@ -349,3 +349,4 @@
  *         description: Upload metadata
  */
 export {};
+

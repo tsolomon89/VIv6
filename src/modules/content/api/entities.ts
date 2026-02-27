@@ -1,153 +1,124 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import {
-  createEntity,
-  getEntity,
-  getEntityBySlug,
-  updateEntity,
-  deleteEntity,
-  listEntities,
+  createRecord,
+  getRecord,
+  getRecordBySlug,
+  updateRecord,
+  deleteRecord,
+  listRecords,
 } from '../services.js';
 import { checkIdempotency } from '../../../core/idempotency.js';
 import { validate, validateQuery } from '../../../api/middleware/validation.js';
 import {
-  EntityInputSchema,
-  EntityUpdateSchema,
-  EntityQuerySchema,
+  RecordInputSchema,
+  RecordUpdateSchema,
+  RecordQuerySchema,
 } from '../../../api/schemas.js';
-import { EntityType } from '../../../core/types.js';
+import type { ObjectType } from '../../../core/types.js';
 import { protectedRoute } from '../../auth/middleware.js';
+import { DEFAULT_ACCOUNT_ID } from '../../../core/constants.js';
 
 const router = Router();
 
-// GET /api/entities - List all entities
+// Compatibility shim for legacy /api/entities consumers.
 router.get(
   '/',
-  validateQuery(EntityQuerySchema),
+  validateQuery(RecordQuerySchema),
   (req: Request, res: Response, next: NextFunction) => {
     try {
       const validatedQuery = (req as any).validatedQuery || {};
-      const type = validatedQuery.type as EntityType | undefined;
-      // Also grab brandId from raw query if validated schema doesn't have it yet, 
-      // or we update the schema too. Let's just grab from req.query to be quick.
-      const brandId = req.query.brandId as string | undefined;
-      
-      const entities = listEntities(type, brandId);
-      res.json(entities);
+      const type = validatedQuery.type as ObjectType | undefined;
+      const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
+      const records = listRecords(accountId, type);
+      res.json(records);
     } catch (err) {
       next(err);
     }
   }
 );
 
-// GET /api/entities/:id - Get single entity
 router.get('/:id', (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    
-    // Try by ID first, then by slug
-    let entity = getEntity(id as string);
-    if (!entity) {
-      entity = getEntityBySlug(id as string);
-    }
-    
-    if (!entity) {
-      res.status(404).json({
-        error: 'Entity not found',
-        status: 404,
-      });
+    const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
+    const record = getRecord(id) || getRecordBySlug(accountId, id);
+
+    if (!record) {
+      res.status(404).json({ error: 'Record not found', status: 404 });
       return;
     }
-    
-    res.json(entity);
+
+    res.json(record);
   } catch (err) {
     next(err);
   }
 });
 
-// POST /api/entities - Create new entity
 router.post(
   '/',
   ...protectedRoute,
-  validate(EntityInputSchema),
-  (req: Request, res: Response, next: NextFunction) => {
+  validate(RecordInputSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const input = req.body;
-      
-      // Check idempotency
+      if (!input.account_id) {
+        input.account_id = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
+      }
+
       const idempotencyResult = checkIdempotency(input);
       if (idempotencyResult === 'skip') {
-        const existing = getEntityBySlug(input.slug);
-        res.status(200).json({
-          ...existing,
-          _idempotency: 'skipped',
-        });
-        return;
-      }
-      
-      if (idempotencyResult === 'update') {
-        const existing = getEntityBySlug(input.slug);
+        const existing = getRecordBySlug(input.account_id, input.slug);
         if (existing) {
-          const updated = updateEntity(existing.id, input);
-          res.status(200).json({
-            ...updated,
-            _idempotency: 'updated',
-          });
+          res.status(200).json({ ...existing, _idempotency: 'skipped' });
           return;
         }
       }
-      
-      // Create new entity
-      const entity = createEntity(input);
-      res.status(201).json({
-        ...entity,
-        _idempotency: 'created',
-      });
+
+      if (idempotencyResult === 'update') {
+        const existing = getRecordBySlug(input.account_id, input.slug);
+        if (existing) {
+          const updated = await updateRecord(existing.id, input, req);
+          if (updated) {
+            res.status(200).json({ ...updated, _idempotency: 'updated' });
+            return;
+          }
+        }
+      }
+
+      const record = await createRecord(input, req);
+      res.status(201).json({ ...record, _idempotency: 'created' });
     } catch (err) {
       next(err);
     }
   }
 );
 
-// PUT /api/entities/:id - Update entity
 router.put(
   '/:id',
   ...protectedRoute,
-  validate(EntityUpdateSchema),
-  (req: Request, res: Response, next: NextFunction) => {
+  validate(RecordUpdateSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params as { id: string };
-      const updates = req.body;
-      
-      const entity = updateEntity(id, updates);
-      if (!entity) {
-        res.status(404).json({
-          error: 'Entity not found',
-          status: 404,
-        });
+      const record = await updateRecord(id, req.body, req);
+      if (!record) {
+        res.status(404).json({ error: 'Record not found', status: 404 });
         return;
       }
-      
-      res.json(entity);
+      res.json(record);
     } catch (err) {
       next(err);
     }
   }
 );
 
-// DELETE /api/entities/:id - Delete entity
-router.delete('/:id', ...protectedRoute, (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', ...protectedRoute, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
-    const deleted = deleteEntity(id as string);
-    
+    const deleted = await deleteRecord(req.params.id, req);
     if (!deleted) {
-      res.status(404).json({
-        error: 'Entity not found',
-        status: 404,
-      });
+      res.status(404).json({ error: 'Record not found', status: 404 });
       return;
     }
-    
     res.status(204).send();
   } catch (err) {
     next(err);

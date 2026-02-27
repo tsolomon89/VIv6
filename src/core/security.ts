@@ -1,4 +1,4 @@
-import { DataRecordInput, EntityType } from './types.js';
+import { DataRecordInput, ObjectType } from './types.js';
 
 // --- Tier Definitions ---
 
@@ -8,9 +8,9 @@ export enum RecordTier {
     TENANT_DATA = 2
 }
 
-const TIER_1_TYPES: EntityType[] = ['object_def', 'field_def'];
+const TIER_1_TYPES: ObjectType[] = ['object_def', 'field_def'];
 
-export function getRecordTier(type: EntityType): RecordTier {
+export function getRecordTier(type: ObjectType): RecordTier {
     if (TIER_1_TYPES.includes(type)) {
         return RecordTier.CONFIGURATION;
     }
@@ -26,7 +26,7 @@ export interface UserContext {
     permissionLevel: 'admin' | 'editor' | 'viewer';
 }
 
-export function canCreateRecord(context: UserContext, type: EntityType): boolean {
+export function canCreateRecord(context: UserContext, type: ObjectType): boolean {
     const tier = getRecordTier(type);
 
     if (tier === RecordTier.KERNEL) return false; // Immutable via API
@@ -106,3 +106,4 @@ export function initSecurityHooks() {
         }
     });
 }
+

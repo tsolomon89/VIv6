@@ -61,7 +61,7 @@ export interface TargetingSuggestionsArgs {
 }
 
 export interface TargetingSuggestionsResult {
-  entityType: string;
+  ObjectType: string;
   availableDimensions: Array<{ dimension: string; count: number }>;
   dimensionRelationships: Array<{
     source_dimension: string;
@@ -184,7 +184,7 @@ export function getTargetingSuggestions(args: TargetingSuggestionsArgs): Targeti
   `).all() as Array<{ source_dimension: string; target_dimension: string; link_count: number }>;
 
   return {
-    entityType: args.entity_type,
+    ObjectType: args.entity_type,
     availableDimensions: dimensions,
     dimensionRelationships: depSummary,
     usage: {
@@ -193,3 +193,4 @@ export function getTargetingSuggestions(args: TargetingSuggestionsArgs): Targeti
     },
   };
 }
+

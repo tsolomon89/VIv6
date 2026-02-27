@@ -9,7 +9,7 @@ import { db } from '../../core/db.js';
 import { SYSTEM_ACCOUNT_ID } from '../../core/constants.js';
 import { createRecord, getRecord, getRecordBySlug, updateRecord, listRecords } from '../../core/records.js';
 import { createRelationship, getRelationshipsFrom } from '../../core/relationships.js';
-import type { DataRecord, PageAssetData, EntityType } from '../../core/types.js';
+import type { DataRecord, PageAssetData, ObjectType } from '../../core/types.js';
 import {
   compilePage,
   resolveBinding,
@@ -188,7 +188,7 @@ export async function createPageAsset(args: CreatePageAssetArgs): Promise<Create
   };
 
   const record = await createRecord({
-    type: 'page' as EntityType,
+    type: 'page' as ObjectType,
     name: args.name,
     slug: args.slug,
     account_id: accountId,
@@ -217,7 +217,7 @@ export async function createPageAsset(args: CreatePageAssetArgs): Promise<Create
  */
 export function listPageAssets(args: ListPageAssetsArgs): ListPageAssetsResult {
   const accountId = args.account_id || SYSTEM_ACCOUNT_ID;
-  const records = listRecords(accountId, 'page' as EntityType);
+  const records = listRecords(accountId, 'page' as ObjectType);
 
   let filtered = records;
   if (args.subject_type) {
@@ -393,3 +393,4 @@ export async function linkPageToEntity(args: LinkPageToEntityArgs): Promise<Link
     to: args.entity_id,
   };
 }
+

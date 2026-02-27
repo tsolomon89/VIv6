@@ -57,6 +57,7 @@ type FieldStruct = {
   // Recursion: Points to a Field Definition Record
   idRefFieldRecord: UUID;
   nameField: string; // Cache/Display
+  cardinality?: 'single' | 'multi'; // Cached from FieldDef mapping (optional)
   
   // Value(s)
   propertyStructs: PropertyStruct[];
@@ -85,3 +86,5 @@ type PropertyStruct = {
 1.  **Universal Homogeneity**: A `Contact` is a RecordStruct. A `Product` is a RecordStruct. The definition of a `Contact` (ObjectDef) is *also* a RecordStruct.
 2.  **Strict Recursion**: `idRefObjectRecord` and `idRefFieldRecord` MUST resolve to valid records in the same Tenant (or the upstream Tier 1 "Oblio" Tenant).
 3.  **Data = Schema**: You cannot create a record without referencing its definition records. The schema is enforced at write time by checking these references.
+4.  **Cardinality = Mapping**: Single-vs-multi is defined by `FieldDef.cardinality` (`single|multi`), not by switching payload shapes.
+5.  **Payload Consistency**: Runtime/API field payloads always use array values (`values[]`).

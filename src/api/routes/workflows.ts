@@ -8,6 +8,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { WorkflowEngine } from '../../modules/workflows/engine.js';
 import { listRecords, getRecordBySlug } from '../../modules/content/services.js';
 import { DEFAULT_ACCOUNT_ID } from '../../core/constants.js';
+import { firstQueryValue } from '../../core/http/query.js';
 import { protectedRoute } from '../../modules/auth/middleware.js';
 import { parsePagination, paginatedResponse } from '../middleware/pagination.js';
 
@@ -19,7 +20,7 @@ const router = Router();
  */
 router.get('/', (req: Request, res: Response, next: NextFunction) => {
     try {
-        const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
+        const accountId = firstQueryValue(req.query.account_id) || DEFAULT_ACCOUNT_ID;
         const workflows = listRecords(accountId, 'workflow' as any);
 
         // Get step counts for each workflow
@@ -56,7 +57,7 @@ router.get('/', (req: Request, res: Response, next: NextFunction) => {
  */
 router.get('/step-types', (req: Request, res: Response, next: NextFunction) => {
     try {
-        const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
+        const accountId = firstQueryValue(req.query.account_id) || DEFAULT_ACCOUNT_ID;
         const stepTypes = listRecords(accountId, 'workflow_step_type' as any);
 
         const result = stepTypes.map(st => ({
@@ -81,7 +82,7 @@ router.get('/step-types', (req: Request, res: Response, next: NextFunction) => {
 router.get('/:slug', (req: Request, res: Response, next: NextFunction) => {
     try {
         const { slug } = req.params;
-        const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
+        const accountId = firstQueryValue(req.query.account_id) || DEFAULT_ACCOUNT_ID;
 
         // Find workflow by slug from all workflow records
         const allWorkflows = listRecords(accountId, 'workflow' as any);
@@ -164,8 +165,8 @@ router.post('/:slug/trigger', ...protectedRoute, async (req: Request, res: Respo
 router.get('/:slug/enrollments', (req: Request, res: Response, next: NextFunction) => {
     try {
         const { slug } = req.params;
-        const { status } = req.query;
-        const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
+        const status = firstQueryValue(req.query.status);
+        const accountId = firstQueryValue(req.query.account_id) || DEFAULT_ACCOUNT_ID;
         const pagination = parsePagination(req);
 
         let enrollments = listRecords(accountId, 'workflow_enrollment' as any)
@@ -175,7 +176,7 @@ router.get('/:slug/enrollments', (req: Request, res: Response, next: NextFunctio
             );
 
         // Filter by status if specified
-        if (status && typeof status === 'string') {
+        if (status) {
             enrollments = enrollments.filter(e =>
                 e.data?.status === status ||
                 e.data?.['Status'] === status
@@ -211,22 +212,23 @@ router.get('/:slug/enrollments', (req: Request, res: Response, next: NextFunctio
  */
 router.get('/enrollments/all', (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { workflow_slug, status } = req.query;
-        const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
+        const workflowSlug = firstQueryValue(req.query.workflow_slug);
+        const status = firstQueryValue(req.query.status);
+        const accountId = firstQueryValue(req.query.account_id) || DEFAULT_ACCOUNT_ID;
         const pagination = parsePagination(req);
 
         let enrollments = listRecords(accountId, 'workflow_enrollment' as any);
 
         // Filter by workflow if specified
-        if (workflow_slug && typeof workflow_slug === 'string') {
+        if (workflowSlug) {
             enrollments = enrollments.filter(e =>
-                e.data?.workflow_slug === workflow_slug ||
-                e.data?.['Workflow Slug'] === workflow_slug
+                e.data?.workflow_slug === workflowSlug ||
+                e.data?.['Workflow Slug'] === workflowSlug
             );
         }
 
         // Filter by status if specified
-        if (status && typeof status === 'string') {
+        if (status) {
             enrollments = enrollments.filter(e =>
                 e.data?.status === status ||
                 e.data?.['Status'] === status

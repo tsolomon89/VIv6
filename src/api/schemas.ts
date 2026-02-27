@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
-import { ENTITY_TYPES } from '../core/types.js';
+import { OBJECT_TYPES } from '../core/types.js';
 
 // Record Types enum
-export const RecordTypeSchema = z.enum(ENTITY_TYPES);
+export const RecordTypeSchema = z.enum(OBJECT_TYPES);
 
 // Field Input Types
 export const FieldInputTypeSchema = z.enum([
@@ -28,17 +28,35 @@ const FieldValueSchema = z.union([
   z.number(),
   z.boolean(),
   z.null(),
-  z.array(z.string())
+  z.array(z.union([z.string(), z.number(), z.boolean(), z.null()]))
 ]);
 
 // Field Schema
 export const FieldSchema = z.object({
   name: z.string().min(1),
   inputType: FieldInputTypeSchema,
-  value: FieldValueSchema.optional().nullable(),
+  cardinality: z.enum(['single', 'multi', 'one', 'many']).optional(),
+  isSelectMany: z.boolean().optional(),
+  values: z.array(z.union([z.string(), z.number(), z.boolean(), z.null()])).default([]),
+  value: FieldValueSchema.optional(),
   options: z.array(z.string()).optional(),
-  required: z.boolean().optional()
-});
+  required: z.boolean().optional(),
+}).transform((field) => ({
+  ...field,
+  cardinality:
+    field.cardinality === 'one'
+      ? 'single'
+      : field.cardinality === 'many'
+        ? 'multi'
+        : field.cardinality ?? (field.isSelectMany ? 'multi' : field.inputType === 'multiselect' ? 'multi' : 'single'),
+  values: field.values.length > 0
+    ? field.values
+    : field.value === undefined
+      ? []
+      : Array.isArray(field.value)
+        ? field.value
+        : [field.value],
+}));
 
 // Field Group Schema
 export const FieldGroupSchema = z.object({
@@ -95,3 +113,4 @@ export const RecordQuerySchema = z.object({
 export type DataRecordInput = z.infer<typeof RecordInputSchema>;
 export type DataRecordUpdate = z.infer<typeof RecordUpdateSchema>;
 export type RecordRelationshipInput = z.infer<typeof RecordRelationshipInputSchema>;
+

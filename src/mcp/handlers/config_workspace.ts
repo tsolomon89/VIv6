@@ -405,7 +405,7 @@ export async function listConfigTypesHandler() {
         slug,
         displayName: def.displayName,
         description: def.description,
-        entityType: def.entityType,
+        ObjectType: def.ObjectType,
       };
     });
 
@@ -419,3 +419,4 @@ export async function listConfigTypesHandler() {
     };
   }
 }
+

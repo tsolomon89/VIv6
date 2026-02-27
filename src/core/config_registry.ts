@@ -11,7 +11,7 @@
  */
 
 import { z, ZodSchema } from 'zod';
-import { EntityType, ENTITY_TYPES, ConstraintType, ConstraintTrigger, OPPORTUNITY_STAGES, PIPELINE_TYPES } from './types.js';
+import { ObjectType, OBJECT_TYPES, ConstraintType, ConstraintTrigger, OPPORTUNITY_STAGES, PIPELINE_TYPES } from './types.js';
 import { TriggerEvent, RuleCondition, RuleAction, ActionType } from '../modules/ops/rules.js';
 import { AggregationFunction } from '../modules/ops/metrics.js';
 import { DerivationReturnType } from '../modules/ops/derivations.js';
@@ -49,7 +49,7 @@ export type ConfigTypeSlug = typeof CONFIG_TYPES[number];
 // ============================================================================
 
 // Entity type enum schema
-const EntityTypeSchema = z.enum(ENTITY_TYPES);
+const EntityTypeSchema = z.enum(OBJECT_TYPES);
 
 // Filter operators (used by views, metrics, rules)
 const FilterOpSchema = z.enum(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'contains', 'in', 'not_in']);
@@ -531,7 +531,7 @@ export interface SafetyConcern {
 
 export interface ConfigTypeDefinition {
   slug: ConfigTypeSlug;
-  entityType: EntityType;
+  ObjectType: ObjectType;
   displayName: string;
   description: string;
   schema: ZodSchema;
@@ -549,7 +549,7 @@ export interface ConfigTypeDefinition {
 export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
   rule: {
     slug: 'rule',
-    entityType: 'rule',
+    ObjectType: 'rule',
     displayName: 'Business Rule',
     description: 'Automation rules triggered by record events',
     schema: RuleDataSchema,
@@ -562,7 +562,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   derivation: {
     slug: 'derivation',
-    entityType: 'derivation',
+    ObjectType: 'derivation',
     displayName: 'Computed Field',
     description: 'Formula-based calculated fields',
     schema: DerivationDataSchema,
@@ -575,7 +575,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   validation_constraint: {
     slug: 'validation_constraint',
-    entityType: 'validation_constraint',
+    ObjectType: 'validation_constraint',
     displayName: 'Validation Constraint',
     description: 'Data validation rules for records',
     schema: ConstraintDataSchema,
@@ -588,7 +588,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   metric: {
     slug: 'metric',
-    entityType: 'metric',
+    ObjectType: 'metric',
     displayName: 'Rollup Metric',
     description: 'Aggregation rules across related records',
     schema: MetricDataSchema,
@@ -601,7 +601,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   view: {
     slug: 'view',
-    entityType: 'view',
+    ObjectType: 'view',
     displayName: 'Data View',
     description: 'Query definitions for data retrieval',
     schema: ViewDataSchema,
@@ -613,7 +613,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   state_machine: {
     slug: 'state_machine',
-    entityType: 'state_machine',
+    ObjectType: 'state_machine',
     displayName: 'State Machine',
     description: 'Entity lifecycle state transitions',
     schema: StateMachineDataSchema,
@@ -625,7 +625,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   interpreter_pipeline: {
     slug: 'interpreter_pipeline',
-    entityType: 'interpreter_pipeline',
+    ObjectType: 'interpreter_pipeline',
     displayName: 'Interpreter Pipeline',
     description: 'Lifecycle stage ordering for record interpreter events',
     schema: InterpreterPipelineDataSchema,
@@ -635,7 +635,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   interpreter_executor_def: {
     slug: 'interpreter_executor_def',
-    entityType: 'interpreter_executor_def',
+    ObjectType: 'interpreter_executor_def',
     displayName: 'Interpreter Executor Definition',
     description: 'Declarative catalog entries for lifecycle stage executors',
     schema: InterpreterExecutorDefDataSchema,
@@ -645,7 +645,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   workflow: {
     slug: 'workflow',
-    entityType: 'workflow',
+    ObjectType: 'workflow',
     displayName: 'Workflow',
     description: 'Multi-step automation sequences',
     schema: WorkflowDataSchema,
@@ -659,7 +659,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   workflow_step: {
     slug: 'workflow_step',
-    entityType: 'workflow_step',
+    ObjectType: 'workflow_step',
     displayName: 'Workflow Step',
     description: 'Individual step in a workflow',
     schema: WorkflowStepDataSchema,
@@ -673,7 +673,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   workflow_step_type: {
     slug: 'workflow_step_type',
-    entityType: 'workflow_step_type',
+    ObjectType: 'workflow_step_type',
     displayName: 'Workflow Step Type',
     description: 'Step type definitions with handler mappings',
     schema: WorkflowStepTypeDataSchema,
@@ -685,7 +685,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   pipeline_stage: {
     slug: 'pipeline_stage',
-    entityType: 'pipeline_stage',
+    ObjectType: 'pipeline_stage',
     displayName: 'Pipeline Stage',
     description: 'Opportunity stage configuration with activities and qualifiers',
     schema: PipelineStageDataSchema,
@@ -697,7 +697,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   object_def: {
     slug: 'object_def',
-    entityType: 'object_def',
+    ObjectType: 'object_def',
     displayName: 'Object Definition',
     description: 'Entity schema definitions',
     schema: ObjectDefDataSchema,
@@ -717,7 +717,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   field_def: {
     slug: 'field_def',
-    entityType: 'field_def',
+    ObjectType: 'field_def',
     displayName: 'Field Definition',
     description: 'Field schema definitions',
     schema: FieldDefRecordDataSchema,
@@ -730,7 +730,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   field_group: {
     slug: 'field_group',
-    entityType: 'object_def', // Field groups are embedded in object_def
+    ObjectType: 'object_def', // Field groups are embedded in object_def
     displayName: 'Field Group',
     description: 'Grouping of fields within an object definition',
     schema: FieldGroupDefSchema,
@@ -740,7 +740,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   activity_def: {
     slug: 'activity_def',
-    entityType: 'activity_def',
+    ObjectType: 'activity_def',
     displayName: 'Activity Definition',
     description: 'Activity type definitions with energy and assignment rules',
     schema: ActivityDefDataSchema,
@@ -755,7 +755,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   health_config: {
     slug: 'health_config',
-    entityType: 'health_config',
+    ObjectType: 'health_config',
     displayName: 'Health Configuration',
     description: 'Health/decay settings per entity type',
     schema: HealthConfigDataSchema,
@@ -767,7 +767,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   access_policy: {
     slug: 'access_policy',
-    entityType: 'rule', // Access policies are a type of rule
+    ObjectType: 'rule', // Access policies are a type of rule
     displayName: 'Access Policy',
     description: 'Role-based access control rules',
     schema: AccessPolicyDataSchema,
@@ -779,7 +779,7 @@ export const CONFIG_REGISTRY: Record<ConfigTypeSlug, ConfigTypeDefinition> = {
 
   persona: {
     slug: 'persona',
-    entityType: 'persona',
+    ObjectType: 'persona',
     displayName: 'Persona',
     description: 'Buyer persona definitions with routing and scoring metadata',
     schema: PersonaMetadataSchema,
@@ -871,3 +871,4 @@ export function getEditableConfigTypes(): ConfigTypeSlug[] {
     'persona',
   ];
 }
+

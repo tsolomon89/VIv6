@@ -50,7 +50,7 @@ describe('Derive API', () => {
             const response = await client.get('/derive/test-product');
 
             expect(response.status).toBe(200);
-            // DerivedPage has entitySlug, entityType, entityName, etc.
+            // DerivedPage has entitySlug, ObjectType, entityName, etc.
             expect(response.data).toHaveProperty('entitySlug');
             expect(response.data.entitySlug).toBe('test-product');
         });
@@ -95,3 +95,4 @@ describe('Derive API', () => {
         });
     });
 });
+

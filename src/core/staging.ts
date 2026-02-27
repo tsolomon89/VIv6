@@ -1,4 +1,4 @@
-import { DataRecord, DataRecordInput, RecordRelationship, RecordRelationshipInput, EntityData } from './types.js';
+import { DataRecord, DataRecordInput, RecordRelationship, RecordRelationshipInput, RecordData } from './types.js';
 import { calculateHash } from './idempotency.js';
 import { randomUUID } from 'crypto';
 
@@ -11,7 +11,7 @@ export function makeEntity(input: DataRecordInput, fixedId?: string): DataRecord
   const now = new Date().toISOString();
 
   // Default data structure
-  const data: EntityData = input.data || { fieldGroups: [] };
+  const data: RecordData = input.data || { fieldGroups: [] };
 
   // Calculate content hash for change detection
   const content_hash = calculateHash({ ...input, data });
@@ -61,3 +61,4 @@ export function makeRelationship(input: RecordRelationshipInput, fixedId?: strin
     created_at: now
   };
 }
+

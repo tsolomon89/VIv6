@@ -61,14 +61,14 @@ router.post('/validate-stage', (req: Request, res: Response, next: NextFunction)
   try {
     const accountId = (req.body.account_id as string) || DEFAULT_ACCOUNT_ID;
     const event = req.body.event as InterpreterEvent;
-    const entityType = req.body.entity_type as string;
+    const ObjectType = req.body.entity_type as string;
     const stage = req.body.stage as { executor?: string; options?: Record<string, any>; order?: number };
 
     if (!VALID_EVENTS.has(event)) {
       res.status(400).json({ error: 'Invalid event' });
       return;
     }
-    if (!entityType || typeof entityType !== 'string') {
+    if (!ObjectType || typeof ObjectType !== 'string') {
       res.status(400).json({ error: 'entity_type is required' });
       return;
     }
@@ -80,7 +80,7 @@ router.post('/validate-stage', (req: Request, res: Response, next: NextFunction)
     const errors = validateInterpreterStageAgainstDefinition({
       accountId,
       event,
-      entityType,
+      ObjectType,
       stage: {
         executor: stage.executor.trim(),
         order: typeof stage.order === 'number' ? stage.order : 0,
@@ -117,3 +117,4 @@ router.post('/validate-stage', (req: Request, res: Response, next: NextFunction)
 });
 
 export default router;
+

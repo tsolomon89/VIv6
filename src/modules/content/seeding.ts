@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
-import { DataRecord, RecordStruct, ObjectStruct, FieldStruct, PropertyStruct, FieldGroupStruct, RecordRelationship, EntityType } from '../../core/types.js';
+import { DataRecord, RecordStruct, ObjectStruct, FieldStruct, PropertyStruct, FieldGroupStruct, RecordRelationship, ObjectType } from '../../core/types.js';
 import { SYSTEM_ACCOUNT_ID } from '../../core/constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -477,3 +477,4 @@ export function loadSeedState(): SeedState {
 
     return state;
 }
+

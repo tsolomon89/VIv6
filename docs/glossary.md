@@ -15,6 +15,5 @@ This document serves as the single source of truth for terminology within the VI
 | **Assignment Pool** | A mechanism for intelligent allocation of Opportunities or Activities (e.g., round-robin or persona-based owner assignment). | Queues |
 | **Dimension** | A categorical classification system with hierarchical parent/child `dimension_values`. Used for pick-lists. | Category |
 | **Page Asset** | A record of type `page` that acts as an asset attributed to a channel/medium, optionally connected to visual templates. | Website, Landing |
-
-## Open Questions / Unknowns
-- Naming convention between `EntityType` and `RecordType`. Code uses `EntityType` but refers to the underlying table and constructs as `Record`. The glossary prefers `Record`. Will need to migrate code to `RecordType` if decided.
+| **ObjectType** | Canonical discriminant enum for `DataRecord.type`. | Deprecated aliases |
+| **RecordData** | Canonical payload shape for API/runtime records: `fieldGroups -> fields -> values[]`. | Deprecated aliases |

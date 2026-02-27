@@ -1,8 +1,9 @@
 import { db } from '../../core/db.js';
-import { DataRecord, DataRecordInput, EntityData, EntityType, RecordRelationship, RecordRelationshipInput } from '../../core/types.js';
+import { DataRecord, DataRecordInput, ObjectType, RecordRelationship, RecordRelationshipInput } from '../../core/types.js';
 import { calculateHash } from '../../core/idempotency.js';
 import { hooks } from '../../core/hooks.js';
 import { events } from '../../core/events.js';
+import { normalizeRecordDataPayload } from '../../core/record_data.js';
 import { randomUUID } from 'crypto';
 
 // --- Records ---
@@ -35,7 +36,7 @@ export async function createRecord(input: DataRecordInput, context?: any): Promi
     id,
     created_at: now,
     updated_at: now,
-    data: input.data || { fieldGroups: [] }
+    data: normalizeRecordDataPayload(input.data || { fieldGroups: [] })
   };
 
   const hookContext = enrichHookContext(context, { account_id: initialRecord.account_id });
@@ -52,10 +53,10 @@ export async function createRecord(input: DataRecordInput, context?: any): Promi
     name: initialRecord.name,
     summary: initialRecord.summary || '',
     description: initialRecord.description || '',
-    data: initialRecord.data!, // Hooks ensured data is present
+    data: normalizeRecordDataPayload(initialRecord.data), // Hooks ensured data is present
     created_at: initialRecord.created_at || now, // Use hook-modified time or fallback
     updated_at: initialRecord.updated_at || now,
-    content_hash: calculateHash(initialRecord.data!)
+    content_hash: calculateHash(normalizeRecordDataPayload(initialRecord.data))
   };
 
   const stmt = db.prepare(`
@@ -88,7 +89,7 @@ export function getRecord(id: string): DataRecord | undefined {
 
   return {
     ...result,
-    data: JSON.parse(result.data)
+    data: normalizeRecordDataPayload(JSON.parse(result.data))
   };
 }
 
@@ -100,7 +101,7 @@ export function getRecordBySlug(accountId: string, slug: string): DataRecord | u
 
   return {
     ...result,
-    data: JSON.parse(result.data)
+    data: normalizeRecordDataPayload(JSON.parse(result.data))
   };
 }
 
@@ -129,8 +130,8 @@ export async function updateRecord(id: string, input: Partial<DataRecordInput>, 
     id: current.id, // Ensure ID is string (DataRecord requirement)
     created_at: current.created_at, // Preserve creation time
     updated_at: new Date().toISOString(),
-    data: fullInput.data || current.data, // Ensure we use the hook-modified data
-    content_hash: fullInput.data ? calculateHash(fullInput.data) : current.content_hash
+    data: normalizeRecordDataPayload(fullInput.data || current.data), // Ensure we use the hook-modified data
+    content_hash: fullInput.data ? calculateHash(normalizeRecordDataPayload(fullInput.data)) : current.content_hash
   };
 
   
@@ -188,7 +189,7 @@ export async function deleteRecord(id: string, context?: any): Promise<boolean> 
   return success;
 }
 
-export function listRecords(accountId: string, type?: EntityType): DataRecord[] {
+export function listRecords(accountId: string, type?: ObjectType): DataRecord[] {
   let query = 'SELECT * FROM records WHERE account_id = ?';
   const args: any[] = [accountId];
 
@@ -202,7 +203,7 @@ export function listRecords(accountId: string, type?: EntityType): DataRecord[] 
   const stmt = db.prepare(query);
   return stmt.all(...args).map((row: any) => ({
     ...row,
-    data: JSON.parse(row.data)
+    data: normalizeRecordDataPayload(JSON.parse(row.data))
   }));
 }
 
@@ -352,3 +353,4 @@ export async function deleteRelationship(id: string): Promise<boolean> {
   }
   return false;
 }
+

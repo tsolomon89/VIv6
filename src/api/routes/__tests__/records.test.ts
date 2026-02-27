@@ -82,7 +82,7 @@ describe('Records API', () => {
             expect(response.data.data[0].name).toBe('Product 1');
         });
 
-        it('returns records with data property as EntityData structure', async () => {
+        it('returns records with data property as RecordData structure', async () => {
             seedTestRecord({
                 type: 'product',
                 name: 'Product 1',
@@ -258,3 +258,4 @@ describe('Records API', () => {
         });
     });
 });
+

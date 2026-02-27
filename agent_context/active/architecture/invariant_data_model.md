@@ -13,7 +13,7 @@ The entire system collapses to this single idea. We do not have separate tables 
 ### The Atom: RecordStruct
 Everything is a `RecordStruct`.
 - **Identity**: `idRecord` (UUID)
-- **Type**: `objectStruct.typeObject` (String) `idRefObjectRecord` (Ref)
+- **Type**: `objectStruct.typeObject` (runtime `ObjectType`) + `idRefObjectRecord` (Ref)
 - **Content**: A collection of `FieldStructs` grouped by `FieldGroupStructs`.
 
 ### The Edge Label: FieldStruct
@@ -21,12 +21,20 @@ A `FieldStruct` defines a dimension or attribute of a Record.
 - **Definition**: `idRefFieldRecord` points to the canonical Field definition.
 - **Constraint**: `inputType` determines what values are valid.
     - If `inputType: "Record"`, this field is a **Relationship**.
-- **Cardinality**: `isSelectMany` (Boolean).
+- **Cardinality Authority**: `FieldDef.cardinality` (`single | multi`).
 
 ### The Edge Target: PropertyStruct
 A `PropertyStruct` is the value at a specific coordinate (Record + Field).
 - **Scalar Value**: `valueProperty` holds string/number/boolean data.
 - **Reference Value**: If `inputType` is "Record", `valueProperty` (or nested `recordSnapshotStruct.idRefRecord`) holds the Target Record ID.
+
+### API Record Payload (`RecordData`)
+API/runtime payloads use:
+- `fieldGroups[]`
+- `fields[]`
+- `values[]` (always an array)
+
+Single-value fields still use `values[]` with one item. Cardinality is mapping/schema metadata, not payload shape.
 
 > [!NOTE]
 > **Ref vs Snapshot**:

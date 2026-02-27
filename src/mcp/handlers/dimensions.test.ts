@@ -242,7 +242,7 @@ describe('MCP Dimension Tool Handlers', () => {
 
     it('returns entity type in response', () => {
       const result = getTargetingSuggestions({ entity_type: 'persona' });
-      expect(result.entityType).toBe('persona');
+      expect(result.ObjectType).toBe('persona');
     });
 
     it('returns available dimensions ordered by count', () => {
@@ -284,3 +284,4 @@ describe('MCP Dimension Tool Handlers', () => {
     });
   });
 });
+

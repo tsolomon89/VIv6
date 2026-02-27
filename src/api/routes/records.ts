@@ -15,7 +15,7 @@ import {
   RecordUpdateSchema,
   RecordQuerySchema,
 } from '../schemas.js';
-import { EntityType } from '../../core/types.js'; // Keep EntityType as mostly internal enum
+import { ObjectType } from '../../core/types.js'; // Keep ObjectType as mostly internal enum
 import { protectedRoute } from '../../modules/auth/middleware.js';
 import { Reader } from '../../contracts/Reader.js';
 import { db } from '../../core/db.js'; // Direct DB access for routing logic
@@ -34,7 +34,7 @@ router.get(
   (req: Request, res: Response, next: NextFunction) => {
     try {
       const validatedQuery = (req as any).validatedQuery || {};
-      const type = validatedQuery.type as EntityType | undefined;
+      const type = validatedQuery.type as ObjectType | undefined;
       const accountId = (req.query.account_id as string) || DEFAULT_ACCOUNT_ID;
       const pagination = parsePagination(req);
 
@@ -44,7 +44,7 @@ router.get(
       const total = records.length;
       const paginatedRecords = records.slice(pagination.offset, pagination.offset + pagination.limit);
 
-      // return structured EntityData (FieldGroups) for Admin UI
+      // return structured RecordData (FieldGroups) for Admin UI
       const projected = paginatedRecords.map(r => ({
           ...r,
           data: Reader.toEntityData(r.data)
@@ -77,7 +77,7 @@ router.get('/:id', ...protectedRoute, (req: Request, res: Response, next: NextFu
       return;
     }
     
-    // structured EntityData for Admin UI
+    // structured RecordData for Admin UI
     const projected = {
         ...record,
         data: Reader.toEntityData(record.data)
@@ -293,3 +293,4 @@ router.post('/validate/product', ...protectedRoute, (req: Request, res: Response
 });
 
 export default router;
+
