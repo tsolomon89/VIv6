@@ -1,8 +1,8 @@
 # Victory Initiative v5 (Keimenon)
 
-**The Schema-Driven Website Generator.**
+**The Schema-Driven Record Platform.**
 
-This project allows you to manage a knowledge graph of Entities (Products, Features, Brands) and generate a static, performant website from them using data-driven templates.
+A universal record workspace for managing a knowledge graph of Records (Contacts, Products, Opportunities, Activities) and generating static, performant websites from them using data-driven templates.
 
 ## 🚀 Quick Start
 
@@ -15,22 +15,22 @@ This project allows you to manage a knowledge graph of Entities (Products, Featu
 npm install
 ```
 
-### 3. Running the Admin UI
-Start the local development environment (API, MCP Server, and UI):
+### 3. Running Locally
+Start the local development environment (API + Studio UI):
 ```bash
 # Terminal 1: API Server
 npx tsx src/api/server.ts
 
-# Terminal 2: Admin UI
+# Terminal 2: Studio UI
 cd src/ui && npm run dev
 ```
-Access the UI at `http://localhost:5173`.
+Access the Studio at `http://localhost:5173`.
 
 ### 4. Managing Content
-1.  Go to **Entities** in the Admin UI.
-2.  Create or Edit entities (Brands, Products, Features).
-3.  Set relationships (e.g., Brand "Offers" Product).
-4.  The system uses these relationships to determine page layouts.
+1.  Open the **Studio** at `/dashboard`.
+2.  Navigate to any record type via the sidebar (Contacts, Opportunities, Products, etc.).
+3.  Create, edit, or link records — the system uses relationships to determine page layouts.
+4.  Manage system settings at `/settings` (AI credentials, builds, domains).
 
 ### 5. Building the Site
 Generate the static website to the `dist/` folder:
@@ -41,28 +41,45 @@ npm run build
 ```
 
 **Brand-Scoped Build (Recommended for Production)**:
-Target a specific brand (e.g., `oblio`) to generate a clean, brand-specific output directory:
 ```bash
-npm run build:brand -- --brand=oblio
+npm run build:brand -- --brand=keimenon
 ```
-Output: `dist/oblio/index.html`
+Output:
+- `dist/<hostname>/index.html` when the tenant has an active primary domain
+- `dist/<tenant_slug>/index.html` when no active primary domain is configured
+
+**Verify all seeded tenant brand builds (CI-equivalent gate)**:
+```bash
+npm run build:verify:brands
+```
+This runs `build:brand` for every tenant slug in `data/seeds/tenants/*.json` and fails fast on any build or missing artifact.
 
 ### 6. Previewing
-Preview the built site locally:
 ```bash
 npx serve dist
 ```
 
 ## 🛠 Architecture
 
-- **Core (`src/core`)**: SQLite database logic, Entity/Relationship CRUD.
-- **API (`src/api`)**: Express REST API connecting UI to Core.
-- **UI (`src/ui`)**: React Admin Interface for content management.
-- **Build (`src/build`)**: One-way static generator that compiles DB -> HTML.
+- **Core (`src/core`)**: SQLite database logic, Record CRUD, schema-as-data.
+- **API (`src/api`)**: Express REST API (`/api/records`, `/api/relationships`, `/api/domains`).
+- **UI (`src/ui`)**: React Studio — the universal record workspace.
+- **Build (`src/build`)**: One-way static generator that compiles DB → HTML.
 - **Templates (`src/templates`)**: Handlebars templates (`.hbs`) for the build output.
-- **MCP (`src/mcp`)**: AI Agent tools (`create_entity`, `link_entities`) for Cursor/Claude integration.
+- **MCP (`src/mcp`)**: AI Agent tools for Cursor/Claude integration.
+- **Docs (`agent_context/active`)**: Canonical architecture and domain model specs.
 
 ## 📦 Deployment
 
-1.  Run `npm run build`.
-2.  Run `npm run zip` (if configured) or simply drag `dist/` to Netlify/Surge.
+1.  Run `npm run build:brand -- --brand=<tenant_slug>`.
+2.  Deploy the resolved output folder:
+    - `dist/<hostname>/` when an active primary domain exists
+    - `dist/<tenant_slug>/` otherwise
+3.  Run `npm run build:verify:brands` before release to enforce all-seeded-brand build verification.
+
+### 7. Resetting Local Data After Canonicalization
+The supported local upgrade path for the hard-cut `ObjectType` / `values[]` migration is a destructive reset and reseed:
+```bash
+npm run devdb:reset
+```
+This rebuilds `data/vi.sqlite` from the tracked seed set and is the supported way to realign a local dev database with the current canonical schema.

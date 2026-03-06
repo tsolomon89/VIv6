@@ -13,6 +13,11 @@ dist
 .next
 out
 build
+!src/build/
+!src/build/generate.ts
+
+# Uploads (local dev artifacts)
+uploads/
 
 # Data (Excluded per assessment)
 data/vi.sqlite
@@ -41,6 +46,7 @@ Thumbs.db
 # Debug/temp files
 debug_*.ts
 verify_*.ts
+!src/scripts/verify_brand_builds.ts
 check_*.ts
 *_log.txt
 *_output*.txt

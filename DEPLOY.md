@@ -2,25 +2,36 @@
 
 This guide describes how to deploy the Victory Initiative v5 (Keimenon) generated sites.
 
-## 1. Build a Specific Brand
+## 1. Build a Specific Tenant Brand
 
-For production, you typically want to build a single brand to keep the artifact small and focused.
+For production, build a single tenant scope to keep artifacts focused.
 
 ```bash
-# Build the 'oblio' brand
-npm run build:brand -- --brand=oblio
+# Build the 'keimenon' tenant
+npm run build:brand -- --brand=keimenon
 ```
 
-This will create:
-`dist/oblio/index.html` (and associated assets)
+Output folder resolution:
+- `dist/<hostname>/index.html` when the tenant has an active primary domain
+- `dist/<tenant_slug>/index.html` when no active primary domain is configured
 
-## 2. Deploying
+## 2. Verify All Seeded Brand Builds
 
-### Option A: standard Static Host (Netlify, Vercel, Surge)
-1.  Navigate to `dist/oblio`.
+Run this CI-equivalent gate before deploy:
+
+```bash
+npm run build:verify:brands
+```
+
+This reads all tenant slugs from `data/seeds/tenants/*.json`, runs `build:brand` for each, and fails fast if any expected artifact is missing.
+
+## 3. Deploying
+
+### Option A: Static Host (Netlify, Vercel, Surge)
+1.  Navigate to the resolved brand output folder (`dist/<hostname>` or `dist/<tenant_slug>`).
 2.  Deploy this folder as your site root.
     *   **Netlify**: Drag and drop the folder into the "Deploys" tab.
-    *   **Surge**: Run `surge dist/oblio`.
+    *   **Surge**: Run `surge dist/<hostname-or-tenant_slug>`.
 
 ### Option B: ZIP Handover
 If you need to send the site to a client:
@@ -31,15 +42,15 @@ If you need to send the site to a client:
     ```
     *Note: You may need to adjust the `zip` script in `package.json` to target the specific brand folder if you want a cleaner zip.*
 
-2.  Alternatively, manually zip `dist/oblio`.
+2.  Alternatively, manually zip the resolved output folder.
 
-## 3. SEO & Analytics
+## 4. SEO & Analytics
 
-*   **Meta Tags**: Managed via the Admin UI in the Brand entity.
-*   **GTM/Analytics**: Injected automatically during build based on the "Brand Config" entity in the database.
-    *   To update GTM IDs, edit the Brand entity in the Admin UI.
+*   **Meta Tags**: Managed in the Studio via the Brand record's Settings page.
+*   **GTM/Analytics**: Injected automatically during build based on the Brand record configuration.
+    *   To update GTM IDs, edit the Brand record in the Studio at `/settings`.
 
-## 4. Troubleshooting
+## 5. Troubleshooting
 
 *   **Missing Styles**: Ensure the `assets/` folder is relative to `index.html`. The build output is self-contained.
 *   **3D Scene Errors**: Check the console. The theme relies on `window.VI_CONFIG` being present in the HTML.
